@@ -34,6 +34,7 @@ set (
     src/HAL/Beeper.cpp
     src/HAL/Screen.cpp
     src/HAL/Inputs.cpp
+    src/Screens/HomeScreen.cpp
 )
 
 add_executable(cuckoo ${SRC_FILES})
