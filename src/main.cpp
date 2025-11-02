@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include "linux/input.h"
 
+#include "HAL/Beeper.hpp"
+
 enum screen_color
 {
    SCREEN_COLOR_BLACK = 0x000000,
@@ -33,9 +35,10 @@ static int screen_buffer;
 // Function declarations
 void print_event_data(const char *event_name, const struct input_event *event_data);
 void poll_input_events(int event1, int event2);
-void play_beep(int duration);
 void change_screen_color(int screen_buffer);
 void set_screen_color(int screen_buffer, enum screen_color color);
+
+static Beeper beeper("/dev/input/beeper");
 
 int main() {
    printf("Cuckoo Hello\n");
@@ -88,7 +91,7 @@ void poll_input_events(int event1, int event2)
          && event2_data.code == 't' 
          && event2_data.value == 1)
       {
-         play_beep(10);
+         Beeper beeper("/dev/input/beeper");
          change_screen_color(screen_buffer);
       }
    }
@@ -102,31 +105,6 @@ void print_event_data(const char* event_name, const struct input_event* event_da
           event_data->type,
           event_data->code,
           event_data->value);
-}
-
-void play_beep(int duraton_ms)
-{
-   int event0 = open("/dev/input/event0", O_WRONLY | O_NONBLOCK);
-   if (event0 >= 0)
-   {
-      struct input_event beep_start;
-      memset(&beep_start, 0, sizeof(beep_start));
-      beep_start.type = EV_SND;
-      beep_start.code = SND_BELL;
-      beep_start.value = 1000;
-      write(event0, &beep_start, sizeof(beep_start));
-
-      usleep(duraton_ms * 1000); // Beep duration 200 ms
-
-      struct input_event beep_stop;
-      memset(&beep_stop, 0, sizeof(beep_stop));
-      beep_stop.type = EV_SND;
-      beep_stop.code = SND_BELL;
-      beep_stop.value = 0;
-      write(event0, &beep_stop, sizeof(beep_stop));
-
-      close(event0);
-   }
 }
 
 void change_screen_color(int screen_buffer) {

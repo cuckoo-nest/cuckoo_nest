@@ -28,8 +28,13 @@ ExternalProject_Add(
 # =====================================================
 # 3. Define your actual build target
 # =====================================================
-# (after the toolchain is ready)
-add_executable(hello src/main.cpp)
+set (
+    SRC_FILES 
+    src/main.cpp
+    src/HAL/Beeper.cpp
+)
+
+add_executable(hello ${SRC_FILES})
 
 # Tell CMake that this target depends on the toolchain being ready
 add_dependencies(hello linaro_toolchain)
