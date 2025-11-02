@@ -1,6 +1,19 @@
 cmake_minimum_required(VERSION 3.20)
-project(ARM_CrossBuild CXX)
+project(CuckooNest CXX)
 
+# Option to build tests (defaults to OFF to maintain existing behavior)
+option(BUILD_TESTS "Build unit tests" OFF)
+
+# Option to build main application (defaults to ON)
+option(BUILD_MAIN_APP "Build main application with cross-compiler" ON)
+
+# If building tests, add tests subdirectory and exit early
+if(BUILD_TESTS)
+    add_subdirectory(tests)
+    return()
+endif()
+
+# The rest of this file is for cross-compiled main application
 include(ExternalProject)
 
 # =====================================================
@@ -31,6 +44,7 @@ ExternalProject_Add(
 set (
     SRC_FILES 
     src/main.cpp
+    src/ScreenManager.cpp
     src/HAL/Beeper.cpp
     src/HAL/Display.cpp
     src/HAL/BitmapFont.cpp
