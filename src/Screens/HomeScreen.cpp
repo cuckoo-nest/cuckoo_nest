@@ -22,7 +22,7 @@ void HomeScreen::Render()
         return;
     }
 
-    screen_->change_color(colors[currentColorIndex]);
+    screen_->SetBackgroundColor(colors[currentColorIndex]);
 }
 
 void HomeScreen::handle_input_event(const InputDeviceType device_type, const struct input_event& event)
