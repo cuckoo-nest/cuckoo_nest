@@ -32,7 +32,7 @@ set (
     SRC_FILES 
     src/main.cpp
     src/HAL/Beeper.cpp
-    src/HAL/Screen.cpp
+    src/HAL/Display.cpp
     src/HAL/Inputs.cpp
     src/Screens/HomeScreen.cpp
 )

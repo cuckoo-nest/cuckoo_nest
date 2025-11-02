@@ -2,9 +2,9 @@
 #include <string>
 #include <stdint.h>
 
-class Screen {
+class Display {
 public:
-    Screen(std::string device_path);
+    Display(std::string device_path);
     bool initialize();
     void change_color(uint32_t color);
 

@@ -1,16 +1,16 @@
-#include "Screen.hpp"
+#include "Display.hpp"
 #include <linux/fb.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <iostream>
 
-Screen::Screen(std::string device_path) : 
+Display::Display(std::string device_path) : 
     device_path_(device_path)
 {
 }
 
-bool Screen::initialize()
+bool Display::initialize()
 {
     screen_buffer = open("/dev/fb0", O_RDWR);
     if (screen_buffer < 0)
@@ -21,7 +21,7 @@ bool Screen::initialize()
     return true;
 }
 
-void Screen::change_color(uint32_t color)
+void Display::change_color(uint32_t color)
 {
     struct fb_var_screeninfo vinfo;
    struct fb_fix_screeninfo finfo;

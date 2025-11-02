@@ -3,7 +3,7 @@
 #include "linux/input.h"
 
 #include "HAL/Beeper.hpp"
-#include "HAL/Screen.hpp"
+#include "HAL/Display.hpp"
 #include "HAL/Inputs.hpp"
 
 #include "Screens/HomeScreen.hpp"
@@ -13,7 +13,7 @@ void change_screen_color();
 void handle_input_event(const InputDeviceType device_type, const struct input_event& event);
 
 static Beeper beeper("/dev/input/event0");
-static Screen screen("/dev/fb0");
+static Display screen("/dev/fb0");
 static Inputs inputs("/dev/input/event2", "/dev/input/event1");
 
 static HomeScreen home_screen (&screen, &beeper);
