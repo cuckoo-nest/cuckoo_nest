@@ -15,8 +15,12 @@ void handle_input_event(const InputDeviceType device_type, const struct input_ev
 static Beeper beeper("/dev/input/event0");
 static Display screen("/dev/fb0");
 static Inputs inputs("/dev/input/event2", "/dev/input/event1");
+static ScreenManager screen_manager;
 
-static HomeScreen home_screen (&screen, &beeper);
+static HomeScreen home_screen (
+   &screen_manager,
+   &screen, 
+   &beeper);
 
 int main() 
 {
@@ -26,6 +30,11 @@ int main()
        fprintf(stderr, "Failed to initialize screen\n");
        return 1;
    }
+
+   screen_manager.GoToNextScreen(new HomeScreen(
+       &screen_manager,
+       &screen,
+       &beeper));
 
    // Set up input event callback
    inputs.set_callback(handle_input_event);
@@ -40,7 +49,7 @@ int main()
    
    // Main thread can now do other work or just wait
    while (1) {
-      home_screen.Render();
+      screen_manager.RenderCurrentScreen();
       sleep(1); // Sleep for 1 second - background thread handles input polling
    }
 
@@ -58,6 +67,11 @@ void handle_input_event(const InputDeviceType device_type, const struct input_ev
           event.code,
           event.value);
 
-   home_screen.handle_input_event(device_type, event);
-   home_screen.Render();
+   if (device_type == InputDeviceType::ROTARY
+   && event.type == 0 && event.code == 0) {
+       return; // Ignore "end of event" markers from rotary encoder
+   }
+
+   screen_manager.ProcessInputEvent(device_type, event);
+   screen_manager.RenderCurrentScreen();
 }

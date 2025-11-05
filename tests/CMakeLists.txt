@@ -31,6 +31,7 @@ set(
     ../src/HAL/BitmapFont.cpp
     ../src/HAL/Inputs.cpp
     ../src/Screens/HomeScreen.cpp
+    ../src/Screens/DimmerScreen.cpp
 )
 
 # Define test files

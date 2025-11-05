@@ -6,6 +6,7 @@
 #include <sys/mman.h>
 #include <iostream>
 #include <unistd.h>
+#include <cstring>
 
 Display::Display(std::string device_path) : device_path_(device_path)
 {
@@ -55,11 +56,18 @@ bool Display::initialize()
 
     std::cout << "Screen buffer size: " << screensize << " bytes" << std::endl;
 
-    // Map the screen buffer to memory
+    working_buffer = new char[screensize];
+    if (working_buffer == nullptr)
+    {
+        std::cerr << "Error allocating working buffer" << std::endl;
+        return false;
+    }
+
+    // Map the device to memory
     fbp = (char *)mmap(0, screensize, PROT_READ | PROT_WRITE, MAP_SHARED, screen_buffer, 0);
     if (fbp == MAP_FAILED)
     {
-        std::cerr << "Error mapping framebuffer to memory" << std::endl;
+        std::cerr << "Failed to map framebuffer device to memory" << std::endl;
         return false;
     }
 
@@ -71,7 +79,7 @@ void Display::SetBackgroundColor(uint32_t color)
 
     // Set all pixels to the specified color
     // Assuming 32-bit color depth (4 bytes per pixel)
-    uint32_t *pixel = (uint32_t *)fbp;
+    uint32_t *pixel = (uint32_t *)working_buffer;
     long pixel_count = screensize / 4;
     long i;
 
@@ -134,7 +142,7 @@ void Display::DrawLine(int x0, int y0, int x1, int y1, uint32_t color)
 void Display::DrawPixel(int x, int y, uint32_t color)
 {
     long location = x * 4 + y * 320 * 4;
-    *((uint32_t*)(fbp + location)) = color;
+    *((uint32_t*)(working_buffer + location)) = color;
 }
 
 void Display::DrawBitmapChar(char c, int x, int y, uint32_t color, int scale)
@@ -164,4 +172,11 @@ void Display::DrawBitmapChar(char c, int x, int y, uint32_t color, int scale)
             }
         }
     }
+}
+
+void Display::Flush()
+{
+    // Flush changes to screen
+    //ioctl(screen_buffer, FBIOPAN_DISPLAY, &vinfo);
+    memcpy(fbp, working_buffer, screensize);
 }

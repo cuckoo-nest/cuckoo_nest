@@ -13,7 +13,8 @@ public:
     
     void GoToNextScreen(ScreenBase* screen);
     void GoToPreviousScreen();
-
+    void RenderCurrentScreen();
+    void ProcessInputEvent(const InputDeviceType device_type, const input_event &event);
 
 private:
     std::stack<ScreenBase*> screen_history_;

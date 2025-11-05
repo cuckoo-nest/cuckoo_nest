@@ -12,11 +12,13 @@ public:
     void DrawText(int x, int y, const std::string &text, uint32_t color = 0xFFFFFF, int scale = 1);
     void DrawLine(int x0, int y0, int x1, int y1, uint32_t color);
     void DrawPixel(int x, int y, uint32_t color);
+    void Flush();
 
 private:
     std::string device_path_;
     int screen_buffer;
     char *fbp;
+    char *working_buffer;
     long screensize;
     
     // Screen info

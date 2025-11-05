@@ -70,7 +70,7 @@ void Inputs::polling_loop()
         poll_device(InputDeviceType::ROTARY, rotary_fd_);
 
         // Small sleep to prevent excessive CPU usage
-        usleep(1000); // 1ms
+        usleep(10 * 1000); // 1ms
     }
 }
 

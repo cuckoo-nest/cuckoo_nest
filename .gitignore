@@ -44,3 +44,4 @@ build
 build-main
 build-tests
 Testing
+upload.sh

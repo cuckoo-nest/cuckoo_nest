@@ -57,7 +57,8 @@
         "utility": "cpp",
         "typeindex": "cpp",
         "typeinfo": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "string": "cpp"
     },
     "testMate.cpp.test.executables": "{build,Build,BUILD,out,Out,OUT,build-tests}/**/*{test,Test,TEST}*",
     "cmake.ctest.testExplorerIntegrationEnabled": false
