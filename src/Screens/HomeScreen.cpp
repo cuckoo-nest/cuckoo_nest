@@ -48,7 +48,7 @@ std::string HomeScreen::TimeToString(time_t time)
     char buffer[100];
     struct tm *timeinfo = localtime(&time);
     strftime(buffer, sizeof(buffer), "%H:%M:%S", timeinfo);
-    std::cout << "Formatted time: " << buffer << std::endl;
+    //std::cout << "Formatted time: " << buffer << std::endl;
     return std::string(buffer);
 }
 
@@ -64,9 +64,13 @@ void HomeScreen::handle_input_event(const InputDeviceType device_type, const str
         // Move to the next color
         //currentColorIndex = (currentColorIndex + 1) % color_count;
 
-        screenManager_->GoToNextScreen(new DimmerScreen(
-            screenManager_,
-            display_,
-            beeper_));
+        if (nextScreen_ != nullptr)
+        {
+            screenManager_->GoToNextScreen(nextScreen_);
+        }
+        else
+        {
+            std::cout << "Next screen is null!" << std::endl;
+        }
     }
 }

@@ -20,10 +20,10 @@ void ScreenManager::GoToNextScreen(ScreenBase *screen)
 void ScreenManager::GoToPreviousScreen()
 {
     if (!screen_history_.empty()) {
-        if (current_screen_ != nullptr)
-        {
-            delete current_screen_;
-        }
+        // if (current_screen_ != nullptr)
+        // {
+        //     delete current_screen_;
+        // }
 
         current_screen_ = screen_history_.top();
         screen_history_.pop();

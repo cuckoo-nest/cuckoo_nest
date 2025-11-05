@@ -51,6 +51,7 @@ set (
     src/HAL/Inputs.cpp
     src/Screens/HomeScreen.cpp
     src/Screens/DimmerScreen.cpp
+    src/Screens/MenuScreen.cpp
 )
 
 add_executable(cuckoo ${SRC_FILES})

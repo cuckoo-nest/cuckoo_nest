@@ -65,16 +65,23 @@ void Inputs::set_callback(InputCallback callback)
 
 void Inputs::polling_loop()
 {
-    while (!should_stop_) {
-        poll_device(InputDeviceType::BUTTON, button_fd_);
-        poll_device(InputDeviceType::ROTARY, rotary_fd_);
+    while (!should_stop_) 
+    {
+        bool button_event = poll_device(InputDeviceType::BUTTON, button_fd_);
+        bool rotary_event = poll_device(InputDeviceType::ROTARY, rotary_fd_);
+
+        if (rotary_event) {
+            // If a rotary event was processed, read again quickly to catch all events
+            usleep(1 * 1000); // 1ms
+            continue;
+        }
 
         // Small sleep to prevent excessive CPU usage
-        usleep(10 * 1000); // 1ms
+        usleep(10 * 1000); // 10ms
     }
 }
 
-void Inputs::poll_device(const InputDeviceType device_type, int fd)
+bool Inputs::poll_device(const InputDeviceType device_type, int fd)
 {
     struct input_event event;
     memset(&event, 0, sizeof(event));
@@ -82,5 +89,8 @@ void Inputs::poll_device(const InputDeviceType device_type, int fd)
     int bytes_read = read(fd, &event, sizeof(event));
     if (bytes_read > 0 && callback_) {
         callback_(device_type, event);
+        return true;
     }
+
+    return false;
 }

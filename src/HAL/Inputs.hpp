@@ -38,5 +38,5 @@ private:
     
     // Polling function that runs in background thread
     void polling_loop();
-    void poll_device(const InputDeviceType device_type, int fd);
+    bool poll_device(const InputDeviceType device_type, int fd);
 };
