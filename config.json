@@ -1,0 +1,22 @@
+{
+    "app_name": "CuckooNest",
+    "version": "1.0.0",
+    "debug_mode": true,
+    "max_screens": 10,
+    "refresh_rate": 60.0,
+    "display": {
+        "width": 320,
+        "height": 240,
+        "brightness": 0.8
+    },
+    "homeAssistant": {
+        "baseURL": "http://homeassistant.local:8123",
+        "token": "SomeToken",
+        "entityId": "switch.dining_room_spot_lights"
+    },
+    "beeper": {
+        "enabled": true,
+        "volume": 0.5,
+        "default_tone": 440
+    }
+}

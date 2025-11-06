@@ -20,14 +20,9 @@ public:
         entityId_(entityId)
     {}
 
-private:
-    std::string authKey_;
-    std::string domain_;
-    std::string baseUrl_;
-    std::string serviceUrl_;
-    std::string entityId_;
     virtual ~ActionHomeAssistantService() = default;
 
+    
     void execute() override 
     {
         // Implementation to call Home Assistant service
@@ -69,4 +64,12 @@ private:
             curl_wrapper.slist_free_all(headers);
         }
     }
+
+private:
+    std::string authKey_;
+    std::string domain_;
+    std::string baseUrl_;
+    std::string serviceUrl_;
+    std::string entityId_;
+    
 };

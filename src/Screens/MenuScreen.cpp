@@ -68,7 +68,7 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
         // If there's a callback, invoke it
         if (selectedItem.callback != nullptr)
         {
-            selectedItem.callback();
+            selectedItem.callback->execute();
         }
         else
         {

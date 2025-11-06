@@ -4,18 +4,19 @@
 #include "../ScreenManager.hpp"
 #include "../HAL/Display.hpp"
 #include "../HAL/Beeper.hpp"
+#include "../Integrations/IntegrationActionBase.hpp"
 
 class MenuItem
 {
     public:
-        MenuItem(const std::string& name, ScreenBase* screen, void (*callbackFnct)()) : 
+        MenuItem(const std::string& name, ScreenBase* screen, IntegrationActionBase *action) : 
             name(name), 
             nextScreen(screen),
-            callback(callbackFnct) {}
+            callback(action) {}
         
         std::string name;
         ScreenBase* nextScreen;
-        void (*callback)();
+        IntegrationActionBase *callback;
 };
 
 class MenuScreen : public ScreenBase

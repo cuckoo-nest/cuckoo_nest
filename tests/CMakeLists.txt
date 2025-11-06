@@ -26,6 +26,8 @@ include_directories(../src)
 set(
     TEST_SOURCE_FILES
     ../src/ScreenManager.cpp
+    ../src/ConfigurationReader.cpp
+    ../third-party/json11/json11.cpp
     ../src/HAL/Beeper.cpp
     ../src/HAL/Display.cpp
     ../src/HAL/BitmapFont.cpp
@@ -38,6 +40,7 @@ set(
 set(
     TEST_FILES
     test_screen_manager.cpp
+    test_configuration_reader.cpp
 )
 
 # Create the test executable
@@ -53,6 +56,9 @@ pkg_check_modules(CURL REQUIRED libcurl)
 
 # Add libcurl include directories for host compilation
 target_include_directories(cuckoo_tests PRIVATE ${CURL_INCLUDE_DIRS})
+
+# Add json11 include directory for tests
+target_include_directories(cuckoo_tests PRIVATE ../third-party/json11)
 
 # Link against GoogleTest libraries and system libcurl
 target_link_libraries(

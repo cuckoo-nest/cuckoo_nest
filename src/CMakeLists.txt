@@ -32,6 +32,8 @@ set (
     SRC_FILES 
     main.cpp
     ScreenManager.cpp
+    ConfigurationReader.cpp
+    ../third-party/json11/json11.cpp
     HAL/Beeper.cpp
     HAL/Display.cpp
     HAL/BitmapFont.cpp
@@ -58,6 +60,9 @@ if(EXISTS ${CURL_INCLUDE_DIR}/curl/curl.h)
 else()
     message(FATAL_ERROR "Could not find libcurl headers in ${CURL_INCLUDE_DIR}")
 endif()
+
+# Add json11 include directory
+target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR}/third-party/json11)
 
 # For runtime dynamic linking, we don't link libcurl at build time
 # We use dlopen/dlsym to load it at runtime on the target device

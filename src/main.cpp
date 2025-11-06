@@ -11,6 +11,7 @@
 #include "Screens/DimmerScreen.hpp"
 
 #include "Integrations/ActionHomeAssistantService.hpp"
+#include "ConfigurationReader.hpp"
 
 #include <iostream>
 
@@ -28,6 +29,43 @@ static ScreenManager screen_manager;
 int main()
 {
     std::cout << "Cuckoo Hello\n";
+
+    // Load configuration
+    ConfigurationReader config("config.json");
+    if (config.load()) {
+        std::cout << "Configuration loaded successfully\n";
+        std::cout << "App name: " << config.get_string("app_name", "Unknown") << "\n";
+        std::cout << "Debug mode: " << (config.get_bool("debug_mode", false) ? "enabled" : "disabled") << "\n";
+        std::cout << "Max screens: " << config.get_int("max_screens", 5) << "\n";
+        
+        // Home Assistant configuration
+        if (config.has_home_assistant_config()) {
+            std::cout << "Home Assistant configured:\n";
+            std::cout << "  Base URL: " << config.get_home_assistant_base_url() << "\n";
+            std::cout << "  Token: " << config.get_home_assistant_token().substr(0, 10) << "...\n";
+            std::cout << "  Entity ID: " << config.get_home_assistant_entity_id() << "\n";
+        } else {
+            std::cout << "Home Assistant not configured\n";
+        }
+    } else {
+        std::cout << "Failed to load configuration, using defaults\n";
+    }
+
+    ActionHomeAssistantService ha_service_light_on(
+        config.get_home_assistant_token(""),
+        "notused",
+        config.get_home_assistant_base_url(""),
+        "switch/turn_on",
+        config.get_home_assistant_entity_id("switch.dining_room_spot_lights")
+    );
+
+    ActionHomeAssistantService ha_service_light_off(
+        config.get_home_assistant_token(""),
+        "notused",
+        config.get_home_assistant_base_url(""),
+        "switch/turn_off",
+        config.get_home_assistant_entity_id("switch.dining_room_spot_lights")
+    );
 
     if (!screen.initialize())
     {
@@ -50,8 +88,8 @@ int main()
         &screen,
         &beeper);
 
-    menu_screen->AddMenuItem(MenuItem("On", nullptr, &menu_screen_callback_on));
-    menu_screen->AddMenuItem(MenuItem("Off", nullptr, &menu_screen_callback_off));
+    menu_screen->AddMenuItem(MenuItem("On", nullptr, &ha_service_light_on));
+    menu_screen->AddMenuItem(MenuItem("Off", nullptr, &ha_service_light_off));
     menu_screen->AddMenuItem(MenuItem("Dimmer", dimmer_screen, nullptr));
     menu_screen->AddMenuItem(MenuItem("Back", home_screen, nullptr));
 
@@ -90,14 +128,4 @@ void handle_input_event(const InputDeviceType device_type, const struct input_ev
 
     screen_manager.ProcessInputEvent(device_type, event);
     screen_manager.RenderCurrentScreen();
-}
-
-void menu_screen_callback_on()
-{
-    std::cout << "Menu Screen: On selected\n";
-}
-
-void menu_screen_callback_off()
-{
-    std::cout << "Menu Screen: Off selected\n";
 }
