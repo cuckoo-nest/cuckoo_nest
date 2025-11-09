@@ -12,8 +12,47 @@
     "homeAssistant": {
         "baseURL": "http://homeassistant.local:8123",
         "token": "SomeToken",
-        "entityId": "switch.dining_room_spot_lights"
+        "entities": [{
+            "name": "Living Room Lights",
+            "entityId": "light.living_room",
+            "type": "switch",
+            "IntegrationID": 1
+        },
+        {
+            "name": "Dining Room Spot Lights",
+            "entityId": "switch.dining_room_spot_lights",
+            "type": "switch",
+            "IntegrationID": 2
+        }
+    ]
     },
+    "screens":[
+        {
+            "name": "Home Screen",
+            "type": "home",
+            "id": "home"
+        },
+        {
+            "name": "Main Menu",
+            "parent": "home",
+            "type": "menu",
+            "id": "menu"
+        },
+        {
+            "name": "Garage Lights",
+            "parent": "menu",
+            "type": "switch",
+            "screenID": 1,
+            "IntegrationID": 1
+        },
+        {
+            "name": "External Lights",
+            "parent": "menu",
+            "type": "switch",
+            "screenID": 2,
+            "IntegrationID": 2
+        }
+    ],
     "beeper": {
         "enabled": true,
         "volume": 0.5,

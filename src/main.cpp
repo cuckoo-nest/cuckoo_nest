@@ -9,6 +9,7 @@
 #include "Screens/HomeScreen.hpp"
 #include "Screens/MenuScreen.hpp"
 #include "Screens/DimmerScreen.hpp"
+#include "Screens/SwitchScreen.hpp"
 
 #include "Integrations/ActionHomeAssistantService.hpp"
 #include "ConfigurationReader.hpp"
@@ -51,21 +52,56 @@ int main()
         std::cout << "Failed to load configuration, using defaults\n";
     }
 
-    ActionHomeAssistantService ha_service_light_on(
+    ActionHomeAssistantService ha_service_g_light_on(
         config.get_home_assistant_token(""),
         "notused",
         config.get_home_assistant_base_url(""),
         "switch/turn_on",
-        config.get_home_assistant_entity_id("switch.dining_room_spot_lights")
+        "switch.dining_room_spot_lights"
     );
 
-    ActionHomeAssistantService ha_service_light_off(
+    ActionHomeAssistantService ha_service_g_light_off(
         config.get_home_assistant_token(""),
         "notused",
         config.get_home_assistant_base_url(""),
         "switch/turn_off",
-        config.get_home_assistant_entity_id("switch.dining_room_spot_lights")
+        "switch.dining_room_spot_lights"
     );
+
+    ActionHomeAssistantService ha_service_oo_light_on(
+        config.get_home_assistant_token(""),
+        "notused",
+        config.get_home_assistant_base_url(""),
+        "switch/turn_on",
+        "switch.garden_room_main_lights"
+    );
+
+    ActionHomeAssistantService ha_service_oo_light_off(
+        config.get_home_assistant_token(""),
+        "notused",
+        config.get_home_assistant_base_url(""),
+        "switch/turn_off",
+        "switch.garden_room_main_lights"
+    );
+
+    ActionHomeAssistantService ha_service_oe_light_on(
+        config.get_home_assistant_token(""),
+        "notused",
+        config.get_home_assistant_base_url(""),
+        "switch/turn_on",
+        "switch.garden_room_external_lights"
+    );
+
+    ActionHomeAssistantService ha_service_oe_light_off(
+        config.get_home_assistant_token(""),
+        "notused",
+        config.get_home_assistant_base_url(""),
+        "switch/turn_off",
+        "switch.garden_room_external_lights"
+    );
+
+
+
 
     if (!screen.initialize())
     {
@@ -88,8 +124,30 @@ int main()
         &screen,
         &beeper);
 
-    menu_screen->AddMenuItem(MenuItem("On", nullptr, &ha_service_light_on));
-    menu_screen->AddMenuItem(MenuItem("Off", nullptr, &ha_service_light_off));
+    auto switch_screen_garage = new SwitchScreen(
+        &screen_manager,
+        &screen,
+        &beeper,
+        &ha_service_g_light_on,
+        &ha_service_g_light_off);
+
+    auto switch_screen_office_in = new SwitchScreen(
+        &screen_manager,
+        &screen,
+        &beeper,
+        &ha_service_oo_light_on,
+        &ha_service_oo_light_off);
+
+    auto switch_screen_office_out = new SwitchScreen(
+        &screen_manager,
+        &screen,
+        &beeper,
+        &ha_service_oe_light_on,
+        &ha_service_oe_light_off);
+
+    menu_screen->AddMenuItem(MenuItem("Garage", switch_screen_garage, nullptr));
+    menu_screen->AddMenuItem(MenuItem("Office in", switch_screen_office_in, nullptr));
+    menu_screen->AddMenuItem(MenuItem("Office Out", switch_screen_office_out, nullptr));
     menu_screen->AddMenuItem(MenuItem("Dimmer", dimmer_screen, nullptr));
     menu_screen->AddMenuItem(MenuItem("Back", home_screen, nullptr));
 

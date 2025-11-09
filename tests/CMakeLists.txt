@@ -34,6 +34,7 @@ set(
     ../src/HAL/Inputs.cpp
     ../src/Screens/HomeScreen.cpp
     ../src/Screens/DimmerScreen.cpp
+    ../src/Integrations/IntegrationContainer.cpp
 )
 
 # Define test files
@@ -41,6 +42,7 @@ set(
     TEST_FILES
     test_screen_manager.cpp
     test_configuration_reader.cpp
+    TestIntegrationContainer.cpp
 )
 
 # Create the test executable
