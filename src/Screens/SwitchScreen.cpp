@@ -59,25 +59,37 @@ void SwitchScreen::handle_input_event(const InputDeviceType device_type, const s
 
         if (selectedOption == SelectedOption::TOGGLE)
         {
+            if (integrationId_ == 0) {
+                std::cout << "No integration ID set for this SwitchScreen\n";
+                return;
+            }
+
+            auto integrationContainer_ = screenManager_->GetIntegrationContainer();
+            if (integrationContainer_ == nullptr) {
+                std::cout << "No integration container available\n";
+                return;
+            }
+
+            auto sw = integrationContainer_->GetSwitchById(integrationId_);
+            if (sw == nullptr) {
+                std::cout << "No switch found for integration ID: " << integrationId_ << "\n";
+                return;
+            }
+
             // Toggle the switch state
             if (switchState == SwitchState::OFF)
             {
                 switchState = SwitchState::ON;
                 std::cout << "Switch turned ON\n";
-                if (onAction_ != nullptr)
-                {
-                    onAction_->execute();
-                }
+                sw->TurnOn();
             }
             else
             {
                 switchState = SwitchState::OFF;
                 std::cout << "Switch turned OFF\n";
-                if (offAction_ != nullptr)
-                {
-                    offAction_->execute();
-                }
+                sw->TurnOff();
             }
+
         }
         else if (selectedOption == SelectedOption::BACK)
         {

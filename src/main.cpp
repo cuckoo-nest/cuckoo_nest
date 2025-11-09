@@ -9,6 +9,7 @@
 #include "Screens/DimmerScreen.hpp"
 #include "Screens/SwitchScreen.hpp"
 
+#include "Integrations/IntegrationContainer.hpp"
 #include "Integrations/ActionHomeAssistantService.hpp"
 #include "ConfigurationReader.hpp"
 
@@ -24,7 +25,8 @@ static HAL hal;
 static Beeper beeper("/dev/input/event0");
 static Display screen("/dev/fb0");
 static Inputs inputs("/dev/input/event2", "/dev/input/event1");
-static ScreenManager screen_manager(&hal);
+static IntegrationContainer integration_container;
+static ScreenManager screen_manager(&hal, &integration_container);
 
 int main()
 {
@@ -112,38 +114,9 @@ int main()
         return 1;
     }
 
-    auto menu_screen = new MenuScreen(&hal, &screen_manager);
-
-    auto home_screen = new HomeScreen(&hal, &screen_manager);
-
-    auto dimmer_screen = new DimmerScreen(&hal, &screen_manager);
-
-    auto switch_screen_garage = new SwitchScreen(
-        &hal,
-        &screen_manager,
-        &ha_service_g_light_on,
-        &ha_service_g_light_off);
-
-    auto switch_screen_office_in = new SwitchScreen(
-        &hal,
-        &screen_manager,
-        &ha_service_oo_light_on,
-        &ha_service_oo_light_off);
-
-    auto switch_screen_office_out = new SwitchScreen(
-        &hal,   
-        &screen_manager,
-        &ha_service_oe_light_on,
-        &ha_service_oe_light_off);
-
-    menu_screen->AddMenuItem(MenuItem("Garage", switch_screen_garage, nullptr));
-    menu_screen->AddMenuItem(MenuItem("Office in", switch_screen_office_in, nullptr));
-    menu_screen->AddMenuItem(MenuItem("Office Out", switch_screen_office_out, nullptr));
-    menu_screen->AddMenuItem(MenuItem("Dimmer", dimmer_screen, nullptr));
-    menu_screen->AddMenuItem(MenuItem("Back", home_screen, nullptr));
-
-    home_screen->SetNextScreen(menu_screen);
-
+    
+    integration_container.LoadIntegrationsFromConfig("config.json");
+    screen_manager.LoadScreensFromConfig("screens_config.json");
     screen_manager.GoToNextScreen(1);
 
     // Set up input event callback

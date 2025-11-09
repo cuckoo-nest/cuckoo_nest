@@ -10,15 +10,11 @@ class SwitchScreen : public ScreenBase
 public:
     SwitchScreen(
         HAL* hal,
-        ScreenManager* screenManager,
-        IntegrationActionBase* onAction,
-        IntegrationActionBase* offAction) : 
+        ScreenManager* screenManager) : 
         ScreenBase(), 
         screenManager_(screenManager),
         display_(hal->display), 
         beeper_(hal->beeper),
-        onAction_(onAction),
-        offAction_(offAction),
         rotaryAccumulator(0),
         switchState(SwitchState::OFF),
         selectedOption(SelectedOption::TOGGLE)
@@ -52,8 +48,6 @@ private:
     Beeper* beeper_;
     Display* display_;
     int rotaryAccumulator;
-    IntegrationActionBase* onAction_;
-    IntegrationActionBase* offAction_;
     int integrationId_;
 
 

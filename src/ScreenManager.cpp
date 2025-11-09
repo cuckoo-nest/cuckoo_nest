@@ -13,10 +13,11 @@
 #include "Screens/SwitchScreen.hpp"
 #include "Screens/DimmerScreen.hpp"
 
-ScreenManager::ScreenManager(HAL *hal) : 
+ScreenManager::ScreenManager(HAL *hal, IntegrationContainer* integrationContainer) : 
     screen_history_(),
     current_screen_(nullptr),
-    hal_(hal)
+    hal_(hal),
+    integrationContainer_(integrationContainer)
 {
 }
 
@@ -159,7 +160,7 @@ void ScreenManager::BuildMenuScreenFromJSON(const json11::Json &screenJson, int 
 void ScreenManager::BuildSwitchScreenFromJSON(const json11::Json &screenJson, int id)
 {
     int integrationId = screenJson["integrationId"].int_value();
-    auto switchScreen = new SwitchScreen(hal_, this, nullptr, nullptr);
+    auto switchScreen = new SwitchScreen(hal_, this);
     switchScreen->SetIntegrationId(integrationId);
     screens_[id] = std::unique_ptr<ScreenBase>(switchScreen);
 }

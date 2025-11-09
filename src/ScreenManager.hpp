@@ -8,11 +8,12 @@
 #include <json11.hpp>
 #include "HAL/HAL.hpp"
 #include "Screens/ScreenBase.hpp"
+#include "Integrations/IntegrationContainer.hpp"
 
 class ScreenManager 
 {
 public:
-    ScreenManager(HAL *hal);
+    ScreenManager(HAL *hal, IntegrationContainer* integrationContainer);
     ~ScreenManager();
     
     void GoToNextScreen(int id);
@@ -34,6 +35,10 @@ public:
         screens_[id] = std::move(screen);
     }
 
+    IntegrationContainer* GetIntegrationContainer() const {
+        return integrationContainer_;
+    }
+
 private:
     std::string ReadFileContents(const std::string &filepath) const;
 
@@ -46,4 +51,5 @@ private:
     ScreenBase* current_screen_;
     std::map<int, std::unique_ptr<ScreenBase>> screens_;
     HAL *hal_;
+    IntegrationContainer* integrationContainer_;
 };
