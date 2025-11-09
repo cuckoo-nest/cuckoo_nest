@@ -141,3 +141,48 @@ TEST_F(ScreenManagerConfigLoadTest, InvalidScreenIdSkipped) {
     ASSERT_NE(nullptr, menu_screen);
     EXPECT_NE(dynamic_cast<MenuScreen*>(menu_screen), nullptr);
 }
+
+// menu screen is populated with a list of menu items from config
+TEST_F(ScreenManagerConfigLoadTest, MenuScreenItemsLoaded) {
+    std::ofstream config("test_config.json");
+    config << R"({
+        "screens": [
+            {
+                "id": 1,
+                "name": "MainMenu",
+                "type": "Menu",
+                "menuItems": [
+                    {
+                        "name": "Item1",
+                        "nextScreen": 2
+                    },
+                    {
+                        "name": "Item2",
+                        "nextScreen": 3
+                    }
+                ]
+            },
+            {
+                "id": 2,
+                "name": "SubMenu1",
+                "type": "Menu"
+            },
+            {
+                "id": 3,
+                "name": "SubMenu2",
+                "type": "Menu"
+            }
+        ]
+    })";
+    config.close();
+
+    screen_manager->LoadScreensFromConfig("test_config.json");
+    EXPECT_EQ(3, screen_manager->CountScreens());
+
+    ScreenBase* menu_screen = screen_manager->GetScreenById(1);
+    ASSERT_NE(nullptr, menu_screen);
+    MenuScreen* ms = dynamic_cast<MenuScreen*>(menu_screen);
+    ASSERT_NE(ms, nullptr);
+    EXPECT_EQ(2, ms->CountMenuItems());
+    
+}

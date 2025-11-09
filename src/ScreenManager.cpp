@@ -88,7 +88,7 @@ void ScreenManager::LoadScreensFromConfig(const std::string& config_path)
         if (id == 0) {
             continue; // skip invalid or missing IDs
         }
-        
+
         std::string name = screen["name"].string_value();
         std::string type = screen["type"].string_value();
         transform(type.begin(), type.end(), type.begin(), ::tolower);
@@ -99,18 +99,15 @@ void ScreenManager::LoadScreensFromConfig(const std::string& config_path)
         }
         else if (type == "menu") 
         {
-            screens_[id] = std::unique_ptr<ScreenBase>(
-                new MenuScreen(hal_, this));
+            BuildMenuScreenFromJSON(screen, id);
         }
         else if (type == "switch") 
         {
-            screens_[id] = std::unique_ptr<ScreenBase>(
-                new SwitchScreen(hal_, this, nullptr, nullptr));
+            BuildSwitchScreenFromJSON(screen, id);
         }
         else if (type == "dimmer") 
         {
-            screens_[id] = std::unique_ptr<ScreenBase>(
-                new DimmerScreen(hal_, this));
+            BuildDimmerScreenFromJSON(screen, id);
         }
     }
 }
@@ -134,4 +131,34 @@ void ScreenManager::BuildHomeScreenFromJSON(const json11::Json &screenJson, int 
     auto homeScreen = new HomeScreen(hal_, this);
     homeScreen->SetNextScreenId(nextScreenId);
     screens_[id] = std::unique_ptr<ScreenBase>(homeScreen);
+}
+
+void ScreenManager::BuildMenuScreenFromJSON(const json11::Json &screenJson, int id)
+{
+    auto menuScreen = new MenuScreen(hal_, this);
+    
+    for (const auto& itemJson : screenJson["menuItems"].array_items()) 
+    {
+        std::string itemName = itemJson["name"].string_value();
+        int nextScreenId = itemJson["nextScreen"].int_value();
+        ScreenBase* nextScreen = nullptr;
+        if (nextScreenId != 0) {
+            nextScreen = GetScreenById(nextScreenId);
+        }
+        menuScreen->AddMenuItem(MenuItem(itemName, nextScreen, nullptr));
+    }
+    
+    screens_[id] = std::unique_ptr<ScreenBase>(menuScreen);
+}
+
+void ScreenManager::BuildSwitchScreenFromJSON(const json11::Json &screenJson, int id)
+{
+    screens_[id] = std::unique_ptr<ScreenBase>(
+        new SwitchScreen(hal_, this, nullptr, nullptr));
+}
+
+void ScreenManager::BuildDimmerScreenFromJSON(const json11::Json &screenJson, int id)
+{
+    screens_[id] = std::unique_ptr<ScreenBase>(
+        new DimmerScreen(hal_, this));
 }

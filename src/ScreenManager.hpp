@@ -33,6 +33,9 @@ private:
     std::string ReadFileContents(const std::string &filepath) const;
 
     void BuildHomeScreenFromJSON(const json11::Json &screenJson, int id);
+    void BuildMenuScreenFromJSON(const json11::Json &screenJson, int id);
+    void BuildSwitchScreenFromJSON(const json11::Json &screenJson, int id);
+    void BuildDimmerScreenFromJSON(const json11::Json &screenJson, int id);
 
     std::stack<ScreenBase*> screen_history_;
     ScreenBase* current_screen_;

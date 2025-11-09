@@ -38,6 +38,9 @@ public:
     void AddMenuItem(const MenuItem& item) {
         menuItems.push_back(item);
     }
+    int CountMenuItems() const {
+        return menuItems.size();
+    }
 
 private:
     ScreenManager* screenManager_;
