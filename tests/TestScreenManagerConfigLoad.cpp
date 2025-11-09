@@ -184,5 +184,53 @@ TEST_F(ScreenManagerConfigLoadTest, MenuScreenItemsLoaded) {
     MenuScreen* ms = dynamic_cast<MenuScreen*>(menu_screen);
     ASSERT_NE(ms, nullptr);
     EXPECT_EQ(2, ms->CountMenuItems());
-    
+
+}
+
+TEST_F(ScreenManagerConfigLoadTest, SwitchScreenIntegrationLoaded) {
+    std::ofstream config("test_config.json");
+    config << R"({
+        "screens": [
+            {
+                "id": 1,
+                "name": "SwitchScreen1",
+                "type": "Switch",
+                "integrationId": 42
+            }
+        ]
+    })";
+    config.close();
+
+    screen_manager->LoadScreensFromConfig("test_config.json");
+    EXPECT_EQ(1, screen_manager->CountScreens());
+
+    ScreenBase* switch_screen = screen_manager->GetScreenById(1);
+    ASSERT_NE(nullptr, switch_screen);
+    SwitchScreen* ss = dynamic_cast<SwitchScreen*>(switch_screen);
+    ASSERT_NE(ss, nullptr);
+    EXPECT_EQ(42, ss->GetIntegrationId());
+}
+
+TEST_F(ScreenManagerConfigLoadTest, DimmerScreenIntegrationLoaded) {
+    std::ofstream config("test_config.json");
+    config << R"({
+        "screens": [
+            {
+                "id": 1,
+                "name": "DimmerScreen1",
+                "type": "Dimmer",
+                "integrationId": 55
+            }
+        ]
+    })";
+    config.close();
+
+    screen_manager->LoadScreensFromConfig("test_config.json");
+    EXPECT_EQ(1, screen_manager->CountScreens());
+
+    ScreenBase* dimmer_screen = screen_manager->GetScreenById(1);
+    ASSERT_NE(nullptr, dimmer_screen);
+    DimmerScreen* ds = dynamic_cast<DimmerScreen*>(dimmer_screen);
+    ASSERT_NE(ds, nullptr);
+    EXPECT_EQ(55, ds->GetIntegrationId());
 }

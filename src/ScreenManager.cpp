@@ -153,12 +153,16 @@ void ScreenManager::BuildMenuScreenFromJSON(const json11::Json &screenJson, int 
 
 void ScreenManager::BuildSwitchScreenFromJSON(const json11::Json &screenJson, int id)
 {
-    screens_[id] = std::unique_ptr<ScreenBase>(
-        new SwitchScreen(hal_, this, nullptr, nullptr));
+    int integrationId = screenJson["integrationId"].int_value();
+    auto switchScreen = new SwitchScreen(hal_, this, nullptr, nullptr);
+    switchScreen->SetIntegrationId(integrationId);
+    screens_[id] = std::unique_ptr<ScreenBase>(switchScreen);
 }
 
 void ScreenManager::BuildDimmerScreenFromJSON(const json11::Json &screenJson, int id)
 {
-    screens_[id] = std::unique_ptr<ScreenBase>(
-        new DimmerScreen(hal_, this));
+    int integrationId = screenJson["integrationId"].int_value();
+    auto dimmerScreen = new DimmerScreen(hal_, this);
+    dimmerScreen->SetIntegrationId(integrationId);
+    screens_[id] = std::unique_ptr<ScreenBase>(dimmerScreen);
 }
