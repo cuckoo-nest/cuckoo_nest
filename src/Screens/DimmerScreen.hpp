@@ -8,14 +8,11 @@
 class DimmerScreen : public ScreenBase
 {
 public:
-    DimmerScreen(
-        ScreenManager* screenManager,
-        Display *display,
-        Beeper *beeper) : 
+    DimmerScreen(HAL *hal, ScreenManager* screenManager) : 
         ScreenBase(), 
         screenManager_(screenManager),
-        display_(display), 
-        beeper_(beeper),
+        display_(hal->display), 
+        beeper_(hal->beeper),
         dimmerValue(50 * DIMMER_STEP) {}
 
     virtual ~DimmerScreen() = default;

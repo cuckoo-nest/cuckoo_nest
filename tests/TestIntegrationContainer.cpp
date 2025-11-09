@@ -63,5 +63,5 @@ TEST_F(IntegrationContainerTest, LoadIntegrationsFromConfigLoadsHomeAssistantSwi
     EXPECT_EQ(sw->GetName(), "Test Switch 1");
     HomeAssistantSwitch *haSw = dynamic_cast<HomeAssistantSwitch*>(sw);
     EXPECT_NE(haSw, nullptr);
-    EXPECT_EQ(haSw->GetEntityId(), "switch.test_switch_1");`
+    EXPECT_EQ(haSw->GetEntityId(), "switch.test_switch_1");
 }

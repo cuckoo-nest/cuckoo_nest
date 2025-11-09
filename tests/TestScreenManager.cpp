@@ -29,7 +29,7 @@ private:
 class ScreenManagerTest : public ::testing::Test {
 protected:
     void SetUp() {
-        screen_manager = new ScreenManager();
+        screen_manager = new ScreenManager(nullptr);
         mock_screen1 = new MockScreen();
         mock_screen2 = new MockScreen();
     }
@@ -94,7 +94,7 @@ TEST_F(ScreenManagerTest, Destructor)
     screen_manager->GoToNextScreen(mock_screen2);
     
     // Create a new ScreenManager and delete it to test destructor
-    ScreenManager* test_manager = new ScreenManager();
+    ScreenManager* test_manager = new ScreenManager(nullptr);
     delete test_manager;
     
     SUCCEED();

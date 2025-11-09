@@ -2,23 +2,21 @@
 
 #include "ScreenBase.hpp"
 #include "../ScreenManager.hpp"
-#include "../HAL/Display.hpp"
-#include "../HAL/Beeper.hpp"
+#include "../HAL/HAL.hpp"
 #include "../Integrations/IntegrationActionBase.hpp"
 
 class SwitchScreen : public ScreenBase
 {
 public:
     SwitchScreen(
+        HAL* hal,
         ScreenManager* screenManager,
-        Display *display,
-        Beeper *beeper,
         IntegrationActionBase* onAction,
         IntegrationActionBase* offAction) : 
         ScreenBase(), 
         screenManager_(screenManager),
-        display_(display), 
-        beeper_(beeper),
+        display_(hal->display), 
+        beeper_(hal->beeper),
         onAction_(onAction),
         offAction_(offAction),
         rotaryAccumulator(0),

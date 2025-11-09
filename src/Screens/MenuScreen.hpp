@@ -22,14 +22,12 @@ class MenuItem
 class MenuScreen : public ScreenBase
 {
 public:
-    MenuScreen(
-        ScreenManager* screenManager,
-        Display *display,
-        Beeper *beeper) : 
+    MenuScreen(HAL *hal,
+        ScreenManager* screenManager) : 
         ScreenBase(), 
         screenManager_(screenManager),
-        display_(display), 
-        beeper_(beeper),
+        display_(hal->display),
+        beeper_(hal->beeper),
         menuSelectedIndex(0),
         rotaryAccumulator(0) {}
 

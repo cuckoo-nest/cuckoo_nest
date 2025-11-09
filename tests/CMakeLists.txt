@@ -33,15 +33,18 @@ set(
     ../src/HAL/BitmapFont.cpp
     ../src/HAL/Inputs.cpp
     ../src/Screens/HomeScreen.cpp
+    ../src/Screens/MenuScreen.cpp
     ../src/Screens/DimmerScreen.cpp
+    ../src/Screens/SwitchScreen.cpp
     ../src/Integrations/IntegrationContainer.cpp
 )
 
 # Define test files
 set(
     TEST_FILES
-    test_screen_manager.cpp
-    test_configuration_reader.cpp
+    TestScreenManagerConfigLoad.cpp
+    TestScreenManager.cpp
+    TestConfigurationReader.cpp
     TestIntegrationContainer.cpp
 )
 

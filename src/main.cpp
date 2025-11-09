@@ -2,9 +2,7 @@
 #include <unistd.h>
 #include "linux/input.h"
 
-#include "HAL/Beeper.hpp"
-#include "HAL/Display.hpp"
-#include "HAL/Inputs.hpp"
+#include "HAL/HAL.hpp"
 
 #include "Screens/HomeScreen.hpp"
 #include "Screens/MenuScreen.hpp"
@@ -22,14 +20,19 @@ void handle_input_event(const InputDeviceType device_type, const struct input_ev
 void menu_screen_callback_on();
 void menu_screen_callback_off();
 
+static HAL hal;
 static Beeper beeper("/dev/input/event0");
 static Display screen("/dev/fb0");
 static Inputs inputs("/dev/input/event2", "/dev/input/event1");
-static ScreenManager screen_manager;
+static ScreenManager screen_manager(&hal);
 
 int main()
 {
     std::cout << "Cuckoo Hello\n";
+
+    hal.beeper = &beeper;
+    hal.display = &screen;
+    hal.inputs = &inputs;
 
     // Load configuration
     ConfigurationReader config("config.json");
@@ -109,39 +112,27 @@ int main()
         return 1;
     }
 
-    auto menu_screen = new MenuScreen(
-        &screen_manager,
-        &screen,
-        &beeper);
+    auto menu_screen = new MenuScreen(&hal, &screen_manager);
 
-    auto home_screen = new HomeScreen(
-        &screen_manager,
-        &screen,
-        &beeper);
+    auto home_screen = new HomeScreen(&hal, &screen_manager);
 
-    auto dimmer_screen = new DimmerScreen(
-        &screen_manager,
-        &screen,
-        &beeper);
+    auto dimmer_screen = new DimmerScreen(&hal, &screen_manager);
 
     auto switch_screen_garage = new SwitchScreen(
+        &hal,
         &screen_manager,
-        &screen,
-        &beeper,
         &ha_service_g_light_on,
         &ha_service_g_light_off);
 
     auto switch_screen_office_in = new SwitchScreen(
+        &hal,
         &screen_manager,
-        &screen,
-        &beeper,
         &ha_service_oo_light_on,
         &ha_service_oo_light_off);
 
     auto switch_screen_office_out = new SwitchScreen(
+        &hal,   
         &screen_manager,
-        &screen,
-        &beeper,
         &ha_service_oe_light_on,
         &ha_service_oe_light_off);
 

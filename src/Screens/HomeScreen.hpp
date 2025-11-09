@@ -2,20 +2,16 @@
 
 #include "ScreenBase.hpp"
 #include "../ScreenManager.hpp"
-#include "../HAL/Display.hpp"
-#include "../HAL/Beeper.hpp"
+#include "../HAL/HAL.hpp"
 
 class HomeScreen : public ScreenBase
 {
 public:
-    HomeScreen(
-        ScreenManager* screenManager,
-        Display *screen,
-        Beeper *beeper) : 
+    HomeScreen(HAL *hal, ScreenManager *screenManager) : 
         ScreenBase(), 
         screenManager_(screenManager),
-        display_(screen), 
-        beeper_(beeper),
+        display_(hal->display),
+        beeper_(hal->beeper),
         nextScreen_(nullptr) {}
 
     virtual ~HomeScreen() = default;
