@@ -3,6 +3,10 @@
 #include <iostream>
 
 #include "ScreenManager.hpp"
+#include "Screens/HomeScreen.hpp"
+#include "Screens/MenuScreen.hpp"
+#include "Screens/SwitchScreen.hpp"
+#include "Screens/DimmerScreen.hpp"
 
 class ScreenManagerConfigLoadTest : public ::testing::Test {
 protected:
@@ -31,7 +35,8 @@ TEST_F(ScreenManagerConfigLoadTest, LoadScreensFromConfig) {
             {
                 "id": 1,
                 "name": "HomeScreen",
-                "type": "Home"
+                "type": "Home",
+                "nextScreen": 2
             },
             {
                 "id": 2,
@@ -46,6 +51,93 @@ TEST_F(ScreenManagerConfigLoadTest, LoadScreensFromConfig) {
     EXPECT_EQ(2, screen_manager->CountScreens());
 }
 
+TEST_F(ScreenManagerConfigLoadTest, HomeScreenLinksToMenuScreen) {
+    std::ofstream config("test_config.json");
+    config << R"({
+        "screens": [
+            {
+                "id": 1,
+                "name": "HomeScreen",
+                "type": "Home",
+                "nextScreen": 2
+            },
+            {
+                "id": 2,
+                "name": "MainMenu",
+                "type": "Menu"
+            }
+        ]
+    })";
+    config.close();
 
-// screen types should be case insensitive
-// if id is a string then the screen should be skipped
+    screen_manager->LoadScreensFromConfig("test_config.json");
+    EXPECT_EQ(2, screen_manager->CountScreens());
+
+    // Navigate to HomeScreen
+    ScreenBase* home_screen = screen_manager->GetScreenById(1);
+    ASSERT_NE(nullptr, home_screen);
+
+    // Check that HomeScreen's next screen is MenuScreen
+    HomeScreen* hs = dynamic_cast<HomeScreen*>(home_screen);
+    ASSERT_NE(hs, nullptr);
+
+    EXPECT_EQ(2, hs->GetNextScreenId());
+}
+
+TEST_F(ScreenManagerConfigLoadTest, ScreenTypeCaseInsensitive) {
+    std::ofstream config("test_config.json");
+    config << R"({
+        "screens": [
+            {
+                "id": 1,
+                "name": "HomeScreen",
+                "type": "hOmE",
+                "nextScreen": 2
+            },
+            {
+                "id": 2,
+                "name": "MainMenu",
+                "type": "MeNu"
+            }
+        ]
+    })";
+    config.close();
+
+    screen_manager->LoadScreensFromConfig("test_config.json");
+    EXPECT_EQ(2, screen_manager->CountScreens());
+
+    ScreenBase* home_screen = screen_manager->GetScreenById(1);
+    ASSERT_NE(nullptr, home_screen);
+    EXPECT_NE(dynamic_cast<HomeScreen*>(home_screen), nullptr);
+
+    ScreenBase* menu_screen = screen_manager->GetScreenById(2);
+    ASSERT_NE(nullptr, menu_screen);
+    EXPECT_NE(dynamic_cast<MenuScreen*>(menu_screen), nullptr);
+}
+
+TEST_F(ScreenManagerConfigLoadTest, InvalidScreenIdSkipped) {
+    std::ofstream config("test_config.json");
+    config << R"({
+        "screens": [
+            {
+                "id": "one",
+                "name": "HomeScreen",
+                "type": "Home",
+                "nextScreen": 2
+            },
+            {
+                "id": 2,
+                "name": "MainMenu",
+                "type": "Menu"
+            }
+        ]
+    })";
+    config.close();
+
+    screen_manager->LoadScreensFromConfig("test_config.json");
+    EXPECT_EQ(1, screen_manager->CountScreens());
+
+    ScreenBase* menu_screen = screen_manager->GetScreenById(2);
+    ASSERT_NE(nullptr, menu_screen);
+    EXPECT_NE(dynamic_cast<MenuScreen*>(menu_screen), nullptr);
+}

@@ -22,11 +22,21 @@ public:
     void SetNextScreen(ScreenBase* screen) {
         nextScreen_ = screen;
     }
+    int GetNextScreenId() const {
+        return nextScreenId_;
+    }
+    void SetNextScreenId(int id) {
+        nextScreenId_ = id;
+    }
 
 private:
     int currentColorIndex = 0;
     Display *display_;
     Beeper *beeper_;
     ScreenManager *screenManager_;
+
+    int nextScreenId_;
+    
+    //TODO: Remove this 
     ScreenBase* nextScreen_;
 };

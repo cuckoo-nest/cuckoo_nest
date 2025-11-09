@@ -18,4 +18,10 @@ public:
 
     virtual void Render() = 0;
     virtual void handle_input_event(const InputDeviceType device_type, const struct input_event& event) = 0;
+
+    int GetId() const { return id_; }
+    void SetId(int id) { id_ = id; }
+
+private:
+    int id_;
 };

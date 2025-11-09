@@ -5,8 +5,9 @@
 #include <stack>
 #include <map>
 #include <cstddef>
-#include "Screens/ScreenBase.hpp"
+#include <json11.hpp>
 #include "HAL/HAL.hpp"
+#include "Screens/ScreenBase.hpp"
 
 class ScreenManager 
 {
@@ -23,9 +24,16 @@ public:
     
     size_t CountScreens() const { return screens_.size(); }
     
+    ScreenBase* GetScreenById(int id) const {
+        auto it = screens_.find(id);
+        return (it != screens_.end()) ? it->second.get() : nullptr;
+    }
+
 private:
     std::string ReadFileContents(const std::string &filepath) const;
-    
+
+    void BuildHomeScreenFromJSON(const json11::Json &screenJson, int id);
+
     std::stack<ScreenBase*> screen_history_;
     ScreenBase* current_screen_;
     std::map<int, std::unique_ptr<ScreenBase>> screens_;

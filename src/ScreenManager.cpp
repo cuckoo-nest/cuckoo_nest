@@ -34,11 +34,6 @@ void ScreenManager::GoToNextScreen(ScreenBase *screen)
 void ScreenManager::GoToPreviousScreen()
 {
     if (!screen_history_.empty()) {
-        // if (current_screen_ != nullptr)
-        // {
-        //     delete current_screen_;
-        // }
-
         current_screen_ = screen_history_.top();
         screen_history_.pop();
         current_screen_->Render();
@@ -90,14 +85,17 @@ void ScreenManager::LoadScreensFromConfig(const std::string& config_path)
         }
 
         int id = screen["id"].int_value();
+        if (id == 0) {
+            continue; // skip invalid or missing IDs
+        }
+        
         std::string name = screen["name"].string_value();
         std::string type = screen["type"].string_value();
         transform(type.begin(), type.end(), type.begin(), ::tolower);
 
         if (type == "home") 
         {
-            screens_[id] = std::unique_ptr<ScreenBase>(
-                new HomeScreen(hal_, this));
+            BuildHomeScreenFromJSON(screen, id);
         }
         else if (type == "menu") 
         {
@@ -128,4 +126,12 @@ std::string ScreenManager::ReadFileContents(const std::string& filepath) const
     buffer << file.rdbuf();
 
     return buffer.str();
+}
+
+void ScreenManager::BuildHomeScreenFromJSON(const json11::Json &screenJson, int id)
+{
+    int nextScreenId = screenJson["nextScreen"].int_value();
+    auto homeScreen = new HomeScreen(hal_, this);
+    homeScreen->SetNextScreenId(nextScreenId);
+    screens_[id] = std::unique_ptr<ScreenBase>(homeScreen);
 }
