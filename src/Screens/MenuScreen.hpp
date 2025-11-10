@@ -9,14 +9,12 @@
 class MenuItem
 {
     public:
-        MenuItem(const std::string& name, ScreenBase* screen, IntegrationActionBase *action) : 
+        MenuItem(const std::string& name, int nextScreenId) : 
             name(name), 
-            nextScreen(screen),
-            callback(action) {}
-        
+            nextScreenId(nextScreenId) {}
+
         std::string name;
-        ScreenBase* nextScreen;
-        IntegrationActionBase *callback;
+        int nextScreenId;
 };
 
 class MenuScreen : public ScreenBase

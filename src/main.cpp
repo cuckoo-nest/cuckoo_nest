@@ -116,7 +116,7 @@ int main()
 
     
     integration_container.LoadIntegrationsFromConfig("config.json");
-    screen_manager.LoadScreensFromConfig("screens_config.json");
+    screen_manager.LoadScreensFromConfig("config.json");
     screen_manager.GoToNextScreen(1);
 
     // Set up input event callback

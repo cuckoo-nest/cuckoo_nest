@@ -52,6 +52,10 @@ void ScreenManager::RenderCurrentScreen()
     {
         current_screen_->Render();
     }
+    else
+    {
+        std::cerr << "ScreenManager: No current screen to render" << std::endl;
+    }
 }
 
 void ScreenManager::ProcessInputEvent(const InputDeviceType device_type, const struct input_event &event)
@@ -147,12 +151,10 @@ void ScreenManager::BuildMenuScreenFromJSON(const json11::Json &screenJson, int 
     {
         std::string itemName = itemJson["name"].string_value();
         int nextScreenId = itemJson["nextScreen"].int_value();
-        ScreenBase* nextScreen = nullptr;
-        if (nextScreenId != 0) {
-            nextScreen = GetScreenById(nextScreenId);
-        }
-        menuScreen->AddMenuItem(MenuItem(itemName, nextScreen, nullptr));
+        menuScreen->AddMenuItem(MenuItem(itemName, nextScreenId));
     }
+
+    menuScreen->AddMenuItem(MenuItem("Back", -1)); // Add Back option
     
     screens_[id] = std::unique_ptr<ScreenBase>(menuScreen);
 }

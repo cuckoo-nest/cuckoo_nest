@@ -1,0 +1,83 @@
+{
+    "app_name": "CuckooNest",
+    "version": "1.0.0",
+    "debug_mode": true,
+    "max_screens": 10,
+    "refresh_rate": 60.0,
+    "display": {
+        "width": 320,
+        "height": 240,
+        "brightness": 0.8
+    },
+    "homeAssistant": {
+        "baseURL": "http://homeassistant.local:8123",
+        "token": "example_long_lived_access_token"
+    },
+    "integrations": [
+        {
+            "id": 1,
+            "name": "Garage Lights",
+            "entityId": "switch.garage_lights",
+            "type": "HomeAssistant"
+        },
+        {
+            "id": 2,
+            "name": "Office External Lights",
+            "entityId": "switch.office_external_lights",
+            "type": "HomeAssistant"
+        },
+        {
+            "id": 3,
+            "name": "Office Internal Lights",
+            "entityId": "switch.office_internal_lights",
+            "type": "HomeAssistant"
+        }
+    ],
+    "screens": [
+        {
+            "name": "Home Screen",
+            "type": "home",
+            "id": 1,
+            "nextScreen": 2
+        },
+        {
+            "name": "Main Menu",
+            "parent": "home",
+            "type": "menu",
+            "id": 2,
+            "menuItems": [
+                {
+                    "name": "Garage",
+                    "nextScreen": 3
+                },{
+                    "name": "Office Ex",
+                    "nextScreen": 4
+                },{
+                    "name": "Office in",
+                    "nextScreen": 5
+                }
+            ]
+        },
+        {
+            "name": "Garage Lights",
+            "parent": "menu",
+            "type": "switch",
+            "id": 3,
+            "integrationId": 1
+        },
+        {
+            "name": "External Lights",
+            "parent": "menu",
+            "type": "switch",
+            "id": 4,
+            "integrationId": 2
+        },
+        {
+            "name": "Internal Lights",
+            "parent": "menu",
+            "type": "switch",
+            "id": 5,
+            "integrationId": 3
+        }
+    ]
+}

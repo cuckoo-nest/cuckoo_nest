@@ -4,6 +4,7 @@
 #include <json11.hpp>
 #include <iostream>
 #include <memory>
+#include <stdio.h>
 
 #include "HomeAssistantSwitch.hpp"
 
@@ -17,6 +18,7 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
     if (configContent.empty())
     {
         // Handle error: could not read config file
+        std::cerr << "ConfigurationReader: Could not read config file" << std::endl;
         return;
     }
 
@@ -52,9 +54,10 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
 
         if (type == "HomeAssistant") 
         {
-            std::string entity_id = integration["entity_id"].string_value();
+            std::string entityId = integration["entityId"].string_value();
+
             auto switchPtr = std::unique_ptr<HomeAssistantSwitch>(
-                new HomeAssistantSwitch(homeAssistantCreds_, entity_id)
+                new HomeAssistantSwitch(homeAssistantCreds_, entityId)
             );
             switchPtr->SetId(id);
             switchPtr->SetName(name);
