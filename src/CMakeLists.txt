@@ -44,7 +44,7 @@ endif()
 
 # Add json11 include directory
 target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR}/third-party/json11)
-target_include_directories(cuckoo PRIVATE /home/alex/lv_port_linux)
+target_include_directories(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
 
 # For runtime dynamic linking, we don't link libcurl at build time
 # We use dlopen/dlsym to load it at runtime on the target device
