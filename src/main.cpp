@@ -31,21 +31,6 @@ public:
 };
 
 /**
- * @brief Sets the backlight brightness by writing to the sysfs file.
- *
- * @param brightness The brightness value to set (e.g., 115).
- */
-static void set_backlight_brightness(int brightness) {
-    FILE *f = fopen("/sys/class/backlight/3-0036/brightness", "w");
-    if (f == nullptr) {
-        perror("Failed to open backlight file");
-        return;
-    }
-    fprintf(f, "%d\n", brightness);
-    fclose(f);
-}
-
-/**
  * @brief Animation callback to set the size of an object.
  *
  * @param var The object to animate (the arc).
@@ -66,6 +51,7 @@ static HAL hal;
 static Beeper beeper("/dev/input/event0");
 static Display screen("/dev/fb0");
 static Inputs inputs("/dev/input/event2", "/dev/input/event1");
+static Backlight backlight("/sys/class/backlight/3-0036/brightness");
 static IntegrationContainer integration_container;
 static ScreenManager screen_manager(&hal, &integration_container);
 
@@ -78,8 +64,8 @@ int main()
 {
     std::cout << "Cuckoo Hello\n";
 
-
-    set_backlight_brightness(115);
+    // ensure brightness is high on start up
+    backlight.set_backlight_brightness(115);
     
     if (!screen.Initialize())
     {
@@ -92,6 +78,7 @@ int main()
     hal.beeper = &beeper;
     hal.display = &screen;
     hal.inputs = &inputs;
+    hal.backlight = &backlight;
 
     // Load configuration
     ConfigurationReader config("config.json");

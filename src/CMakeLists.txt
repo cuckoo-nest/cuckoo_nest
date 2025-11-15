@@ -16,6 +16,7 @@ set (
     HAL/Display.cpp
     HAL/BitmapFont.cpp
     HAL/Inputs.cpp
+    HAL/Backlight.cpp
     Screens/HomeScreen.cpp
     Screens/DimmerScreen.cpp
     Screens/MenuScreen.cpp
