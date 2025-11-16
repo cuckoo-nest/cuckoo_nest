@@ -3,6 +3,7 @@
 #include "IDisplay.hpp"
 #include "Beeper.hpp"
 #include "Inputs.hpp"
+#include "Backlight.hpp"
 
 class HAL 
 {
@@ -13,4 +14,5 @@ public:
     IDisplay* display = nullptr;
     Beeper* beeper = nullptr;
     Inputs* inputs = nullptr;
+    Backlight* backlight = nullptr;
 };
