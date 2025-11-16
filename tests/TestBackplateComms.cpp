@@ -1,5 +1,10 @@
 #include "Backplate/Message.hpp"
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
+
+using ::testing::ElementsAre;
+using ::testing::ElementsAreArray;
+using ::testing::_;
 
 class TestBackplateComms : public ::testing::Test {
 protected:
@@ -17,13 +22,20 @@ protected:
 TEST_F(TestBackplateComms, BasicMessageCreation) 
 {
     Message msg(MessageCommand::Reset);
-    int rawLength = 0;
-    const uint8_t* rawMessage = msg.GetRawMessage(rawLength);
+    auto rawMessage = msg.GetRawMessage();
 
-    ASSERT_EQ(9, rawLength); // 3 bytes preamble + 2 bytes command + 2 bytes length + 2 bytes CRC
-    uint8_t expectedMessage[] = {0xd5, 0x5d, 0xc3, 0xff, 0x00, 0x00, 0x00}; // dont check CRC here
-    for (int i = 0; i < 7; ++i)
-        EXPECT_EQ(expectedMessage[i], rawMessage[i]);
+    ASSERT_EQ(9, rawMessage.size()); // 3 bytes preamble + 2 bytes command + 2 bytes length + 2 bytes CRC
+    EXPECT_THAT(rawMessage, ElementsAre(0xd5, 0x5d, 0xc3, 0xff, 0x00, 0x00, 0x00, _, _)); // last two bytes are CRC
+}
+
+// CRC value is populated correctly
+TEST_F(TestBackplateComms, CrcCalculation)
+{
+    Message msg(MessageCommand::Reset);
+    auto rawMessage = msg.GetRawMessage();
+
+    EXPECT_THAT(rawMessage[7], 0xA3); 
+    EXPECT_THAT(rawMessage[8], 0x4B); 
 }
 
 

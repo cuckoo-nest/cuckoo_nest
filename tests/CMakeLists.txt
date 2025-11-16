@@ -36,6 +36,7 @@ set(
     ../src/Screens/DimmerScreen.cpp
     ../src/Screens/SwitchScreen.cpp
     ../src/Integrations/IntegrationContainer.cpp
+    ../src/Backplate/Message.cpp
 )
 
 # Define test files
@@ -66,11 +67,13 @@ target_include_directories(cuckoo_tests PRIVATE ${CURL_INCLUDE_DIRS})
 # Add json11 include directory for tests
 target_include_directories(cuckoo_tests PRIVATE ../third-party/json11)
 
-# Link against GoogleTest libraries and system libcurl
+# Link against GoogleTest libraries (including GMock) and system libcurl
 target_link_libraries(
     cuckoo_tests
     gtest_main
     gtest
+    gmock
+    gmock_main
     pthread
     ${CURL_LIBRARIES}
 )
