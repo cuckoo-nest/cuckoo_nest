@@ -38,7 +38,36 @@ TEST_F(TestBackplateComms, CrcCalculation)
     EXPECT_THAT(rawMessage[8], 0x4B); 
 }
 
+TEST_F(TestBackplateComms, ParseTooShortData)
+{
+    Message msg;
+    uint8_t data[8] = {0};
+    bool result = msg.ParseMessage(data, sizeof(data));
+    EXPECT_FALSE(result);
+}
 
+TEST_F(TestBackplateComms, ParseIncorrectPreamble)
+{
+    Message msg;
+    uint8_t data[10] = {0x00, 0x00, 0x00}; // Incorrect preamble
+    bool result = msg.ParseMessage(data, sizeof(data));
+    EXPECT_FALSE(result);
+}
+
+TEST_F(TestBackplateComms, ParseValidMessage)
+{
+    Message msg;
+    uint8_t data[] = {0xd5, 0x5d, 0xc3, 0xff, 0x00, 0x00,0x00, 0xA3, 0x4B}; // Valid message
+    bool result = msg.ParseMessage(data, sizeof(data));
+    EXPECT_TRUE(result);
+}
+
+TEST_F(TestBackplateComms, ParseInvalidChecksum)
+{
+    Message msg;
+    uint8_t data[10] = {0xd5, 0x5d, 0xc3, 0xff, 0x00, 0x00,0x00, 0x00, 0x00}; // Invalid checksum
+    bool result = msg.ParseMessage(data, sizeof(data));
+    EXPECT_FALSE(result);
+}
 
 // Handle data length over the max size of uint16_t
-// crc calculation is done correctly

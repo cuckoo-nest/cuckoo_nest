@@ -15,6 +15,7 @@
 
 
 enum class MessageCommand : uint16_t {
+    Null = 0x0000,
     Reset = 0x00FF,
     PeriodicStatusRequest = 0x0083,
     FetControl = 0x0082,
@@ -47,6 +48,11 @@ public:
     {
     }
 
+    Message()
+        : commandId(MessageCommand::Null), payloadLength(0)
+    {
+    }
+
     virtual ~Message()
     {
     }
@@ -55,6 +61,33 @@ public:
     const int PreambleSize = 3;
 
     const std::vector<uint8_t>& GetRawMessage();
+    bool ParseMessage(const uint8_t* data, size_t length)
+    {
+        if (length < PreambleSize + 2 + 2 + 2) // Preamble + CommandId + PayloadLength + CRC
+        {
+            return false;
+        }
+
+        if (std::memcmp(data, Preamble, PreambleSize) != 0)
+        {
+            return false;
+        }
+
+        uint16_t receivedCrc = static_cast<uint16_t>(data[length - 2]) |
+                      (static_cast<int16_t>(data[length - 1]) << 8);
+
+        uint16_t calculatedCrc = CrcCalculator.Calculate(
+                data + PreambleSize,
+                length - PreambleSize - 2 // Exclude CRC bytes
+            );
+        
+        if (receivedCrc != calculatedCrc)
+        {
+            return false;
+        }
+
+        return true;
+    }
 
 private:
     void BuildMessage();
