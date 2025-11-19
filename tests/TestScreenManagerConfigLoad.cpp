@@ -184,7 +184,6 @@ TEST_F(ScreenManagerConfigLoadTest, MenuScreenItemsLoaded) {
     MenuScreen* ms = dynamic_cast<MenuScreen*>(menu_screen);
     ASSERT_NE(ms, nullptr);
     EXPECT_EQ(3, ms->CountMenuItems());
-
 }
 
 TEST_F(ScreenManagerConfigLoadTest, SwitchScreenIntegrationLoaded) {
@@ -230,7 +229,8 @@ TEST_F(ScreenManagerConfigLoadTest, DimmerScreenIntegrationLoaded) {
 
     ScreenBase* dimmer_screen = screen_manager->GetScreenById(1);
     ASSERT_NE(nullptr, dimmer_screen);
-    DimmerScreen* ds = dynamic_cast<DimmerScreen*>(dimmer_screen);
-    ASSERT_NE(ds, nullptr);
-    EXPECT_EQ(55, ds->GetIntegrationId());
+
+    // No dynamic_cast (avoids linking LVGL)
+    EXPECT_EQ("Dimmer", dimmer_screen->GetType());
+    EXPECT_EQ(55, dimmer_screen->GetIntegrationId());
 }
