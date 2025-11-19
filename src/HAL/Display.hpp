@@ -14,6 +14,7 @@ public:
     void SetBackgroundColor(uint32_t color) override;
     void DrawText(int x, int y, const std::string &text, uint32_t color = 0xFFFFFF, Font font = Font::FONT_DEFAULT) override;
     void TimerHandler() override;
+    void DrawArc(int x, int y, int radius, int start_angle, int end_angle, uint32_t color, int thickness, uint32_t background_color = 0x202020, bool rounded = true);
 
 private:
     std::string device_path_;

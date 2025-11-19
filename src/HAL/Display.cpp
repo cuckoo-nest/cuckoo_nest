@@ -100,7 +100,49 @@ void Display::DrawText(int x, int y, const std::string &text, uint32_t color, Fo
     lv_obj_center(label);
     lv_obj_set_y(label, y);
 }
+void Display::DrawArc(int x, int y, int radius,
+                      int start_angle, int end_angle,
+                      uint32_t color, int thickness,
+                      uint32_t background_color, bool rounded)
+{
+    lv_obj_t *arc = lv_arc_create(lv_scr_act());
 
+    // Position and size
+    lv_obj_set_size(arc, radius * 2, radius * 2);
+    lv_obj_set_pos(arc, x - radius, y - radius);
+
+    // Configure full range
+    lv_arc_set_range(arc, 0, 100);
+    lv_arc_set_rotation(arc, start_angle);
+    lv_arc_set_mode(arc, LV_ARC_MODE_NORMAL);
+
+    // Background track
+    if(background_color != 0) {
+        lv_obj_set_style_arc_width(arc, thickness, LV_PART_MAIN);
+        lv_obj_set_style_arc_color(arc,
+            lv_color_make((background_color >> 16) & 0xFF,
+                          (background_color >> 8) & 0xFF,
+                          background_color & 0xFF),
+            LV_PART_MAIN);
+        lv_obj_set_style_arc_rounded(arc, rounded ? 1 : 0, LV_PART_MAIN);
+    } else {
+        lv_obj_set_style_arc_width(arc, 0, LV_PART_MAIN);
+    }
+
+    // Indicator (fill)
+    lv_obj_set_style_arc_width(arc, thickness, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_color(arc,
+        lv_color_make((color >> 16) & 0xFF,
+                      (color >> 8) & 0xFF,
+                      color & 0xFF),
+        LV_PART_INDICATOR);
+    lv_obj_set_style_arc_rounded(arc, rounded ? 1 : 0, LV_PART_INDICATOR);
+
+    // Fill the arc proportionally
+    int fill_percent = end_angle - start_angle;
+    if(fill_percent < 0) fill_percent += 360; // handle wrap-around
+    lv_arc_set_value(arc, fill_percent * 100 / 360);
+}
 void Display::TimerHandler()
 {
     lv_timer_handler();
