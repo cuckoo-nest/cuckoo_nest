@@ -4,6 +4,7 @@
 #include "../ScreenManager.hpp"
 #include "../HAL/IDisplay.hpp"
 #include "../HAL/Beeper.hpp"
+#include "lvgl/lvgl.h"
 
 class DimmerScreen : public ScreenBase
 {
@@ -37,4 +38,6 @@ private:
     const int DIMMER_STEP = 50; // step size for each rotary event
     const int MAX_DIMMER_VALUE = 100; // maximum dimmer value
     const int MIN_DIMMER_VALUE = 0;   // minimum dimmer value
+    lv_obj_t* arc_;    // semi-circle gauge
+    lv_obj_t* label_;  // numeric percentage
 };
