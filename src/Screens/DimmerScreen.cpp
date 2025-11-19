@@ -1,6 +1,6 @@
 #include "DimmerScreen.hpp"
 #include <string>
-
+#include "lvgl/lvgl.h"
 
 void DimmerScreen::Render()
 {
