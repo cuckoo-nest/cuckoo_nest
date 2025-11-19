@@ -25,10 +25,10 @@ void DimmerScreen::Render()
     int filledWidth = (brightnessPercent * barWidth) / MAX_DIMMER_VALUE;
 
     // Draw the background of the bar
-    display_->DrawText(60, 180, std::string(barWidth, '-'), SCREEN_COLOR_GRAY, Font::FONT_DEFAULT);
+    display_->DrawText(60, 180, std::string(barWidth, '-'), SCREEN_COLOR_WHITE, Font::FONT_DEFAULT);
 
     // Draw the filled part of the bar
-    display_->DrawText(60, 180, std::string(filledWidth, '='), SCREEN_COLOR_WHITE, Font::FONT_DEFAULT);
+    display_->DrawText(60, 180, std::string(filledWidth, '='), SCREEN_COLOR_BLUE, Font::FONT_DEFAULT);
 }
 
 void DimmerScreen::handle_input_event(const InputDeviceType device_type, const struct input_event &event)
