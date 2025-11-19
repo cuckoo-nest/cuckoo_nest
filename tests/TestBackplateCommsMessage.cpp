@@ -78,5 +78,28 @@ TEST_F(TestBackplateCommsMessage, ParseInvalidChecksum)
     EXPECT_FALSE(result);
 }
 
+TEST_F(TestBackplateCommsMessage, CreateAsciiResponseMessage)
+{
+    ResponseMessage msg(MessageType::ResponseAscii);
+    msg.SetPayload(std::vector<uint8_t>{'B', 'R', 'K'});
+    auto rawMessage = msg.GetRawMessage(); 
+
+    EXPECT_EQ(13, rawMessage.size()); // 4 bytes preamble + 2 bytes command + 2 bytes length + 3 bytes data + 2 bytes CRC
+    EXPECT_THAT(rawMessage, ElementsAre(0xd5, 0xd5, 0xaa, 0x96, 0x01, 0x00, 0x03, 0x00, 0x42, 0x52, 0x4B, _, _));
+}
+
+// Parsing of ascii response message
+TEST_F(TestBackplateCommsMessage, ParseAsciiResponseMessage)
+{
+    ResponseMessage msg(MessageType::ResponseAscii);
+    msg.SetPayload(std::vector<uint8_t>{'B', 'R', 'K'});
+    auto rawMessage = msg.GetRawMessage();
+
+    ResponseMessage parsedMsg;
+    bool result = parsedMsg.ParseMessage(rawMessage.data(), rawMessage.size());
+    EXPECT_TRUE(result);
+    EXPECT_EQ(parsedMsg.GetMessageCommand(), MessageType::ResponseAscii);
+    EXPECT_THAT(parsedMsg.GetPayload(), ElementsAre('B', 'R', 'K'));
+}
 
 // Handle data length over the max size of uint16_t

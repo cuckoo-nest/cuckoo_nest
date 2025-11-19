@@ -32,6 +32,8 @@ public:
         this->payload = payload;
     }
 
+    const std::vector<uint8_t>& GetPayload() {return payload;}
+
     const std::vector<uint8_t>& GetRawMessage();
     const MessageType GetMessageCommand() const { return commandId; }
     bool ParseMessage(const uint8_t* data, size_t length)
@@ -63,6 +65,14 @@ public:
             static_cast<uint16_t>(data[PreambleSize]) |
             (static_cast<uint16_t>(data[PreambleSize + 1]) << 8)
         );
+
+        uint16_t payloadLength = static_cast<uint16_t>(data[PreambleSize + 2]) |
+                                 (static_cast<uint16_t>(data[PreambleSize + 3]) << 8);
+        if (payloadLength > 0)
+        {
+            payload.resize(payloadLength);
+            std::memcpy(payload.data(), data + PreambleSize + 4, payloadLength);
+        }
 
         return true;
     }

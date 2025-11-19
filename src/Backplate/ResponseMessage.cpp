@@ -25,6 +25,10 @@ void ResponseMessage::BuildMessage()
     buffer.push_back(static_cast<uint8_t>((payload.size() >> 8) & 0x00FF));
 
     // Add payload if any
+    for (const auto &b : payload)
+    {
+        buffer.push_back(b);
+    }
 
     // Calculate CRC
     uint16_t crc = CrcCalculator.Calculate(

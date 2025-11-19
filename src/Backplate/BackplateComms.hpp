@@ -31,16 +31,19 @@ private:
 
 class BackplateComms {
 public:
-    BackplateComms(ISerialPort* serialPort) : 
-        serialPort(serialPort) {}
+    BackplateComms(ISerialPort* serialPort, int burstTimeoutUs = 5000000) : 
+        SerialPort(serialPort),
+        BurstTimeoutUs(burstTimeoutUs) {}
     
     virtual ~BackplateComms() = default;
 
     bool Initialize();
-
-private:
     bool InitializeSerial();
     
 private:
-    ISerialPort* serialPort;
+    bool IsTimeout(timeval &currentTime, timeval &startTime);
+    
+private:
+    ISerialPort* SerialPort;
+    int BurstTimeoutUs;
 };

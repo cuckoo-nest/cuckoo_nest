@@ -41,7 +41,7 @@ protected:
 TEST_F(TestBackplateComms, InitializeOpensSerialPortCorrectly) 
 {
     InSequence s;
-    BackplateComms comms(&mockSerialPort);
+    BackplateComms comms(&mockSerialPort, 1000);
 
     EXPECT_CALL(mockSerialPort, Open(BaudRate::Baud115200))
         .WillOnce(Return(true));
@@ -53,14 +53,14 @@ TEST_F(TestBackplateComms, InitializeOpensSerialPortCorrectly)
     
     EXPECT_CALL(mockSerialPort, Flush()).Times(1);
 
-    bool result = comms.Initialize();
+    bool result = comms.InitializeSerial();
     EXPECT_TRUE(result);
 }
 
 TEST_F(TestBackplateComms, InitializeFailsIfOpenFails) 
 {
     InSequence s;
-    BackplateComms comms(&mockSerialPort);
+    BackplateComms comms(&mockSerialPort, 1000);
 
     EXPECT_CALL(mockSerialPort, Open(BaudRate::Baud115200))
         .WillOnce(Return(false));
@@ -72,7 +72,8 @@ TEST_F(TestBackplateComms, InitializeFailsIfOpenFails)
 TEST_F(TestBackplateComms, InitalizeBurstStages) 
 {
     InSequence s;
-    BackplateComms comms(&mockSerialPort);
+    //BackplateComms comms(&mockSerialPort, 1000);
+    BackplateComms comms(&mockSerialPort, 10* 10000 * 1000);
 
     EXPECT_CALL(mockSerialPort, Open(BaudRate::Baud115200))
         .WillRepeatedly(Return(true));
@@ -87,25 +88,22 @@ TEST_F(TestBackplateComms, InitalizeBurstStages)
     ResponseMessage burstPacket1FetPresenceMessage(MessageType::FetPresenceData);
     burstPacket1FetPresenceMessage.SetPayload(std::vector<uint8_t>{0x01});
     std::vector<uint8_t> responsebuffer1 = burstPacket1FetPresenceMessage.GetRawMessage();
+    
+    ResponseMessage burstPacket2BrkMessage(MessageType::ResponseAscii);
+    burstPacket2BrkMessage.SetPayload(std::vector<uint8_t>{'B', 'R', 'K'});
+    std::vector<uint8_t> responsebuffer2 = burstPacket2BrkMessage.GetRawMessage();
+    
+    
     EXPECT_CALL(
         mockSerialPort,
         Read(_,_)
     ).WillOnce(testing::Invoke([responsebuffer1](char* buffer, int bufferSize) {
         std::memcpy(buffer, responsebuffer1.data(), responsebuffer1.size());
         return static_cast<int>(responsebuffer1.size());
-    }));
-    
-    
-    ResponseMessage burstPacket2BrkMessage(MessageType::ResponseAscii);
-    burstPacket2BrkMessage.SetPayload(std::vector<uint8_t>{'B', 'R', 'K'});
-    std::vector<uint8_t> responsebuffer2 = burstPacket2BrkMessage.GetRawMessage();
-    EXPECT_CALL(
-        mockSerialPort,
-        Read(_, _)
-    ).WillOnce(testing::Invoke([responsebuffer2](char* buffer, int bufferSize) {
+    })).WillOnce(testing::Invoke([responsebuffer2](char* buffer, int bufferSize) {
         std::memcpy(buffer, responsebuffer2.data(), responsebuffer2.size());
         return static_cast<int>(responsebuffer2.size());
-    })); // Simulate reading the BRK response
+    }));
     
     
     EXPECT_TRUE(comms.Initialize());
@@ -120,3 +118,5 @@ TEST_F(TestBackplateComms, InitalizeBurstStages)
 // One status message is sent in bust, followed by BRK
 // Two status messages are sent in burst, followed by BRK
 // No acks are sent until BRK is received
+// Correct number of Acks are sent
+// Reads of partial data 
