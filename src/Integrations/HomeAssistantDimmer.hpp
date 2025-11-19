@@ -8,7 +8,7 @@ class HomeAssistantDimmer : public IntegrationDimmerBase
 {
 public:
     HomeAssistantDimmer(const HomeAssistantCreds &creds, const std::string &entity_id) : creds_(creds),
-                                                                                         entityId_(entity_id)
+                                                                                         entityId_(entity_id), brightness_(-1)
     {
     }
 
@@ -19,26 +19,42 @@ public:
     SwitchState GetState() override
     {
         // Implementation to get state from Home Assistant
-        return SwitchState::OFF; // Placeholder
+        return brightness_ > 0 ? SwitchState::ON : SwitchState::OFF; // Placeholder
     }
 
     void TurnOn() override
     {
         // Implementation to turn on the Dimmer via Home Assistant
-        execute("light/turn_on");
+        SetBrightness(100);
     }
 
     void TurnOff() override
     {
         // Implementation to turn off the Dimmer via Home Assistant
-        execute("light/turn_off");
+        SetBrightness(-1);
     }
+
+void SetBrightness(int brightness) override
+{
+    if (brightness <= 0)
+    {
+        brightness_ = -1;                  
+        ExecuteBrightness("light/turn_off");
+    }
+    else
+    {
+        if (brightness > 100) brightness = 100;
+        brightness_ = brightness;
+        ExecuteBrightness("light/turn_on", brightness_);
+    }
+}
 
 private:
     HomeAssistantCreds creds_;
     std::string entityId_;
+    int brightness_;
 
-    void execute(std::string action)
+    void ExecuteBrightness(std::string action, int brightness = -1)
     {
         // Implementation to call Home Assistant service
         std::cout << "Calling Home Assistant service: " << creds_.GetUrl() << std::endl;
@@ -59,6 +75,11 @@ private:
 
         // Prepare JSON data
         std::string jsonData = "{\"entity_id\": \"" + entityId_ + "\"}";
+        if (brightness >= 0)
+        {
+            int ha_brightness = (brightness * 255) / 100;
+            jsonData = "{\"entity_id\": \"" + entityId_ + "\", \"brightness\": " + std::to_string(ha_brightness) + "}";
+        }
 
         // Prepare headers
         struct curl_slist *headers = nullptr;
