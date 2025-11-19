@@ -4,7 +4,7 @@
 #include <map>
 
 #include "IntegrationSwitchBase.hpp"
-#include "IntergrationDimmerBase.hpp"
+#include "IntegrationDimmerBase.hpp"
 #include "HomeAssistantCreds.hpp"
 
 
