@@ -35,6 +35,14 @@ void DimmerScreen::handle_input_event(const InputDeviceType device_type, const s
         {
             beeper_->play(100);
         }   
+        
+        auto dimmer = screenManager_->GetIntegrationContainer()->GetDimmerById(integrationId_);
+
+        if (dimmer != nullptr)
+        {
+            int brightnessPercent = dimmerValue / DIMMER_STEP;
+            dimmer->SetBrightness(brightnessPercent);
+        }
 
         screenManager_->GoToPreviousScreen();
     }

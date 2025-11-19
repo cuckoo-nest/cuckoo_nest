@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "HomeAssistantSwitch.hpp"
+#include "HomeAssistantDimmer.hpp"
 
 IntegrationContainer::IntegrationContainer()
 {
@@ -52,7 +53,7 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
         std::string name = integration["name"].string_value();
         std::string type = integration["type"].string_value();
 
-        if (type == "HomeAssistant") 
+        if (type == "HomeAssistantSwitch") 
         {
             std::string entityId = integration["entityId"].string_value();
 
@@ -62,6 +63,17 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
             switchPtr->SetId(id);
             switchPtr->SetName(name);
             switchMap_[id] = std::move(switchPtr);
+        }
+        else if (type == "HomeAssistantDimmer") 
+        {
+            std::string entityId = integration["entityId"].string_value();
+
+            auto dimmerPtr = std::unique_ptr<HomeAssistantDimmer>(
+                new HomeAssistantDimmer(homeAssistantCreds_, entityId)
+            );
+            dimmerPtr->SetId(id);
+            dimmerPtr->SetName(name);
+            dimmerMap_[id] = std::move(dimmerPtr);
         }
     }
 
@@ -84,6 +96,16 @@ IntegrationSwitchBase* IntegrationContainer::GetSwitchById(int id)
 {
     auto it = switchMap_.find(id);
     if (it != switchMap_.end())
+    {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
+IntegrationDimmerBase* IntegrationContainer::GetDimmerById(int id)
+{
+    auto it = dimmerMap_.find(id);
+    if (it != dimmerMap_.end())
     {
         return it->second.get();
     }
