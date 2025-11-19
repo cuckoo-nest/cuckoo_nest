@@ -35,6 +35,13 @@ protected:
         // before the destructor).
     }
 
+    testing::Action<int(char*, int)> mockReadResponse(const std::vector<uint8_t>& responseBuffer) {
+        return testing::Invoke([responseBuffer](char* buffer, int bufferSize) {
+            std::memcpy(buffer, responseBuffer.data(), responseBuffer.size());
+            return static_cast<int>(responseBuffer.size());
+        });
+    }
+
     MockSerialPort mockSerialPort;
 };
 
@@ -87,24 +94,14 @@ TEST_F(TestBackplateComms, InitalizeBurstStages)
 
     ResponseMessage burstPacket1FetPresenceMessage(MessageType::FetPresenceData);
     burstPacket1FetPresenceMessage.SetPayload(std::vector<uint8_t>{0x01});
-    std::vector<uint8_t> responsebuffer1 = burstPacket1FetPresenceMessage.GetRawMessage();
     
     ResponseMessage burstPacket2BrkMessage(MessageType::ResponseAscii);
     burstPacket2BrkMessage.SetPayload(std::vector<uint8_t>{'B', 'R', 'K'});
-    std::vector<uint8_t> responsebuffer2 = burstPacket2BrkMessage.GetRawMessage();
     
-    
-    EXPECT_CALL(
-        mockSerialPort,
-        Read(_,_)
-    ).WillOnce(testing::Invoke([responsebuffer1](char* buffer, int bufferSize) {
-        std::memcpy(buffer, responsebuffer1.data(), responsebuffer1.size());
-        return static_cast<int>(responsebuffer1.size());
-    })).WillOnce(testing::Invoke([responsebuffer2](char* buffer, int bufferSize) {
-        std::memcpy(buffer, responsebuffer2.data(), responsebuffer2.size());
-        return static_cast<int>(responsebuffer2.size());
-    }));
-    
+
+    EXPECT_CALL(mockSerialPort, Read(_,_))
+        .WillOnce(mockReadResponse(burstPacket1FetPresenceMessage.GetRawMessage()))
+        .WillOnce(mockReadResponse(burstPacket2BrkMessage.GetRawMessage()));
     
     EXPECT_TRUE(comms.Initialize());
 }
