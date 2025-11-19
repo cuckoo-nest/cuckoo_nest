@@ -15,7 +15,19 @@ public:
         display_(hal->display), 
         beeper_(hal->beeper),
         dimmerValue(50 * DIMMER_STEP) {}
+    // Create semi-circle arc
+    arc_ = lv_arc_create(lv_scr_act());
+    lv_obj_set_size(arc_, 160, 160);
+    lv_arc_set_angles(arc_, 180, 0);  // semi-circle
+    lv_obj_set_style_arc_width(arc_, 12, 0);
+    lv_obj_set_style_arc_color(arc_, lv_color_gray(), LV_PART_MAIN);
+    lv_obj_set_style_arc_color(arc_, lv_color_green(), LV_PART_INDICATOR);
+    lv_obj_align(arc_, LV_ALIGN_CENTER, 0, 20);
 
+    // Create numeric label
+    label_ = lv_label_create(lv_scr_act());
+    lv_label_set_text_fmt(label_, "%d%%", dimmerValue / DIMMER_STEP);
+    lv_obj_align(label_, arc_, LV_ALIGN_CENTER, 0, 0);
     virtual ~DimmerScreen() = default;
 
     void Render() override;
