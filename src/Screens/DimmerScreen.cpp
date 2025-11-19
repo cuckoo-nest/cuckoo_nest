@@ -1,17 +1,34 @@
 #include "DimmerScreen.hpp"
 #include <string>
 
+
 void DimmerScreen::Render()
 {
-    if (!display_) return;
+    if (display_ == nullptr) {
+        return;
+    }
 
     display_->SetBackgroundColor(SCREEN_COLOR_BLACK);
 
     int brightnessPercent = dimmerValue / DIMMER_STEP;
-    lv_arc_set_value(arc_, brightnessPercent);
-    lv_label_set_text_fmt(label_, "%d%%", brightnessPercent);
+    std::string dimmerValueString = std::to_string(brightnessPercent) + "%";
 
-    display_->TimerHandler();  // forces LVGL to redraw
+    // Draw the header text
+    display_->DrawText(60, 80, "Dimmer", SCREEN_COLOR_WHITE, Font::FONT_H1);
+
+    // Draw the brightness percentage
+    display_->DrawText(100, 140, dimmerValueString, SCREEN_COLOR_WHITE, Font::FONT_H2);
+
+    // Draw a simple horizontal brightness bar
+    int barWidth = 200;
+    int barHeight = 20;
+    int filledWidth = (brightnessPercent * barWidth) / MAX_DIMMER_VALUE;
+
+    // Draw the background of the bar
+    display_->DrawText(60, 180, std::string(barWidth, '-'), SCREEN_COLOR_GRAY, Font::FONT_DEFAULT);
+
+    // Draw the filled part of the bar
+    display_->DrawText(60, 180, std::string(filledWidth, '='), SCREEN_COLOR_WHITE, Font::FONT_DEFAULT);
 }
 
 void DimmerScreen::handle_input_event(const InputDeviceType device_type, const struct input_event &event)
