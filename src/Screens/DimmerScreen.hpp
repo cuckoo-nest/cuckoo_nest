@@ -26,6 +26,12 @@ public:
     void SetIntegrationId(int id) {
         integrationId_ = id;
     }
+    const std::string& GetName() const {
+        return name_;
+    }
+    void SetName(const std::string& name) {
+        name_ = name;
+    }
 
 private:
     ScreenManager* screenManager_;
@@ -33,6 +39,7 @@ private:
     IDisplay* display_;
     int dimmerValue;
     int integrationId_;
+    std::string name_;
 
     const int DIMMER_STEP = 50; // step size for each rotary event
     const int MAX_DIMMER_VALUE = 100; // maximum dimmer value

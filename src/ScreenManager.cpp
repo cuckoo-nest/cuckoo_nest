@@ -173,7 +173,9 @@ void ScreenManager::BuildSwitchScreenFromJSON(const json11::Json &screenJson, in
 void ScreenManager::BuildDimmerScreenFromJSON(const json11::Json &screenJson, int id)
 {
     int integrationId = screenJson["integrationId"].int_value();
+    std::string name = screenJson["name"].string_value();
     auto dimmerScreen = new DimmerScreen(hal_, this);
     dimmerScreen->SetIntegrationId(integrationId);
+    dimmerScreen->SetName(name);
     screens_[id] = std::unique_ptr<ScreenBase>(dimmerScreen);
 }

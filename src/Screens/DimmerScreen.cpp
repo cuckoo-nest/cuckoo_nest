@@ -17,7 +17,7 @@ void DimmerScreen::Render()
         dimmerValueString = "Off";
     }
 
-    display_->DrawText(60, -40, "Dimmer", SCREEN_COLOR_WHITE, Font::FONT_H1);
+    display_->DrawText(60, -40, GetName().substr(0,10), SCREEN_COLOR_WHITE, Font::FONT_H1);
     display_->DrawText(100, 100, dimmerValueString, SCREEN_COLOR_WHITE, Font::FONT_H2);
 
     int cx = 160;
