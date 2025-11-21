@@ -11,6 +11,10 @@ enum class MessageType : uint16_t {
     BackplateState = 0x000B,
     RawAdcData = 0x000C,
     //AmbientLightData = 0x000C,
+    TfeVersion = 0x0018,
+    TfeBuildInfo = 0x0019,
+    BackplateModelAndBslId = 0x001d,
+
     BufferedSensoreData = 0x0022,
     PirMotionEvent = 0x0023,
     ProximityEvent = 0x0025,

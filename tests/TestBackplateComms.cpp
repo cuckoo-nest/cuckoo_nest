@@ -76,7 +76,7 @@ TEST_F(TestBackplateComms, InitializeFailsIfOpenFails)
     EXPECT_FALSE(result);
 }
 
-TEST_F(TestBackplateComms, InitalizeBurstStages) 
+TEST_F(TestBackplateComms, BustStageWorks) 
 {
     InSequence s;
     BackplateComms comms(&mockSerialPort, 1000);
@@ -112,6 +112,28 @@ TEST_F(TestBackplateComms, InitalizeBurstStages)
     ).WillOnce(Return(ackMessage.GetRawMessage().size()));
 
     EXPECT_TRUE(comms.DoBurstStage());
+}
+
+TEST_F(TestBackplateComms, GetInfoStageWorks)
+{
+    InSequence s;
+    BackplateComms comms (
+        &mockSerialPort,
+        1000,
+        5*1000*1000 // 5 seconds for info gathering timeout
+    );
+
+    ResponseMessage tfeVersionResponse(MessageType::TfeVersion);
+    ResponseMessage tfeBuildInfo(MessageType::TfeBuildInfo);
+    ResponseMessage backplaceModelAndBsl(MessageType::BackplateModelAndBslId);
+
+    EXPECT_CALL(mockSerialPort, Read(_,_))
+        .WillOnce(mockReadResponse(tfeVersionResponse.GetRawMessage()))
+        .WillOnce(mockReadResponse(tfeBuildInfo.GetRawMessage()))
+        .WillOnce(mockReadResponse(backplaceModelAndBsl.GetRawMessage()));
+
+
+    EXPECT_TRUE(comms.DoInfoGathering());
 }
 
 // will need tests for

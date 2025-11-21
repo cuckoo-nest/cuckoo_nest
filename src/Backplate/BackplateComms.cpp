@@ -15,6 +15,9 @@ bool BackplateComms::Initialize()
     if (!DoBurstStage())
         return false;
 
+    if (!DoInfoGathering)
+        return false;
+
     return true;
 }
 
@@ -46,12 +49,12 @@ bool BackplateComms::DoBurstStage()
     bool burstDone = false;
     bool fet_data_received = false;
     std::vector<uint8_t> fetPresencePayload;
-    struct timeval startTime, currentTime;
+    struct timeval startTime;
     gettimeofday(&startTime, nullptr);
 
     while (true)
     {
-        if (IsTimeout(currentTime, startTime))
+        if (IsTimeout(startTime, BurstTimeoutUs))
             break;
 
         uint8_t readBuffer[256];
@@ -106,15 +109,88 @@ bool BackplateComms::DoBurstStage()
     return true;
 }
 
-bool BackplateComms::IsTimeout(timeval &currentTime, timeval &startTime)
+bool BackplateComms::IsTimeout(timeval &startTime, int timeoutUs)
 {
+    timeval currentTime;
     gettimeofday(&currentTime, nullptr);
     long elapsedUs = (currentTime.tv_sec - startTime.tv_sec) * 1000000 +
                      (currentTime.tv_usec - startTime.tv_usec);
 
-    if (elapsedUs >= BurstTimeoutUs)
+    if (elapsedUs >= timeoutUs)
     {
         return true;
     }
+    return false;
+}
+
+bool BackplateComms::DoInfoGathering()
+{
+    if (!GetInfo(MessageType::GetTfeVersion, MessageType::TfeVersion))
+    {
+        std::cerr << "Failed to get TfeVersion" << std::endl;
+        return false;
+    }
+
+    if (!GetInfo(MessageType::GetTfeBuildInfo, MessageType::TfeBuildInfo))
+    {
+        std::cerr << "Failed to get TfeBuildInfo" << std::endl;
+        return false;
+    }
+
+    if (!GetInfo(MessageType::GetBackplateModelAndBslId, MessageType::BackplateModelAndBslId))
+    {
+        std::cerr << "Failed to get BackplateModelAndBslId" << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool BackplateComms::GetInfo(MessageType command, MessageType expectedResponse)
+{
+    CommandMessage commandMsg(command);
+    SerialPort->Write(commandMsg.GetRawMessage());
+
+    struct timeval startTime;
+    gettimeofday(&startTime, nullptr);
+
+    while (true)
+    {
+        if (IsTimeout(startTime, GetInfoTimeoutUs))
+            break;
+
+        uint8_t readBuffer[256];
+        size_t totalBytesRead = 0;
+        totalBytesRead = SerialPort->Read(
+            reinterpret_cast<char *>(readBuffer),
+            sizeof(readBuffer));
+
+        if (totalBytesRead == 0)
+        {
+            usleep(100000); // 100ms
+            continue;
+        }
+
+        // Parse the response
+        ResponseMessage responseMsg;
+        if (!responseMsg.ParseMessage(readBuffer, totalBytesRead))
+        {
+            std::cout << "GetInfo: ParseMessage failed"<< std::endl;
+        }
+        std::cout << "GetInfo: Received response for command "
+                  << static_cast<uint16_t>(responseMsg.GetMessageCommand()) << std::endl;
+        std::cout << "GetInfo: Checksum of payload: "
+                  << static_cast<uint32_t>(responseMsg.GetPayload().size()) << " bytes" << std::endl;
+
+        if (responseMsg.GetMessageCommand() == expectedResponse)
+        {
+            std::cout << "GetInfo: Received expected response for command "
+                      << static_cast<uint16_t>(command) << std::endl;
+            return true;
+        }
+    }
+
+    std::cerr << "GetInfo Error: Did not receive expected response for command "
+              << static_cast<uint16_t>(command) << std::endl;
     return false;
 }

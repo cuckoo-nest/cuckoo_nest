@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include "MessageType.hxx"
 
 enum class BaudRate {
     Baud9600 = 9600,
@@ -31,20 +32,29 @@ private:
 
 class BackplateComms {
 public:
-    BackplateComms(ISerialPort* serialPort, int burstTimeoutUs = 5000000) : 
+    BackplateComms(
+        ISerialPort* serialPort, 
+        int burstTimeoutUs = 5000000,
+        int getInfoTimeoutUs = 200000) : 
         SerialPort(serialPort),
-        BurstTimeoutUs(burstTimeoutUs) {}
+        BurstTimeoutUs(burstTimeoutUs),
+        GetInfoTimeoutUs(getInfoTimeoutUs) {}
     
     virtual ~BackplateComms() = default;
 
     bool Initialize();
     bool InitializeSerial();
     bool DoBurstStage();
-    
+    bool DoInfoGathering();
+    bool GetInfo(MessageType command, MessageType expectedResponse);
+
+
 private:
-    bool IsTimeout(timeval &currentTime, timeval &startTime);
-    
+    bool IsTimeout(timeval &startTime, int timeoutUs);
+
+
 private:
     ISerialPort* SerialPort;
     int BurstTimeoutUs;
+    int GetInfoTimeoutUs;
 };
