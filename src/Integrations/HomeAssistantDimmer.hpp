@@ -59,8 +59,8 @@ private:
     void ExecuteBrightness(std::string action, int brightness = -1)
     {
         // Implementation to call Home Assistant service
-        std::cout << "Calling Home Assistant service: " << creds_.GetUrl() << std::endl;
-        std::cout << "Bearer token: " << creds_.GetToken() << std::endl;
+        spdlog::info("Calling Home Assistant service: {}", creds_.GetUrl());
+        spdlog::info("Bearer token: {}", creds_.GetToken());
 
         static CurlWrapper curl_wrapper;
         static bool curl_initialized = false;
@@ -70,7 +70,7 @@ private:
             curl_initialized = curl_wrapper.initialize();
             if (!curl_initialized)
             {
-                std::cerr << "Failed to initialize libcurl - functionality disabled" << std::endl;
+                spdlog::error("Failed to initialize libcurl - functionality disabled");
                 return;
             }
         }
@@ -93,7 +93,7 @@ private:
         if (curl)
         {
             std::string url = creds_.GetUrl() + "/api/services/" + action;
-            std::cout << "HomeAssistantDimmer: URL: " << url << std::endl;
+            spdlog::info("HomeAssistantDimmer: URL: {}", url);
             curl_wrapper.easy_setopt(curl, CURLOPT_URL, url.c_str());
             curl_wrapper.easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
             curl_wrapper.easy_setopt(curl, CURLOPT_POSTFIELDS, jsonData.c_str());
@@ -101,12 +101,12 @@ private:
             CURLcode res = curl_wrapper.easy_perform(curl);
             if (res != CURLE_OK)
             {
-                std::cerr << "curl_easy_perform() failed: " << curl_wrapper.easy_strerror(res) << std::endl;
+                spdlog::error("curl_easy_perform() failed: {}", curl_wrapper.easy_strerror(res));
             }
 
             curl_wrapper.easy_cleanup(curl);
             curl_wrapper.slist_free_all(headers);
-            std::cout << "\nHomeAssistantDimmer: Service call completed" << std::endl;
+            spdlog::info("HomeAssistantDimmer: Service call completed");
         }
     }
 };
