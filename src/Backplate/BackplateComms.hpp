@@ -39,6 +39,7 @@ public:
 
     bool Initialize();
     bool InitializeSerial();
+    bool DoBurstStage();
     
 private:
     bool IsTimeout(timeval &currentTime, timeval &startTime);
