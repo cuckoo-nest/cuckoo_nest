@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include "MessageType.hxx"
+#include "IDateTimeProvider.hpp"
 
 enum class BaudRate {
     Baud9600 = 9600,
@@ -33,12 +34,10 @@ private:
 class BackplateComms {
 public:
     BackplateComms(
-        ISerialPort* serialPort, 
-        int burstTimeoutUs = 5000000,
-        int getInfoTimeoutUs = 200000) : 
+        ISerialPort* serialPort,
+        IDateTimeProvider* dateTimeProvider) : 
         SerialPort(serialPort),
-        BurstTimeoutUs(burstTimeoutUs),
-        GetInfoTimeoutUs(getInfoTimeoutUs) {}
+        DateTimeProvider(dateTimeProvider) {}
     
     virtual ~BackplateComms() = default;
 
@@ -47,14 +46,17 @@ public:
     bool DoBurstStage();
     bool DoInfoGathering();
     bool GetInfo(MessageType command, MessageType expectedResponse);
-
+    void MainTaskBody(void);
 
 private:
     bool IsTimeout(timeval &startTime, int timeoutUs);
 
 
 private:
+    const int KeepAliveIntervalSeconds = 15;
+    const int BurstTimeoutUs = 5000000;
+    const int GetInfoTimeoutUs = 200000;
+
     ISerialPort* SerialPort;
-    int BurstTimeoutUs;
-    int GetInfoTimeoutUs;
+    IDateTimeProvider* DateTimeProvider;
 };

@@ -12,6 +12,8 @@ using ::testing::DoAll;
 using ::testing::SetArgPointee;
 using ::testing::ByRef;
 
+class MockDateTimeProvider
+
 class MockSerialPort : public ISerialPort {
 public:
     MockSerialPort() : ISerialPort("mock_port") {}
@@ -135,6 +137,9 @@ TEST_F(TestBackplateComms, GetInfoStageWorks)
 
     EXPECT_TRUE(comms.DoInfoGathering());
 }
+
+// keep alives are send periodically
+
 
 // will need tests for
 // no response received to the read - return false

@@ -3,7 +3,6 @@
 #include "ResponseMessage.hpp"
 #include <unistd.h>
 #include <iostream>
-#include <sys/time.h>
 
 bool BackplateComms::Initialize() 
 {
@@ -15,7 +14,7 @@ bool BackplateComms::Initialize()
     if (!DoBurstStage())
         return false;
 
-    if (!DoInfoGathering)
+    if (!DoInfoGathering())
         return false;
 
     return true;
@@ -50,7 +49,7 @@ bool BackplateComms::DoBurstStage()
     bool fet_data_received = false;
     std::vector<uint8_t> fetPresencePayload;
     struct timeval startTime;
-    gettimeofday(&startTime, nullptr);
+    DateTimeProvider->gettimeofday(startTime);
 
     while (true)
     {
@@ -112,7 +111,7 @@ bool BackplateComms::DoBurstStage()
 bool BackplateComms::IsTimeout(timeval &startTime, int timeoutUs)
 {
     timeval currentTime;
-    gettimeofday(&currentTime, nullptr);
+    DateTimeProvider->gettimeofday(currentTime);
     long elapsedUs = (currentTime.tv_sec - startTime.tv_sec) * 1000000 +
                      (currentTime.tv_usec - startTime.tv_usec);
 
@@ -152,7 +151,7 @@ bool BackplateComms::GetInfo(MessageType command, MessageType expectedResponse)
     SerialPort->Write(commandMsg.GetRawMessage());
 
     struct timeval startTime;
-    gettimeofday(&startTime, nullptr);
+    DateTimeProvider->gettimeofday(startTime);
 
     while (true)
     {
@@ -193,4 +192,9 @@ bool BackplateComms::GetInfo(MessageType command, MessageType expectedResponse)
     std::cerr << "GetInfo Error: Did not receive expected response for command "
               << static_cast<uint16_t>(command) << std::endl;
     return false;
+}
+
+void BackplateComms::MainTaskBody (void)
+{
+
 }
