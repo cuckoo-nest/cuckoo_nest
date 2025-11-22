@@ -60,6 +60,8 @@ set(CMAKE_C_COMPILER ${LINARO_BIN}/arm-linux-gnueabi-gcc)
 set(CMAKE_CXX_COMPILER ${LINARO_BIN}/arm-linux-gnueabi-g++)
 set(CMAKE_FIND_ROOT_PATH ${LINARO_DIR}/arm-linux-gnueabi/libc)
 set(CMAKE_SYSROOT ${CMAKE_FIND_ROOT_PATH})
+set(CMAKE_DEPFILE_FLAGS_C "")
+set(CMAKE_DEPFILE_FLAGS_CXX "")
 
 # Enable C++11 support
 set(CMAKE_CXX_STANDARD 11)
