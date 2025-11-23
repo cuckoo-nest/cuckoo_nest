@@ -53,4 +53,4 @@ jobs:
       if: (!cancelled())
       with:
         files: |
-          ${{github.workspace}}/build/test-results/**/*.xml
+          ${{github.workspace}}/build/test-results.xml
