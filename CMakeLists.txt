@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
+enable_testing()
 
 # Use old linker behavior for compatibility with older toolchains
 if(POLICY CMP0116)
