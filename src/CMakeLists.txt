@@ -3,6 +3,10 @@
 
 include(ExternalProject)
 
+# Disable dependency file generation for older toolchains
+set(CMAKE_CXX_DEPENDS_USE_COMPILER FALSE)
+set(CMAKE_C_DEPENDS_USE_COMPILER FALSE)
+
 # =====================================================
 # 3. Define your actual build target
 # =====================================================
