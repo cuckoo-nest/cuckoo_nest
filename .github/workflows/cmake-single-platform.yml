@@ -5,6 +5,7 @@ name: CMake on a single platform
 permissions:
   checks: write
   pull-requests: write
+  contents: write
 
 on:
   push:
