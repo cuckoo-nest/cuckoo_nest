@@ -80,7 +80,7 @@ void setup_custom_pattern() {
 - Compile flag: `SPDLOG_HEADER_ONLY` (automatically set)
 
 ### Unit Tests
-- Uses mock spdlog from `tests/mock_spdlog.hpp`
+- Uses mock spdlog from `tests/spdlog/spdlog.h`
 - All logging functions are no-ops
 - No external dependencies required
 - Compatible with the real spdlog API
