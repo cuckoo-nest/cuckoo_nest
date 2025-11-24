@@ -43,7 +43,6 @@ private:
     {
         // Implementation to call Home Assistant service
         spdlog::info("Calling Home Assistant service: {}", creds_.GetUrl());
-        spdlog::info("Bearer token: {}", creds_.GetToken());
 
         static CurlWrapper curl_wrapper;
         static bool curl_initialized = false;
