@@ -101,6 +101,7 @@ namespace sinks {
     public:
         virtual ~sink() = default;
     };
+    using sink_ptr = std::shared_ptr<sink>;
 }
 
 // Mock logger creation functions
