@@ -97,7 +97,7 @@ int main()
         if (config.has_home_assistant_config()) {
             spdlog::info("Home Assistant configured:");
             spdlog::info("  Base URL: {}", config.get_home_assistant_base_url());
-            spdlog::info("  Token: {}...", config.get_home_assistant_token().substr(0, 10));
+            spdlog::info("  Token: [configured]");
             spdlog::info("  Entity ID: {}", config.get_home_assistant_entity_id());
         } else {
             spdlog::info("Home Assistant not configured");
