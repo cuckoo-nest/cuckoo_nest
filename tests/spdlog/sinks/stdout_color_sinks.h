@@ -4,6 +4,11 @@
 // Mock stdout color sinks for testing
 namespace spdlog {
 namespace sinks {
-    using stdout_color_sink_mt = spdlog::logger;
+    class stdout_color_sink_mt : public spdlog::sinks::sink {
+    public:
+        void set_level(spdlog::level log_level) override {}
+        void log(const spdlog::details::log_msg&) override {}
+        void flush() override {}
+    };
 }
 }
