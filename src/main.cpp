@@ -155,15 +155,35 @@ int main()
 static void setup_logging() 
 {
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("/var/log/cuckoo.log");
-    file_sink->set_level(spdlog::level::info);
+    std::vector<spdlog::sink_ptr> sinks {console_sink};
     
-    std::vector<spdlog::sink_ptr> sinks {console_sink, file_sink};
+    // Try to create file sink, fall back to console-only if it fails
+    try {
+        auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("/var/log/cuckoo.log");
+        file_sink->set_level(spdlog::level::info);
+        sinks.push_back(file_sink);
+    } catch (const spdlog::spdlog_ex& ex) {
+        // Try fallback location
+        try {
+            auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("/tmp/cuckoo.log");
+            file_sink->set_level(spdlog::level::info);
+            sinks.push_back(file_sink);
+        } catch (const spdlog::spdlog_ex& ex2) {
+            // Fall back to console-only logging
+            // Logger will be set up with console sink only
+        }
+    }
+    
     auto logger = std::make_shared<spdlog::logger>("cuckoo", sinks.begin(), sinks.end());
     
     spdlog::set_default_logger(logger);
     spdlog::flush_on(spdlog::level::info);
-    spdlog::info("Logging to console and file");
+    
+    if (sinks.size() > 1) {
+        spdlog::info("Logging to console and file");
+    } else {
+        spdlog::warn("Logging to console only - failed to create log file");
+    }
 }
 
 // Input event handler callback
