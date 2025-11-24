@@ -162,13 +162,13 @@ static void setup_logging()
         auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("/var/log/cuckoo.log");
         file_sink->set_level(spdlog::level::info);
         sinks.push_back(file_sink);
-    } catch (const spdlog::spdlog_ex& ex) {
+    } catch (const spdlog::spdlog_ex&) {
         // Try fallback location
         try {
             auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("/tmp/cuckoo.log");
             file_sink->set_level(spdlog::level::info);
             sinks.push_back(file_sink);
-        } catch (const spdlog::spdlog_ex& ex2) {
+        } catch (const spdlog::spdlog_ex&) {
             // Fall back to console-only logging
             // Logger will be set up with console sink only
         }
@@ -179,6 +179,7 @@ static void setup_logging()
     spdlog::set_default_logger(logger);
     spdlog::flush_on(spdlog::level::info);
     
+    // Check if file sink was successfully added (sinks.size() > 1 means console + file)
     if (sinks.size() > 1) {
         spdlog::info("Logging to console and file");
     } else {
