@@ -12,8 +12,8 @@ void DimmerScreen::Render()
 
     std::string dimmerValueString = std::to_string(dimmerValue / DIMMER_STEP) + "%";
 
-    display_->DrawText(60, 80, "Dimmer", SCREEN_COLOR_WHITE, Font::FONT_H1);
-    display_->DrawText(100, 140, dimmerValueString, SCREEN_COLOR_WHITE, Font::FONT_H2);
+    display_->DrawText(60, -40, "Dimmer", SCREEN_COLOR_WHITE, Font::FONT_H1);
+    display_->DrawText(100, 0, dimmerValueString, SCREEN_COLOR_WHITE, Font::FONT_H2);
 
 }
 
@@ -35,6 +35,14 @@ void DimmerScreen::handle_input_event(const InputDeviceType device_type, const s
         {
             beeper_->play(100);
         }   
+        
+        auto dimmer = screenManager_->GetIntegrationContainer()->GetDimmerById(integrationId_);
+
+        if (dimmer != nullptr)
+        {
+            int brightnessPercent = dimmerValue / DIMMER_STEP;
+            dimmer->SetBrightness(brightnessPercent);
+        }
 
         screenManager_->GoToPreviousScreen();
     }

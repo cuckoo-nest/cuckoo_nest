@@ -1,5 +1,5 @@
 #include "Backlight.hpp"
-#include <iostream>
+#include <spdlog/spdlog.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
@@ -22,13 +22,13 @@ void Backlight::set_backlight_brightness(int brightness)
     FILE* f = fopen(device_path_.c_str(), "w");
     if (f == NULL)
     {
-        std::cerr << "Failed to open brightness device.  Err: " << strerror(errno) << "\n";
+        spdlog::error("Failed to open brightness device. Err: {}", strerror(errno));
         return;
     }
 
     fprintf(f, "%d\n", brightness);
 
-    std::cout << "Brightness set to: " << brightness << "\n";
+    spdlog::info("Brightness set to: {}", brightness);
 
     fclose(f);
 }

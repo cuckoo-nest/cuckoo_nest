@@ -1,5 +1,5 @@
 #include "SwitchScreen.hpp"
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 void SwitchScreen::Render()
 {
@@ -59,19 +59,19 @@ void SwitchScreen::handle_input_event(const InputDeviceType device_type, const s
         if (selectedOption == SelectedOption::TOGGLE)
         {
             if (integrationId_ == 0) {
-                std::cout << "No integration ID set for this SwitchScreen\n";
+                spdlog::warn("No integration ID set for this SwitchScreen");
                 return;
             }
 
             auto integrationContainer_ = screenManager_->GetIntegrationContainer();
             if (integrationContainer_ == nullptr) {
-                std::cout << "No integration container available\n";
+                spdlog::error("No integration container available");
                 return;
             }
 
             auto sw = integrationContainer_->GetSwitchById(integrationId_);
             if (sw == nullptr) {
-                std::cout << "No switch found for integration ID: " << integrationId_ << "\n";
+                spdlog::error("No switch found for integration ID: {}", integrationId_);
                 return;
             }
 
@@ -79,13 +79,13 @@ void SwitchScreen::handle_input_event(const InputDeviceType device_type, const s
             if (switchState == SwitchState::OFF)
             {
                 switchState = SwitchState::ON;
-                std::cout << "Switch turned ON\n";
+                spdlog::info("Switch turned ON");
                 sw->TurnOn();
             }
             else
             {
                 switchState = SwitchState::OFF;
-                std::cout << "Switch turned OFF\n";
+                spdlog::info("Switch turned OFF");
                 sw->TurnOff();
             }
 

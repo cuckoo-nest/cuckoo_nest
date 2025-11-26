@@ -43,3 +43,6 @@
 build*
 Testing
 upload.sh
+
+# CodeQL
+_codeql_detected_source_root

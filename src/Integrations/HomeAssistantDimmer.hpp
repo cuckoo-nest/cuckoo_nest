@@ -1,45 +1,62 @@
 #pragma once
 
-#include "IntegrationSwitchBase.hpp"
+#include "IntegrationDimmerBase.hpp"
 #include "HomeAssistantCreds.hpp"
-#include "CurlWrapper.hpp"
-#include <spdlog/spdlog.h>
+#include"CurlWrapper.hpp"
 
-class HomeAssistantSwitch : public IntegrationSwitchBase
+class HomeAssistantDimmer : public IntegrationDimmerBase
 {
 public:
-    HomeAssistantSwitch(const HomeAssistantCreds &creds, const std::string &entity_id) : creds_(creds),
-                                                                                         entityId_(entity_id)
+    HomeAssistantDimmer(const HomeAssistantCreds &creds, const std::string &entity_id) : creds_(creds),
+                                                                                         entityId_(entity_id), brightness_(-1)
     {
     }
 
-    virtual ~HomeAssistantSwitch() = default;
+    virtual ~HomeAssistantDimmer() = default;
 
     const std::string &GetEntityId() const { return entityId_; }
 
     SwitchState GetState() override
     {
         // Implementation to get state from Home Assistant
-        return SwitchState::OFF; // Placeholder
+        return brightness_ > 0 ? SwitchState::ON : SwitchState::OFF; // Placeholder
     }
 
     void TurnOn() override
     {
-        // Implementation to turn on the switch via Home Assistant
-        execute("switch/turn_on");
+        // Implementation to turn on the Dimmer via Home Assistant
+        SetBrightness(100);
     }
 
     void TurnOff() override
     {
-        // Implementation to turn off the switch via Home Assistant
-        execute("switch/turn_off");
+        // Implementation to turn off the Dimmer via Home Assistant
+        SetBrightness(-1);
     }
+    int GetBrightness() override {  // <-- THIS IS REQUIRED
+        return brightness_;
+    }
+void SetBrightness(int brightness) override
+{
+    if (brightness <= 0)
+    {
+        brightness_ = -1;                  
+        ExecuteBrightness("light/turn_off");
+    }
+    else
+    {
+        if (brightness > 100) brightness = 100;
+        brightness_ = brightness;
+        ExecuteBrightness("light/turn_on", brightness_);
+    }
+}
 
 private:
     HomeAssistantCreds creds_;
     std::string entityId_;
+    int brightness_;
 
-    void execute(std::string action)
+    void ExecuteBrightness(std::string action, int brightness = -1)
     {
         // Implementation to call Home Assistant service
         spdlog::info("Calling Home Assistant service: {}", creds_.GetUrl());
@@ -59,6 +76,11 @@ private:
 
         // Prepare JSON data
         std::string jsonData = "{\"entity_id\": \"" + entityId_ + "\"}";
+        if (brightness >= 0)
+        {
+            int ha_brightness = (brightness * 255) / 100;
+            jsonData = "{\"entity_id\": \"" + entityId_ + "\", \"brightness\": " + std::to_string(ha_brightness) + "}";
+        }
 
         // Prepare headers
         struct curl_slist *headers = nullptr;
@@ -70,7 +92,7 @@ private:
         if (curl)
         {
             std::string url = creds_.GetUrl() + "/api/services/" + action;
-            spdlog::info("HomeAssistantSwitch: URL: {}", url);
+            spdlog::info("HomeAssistantDimmer: URL: {}", url);
             curl_wrapper.easy_setopt(curl, CURLOPT_URL, url.c_str());
             curl_wrapper.easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
             curl_wrapper.easy_setopt(curl, CURLOPT_POSTFIELDS, jsonData.c_str());
@@ -83,7 +105,7 @@ private:
 
             curl_wrapper.easy_cleanup(curl);
             curl_wrapper.slist_free_all(headers);
-            spdlog::info("HomeAssistantSwitch: Service call completed");
+            spdlog::info("HomeAssistantDimmer: Service call completed");
         }
     }
 };

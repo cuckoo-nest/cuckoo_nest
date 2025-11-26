@@ -2,11 +2,12 @@
 #include <fstream>
 #include <sstream>
 #include <json11.hpp>
-#include <iostream>
+#include <spdlog/spdlog.h>
 #include <memory>
 #include <stdio.h>
 
 #include "HomeAssistantSwitch.hpp"
+#include "HomeAssistantDimmer.hpp"
 
 IntegrationContainer::IntegrationContainer()
 {
@@ -18,7 +19,7 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
     if (configContent.empty())
     {
         // Handle error: could not read config file
-        std::cerr << "ConfigurationReader: Could not read config file" << std::endl;
+        spdlog::error("ConfigurationReader: Could not read config file");
         return;
     }
 
@@ -26,12 +27,12 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
     json11::Json parsed_json = json11::Json::parse(configContent, parse_error);
 
     if (!parse_error.empty()) {
-        std::cerr << "ConfigurationReader: JSON parse error: " << parse_error << std::endl;
+        spdlog::error("ConfigurationReader: JSON parse error: {}", parse_error);
         return;
     }
     
     if (!parsed_json.is_object()) {
-        std::cerr << "ConfigurationReader: Root JSON element must be an object" << std::endl;
+        spdlog::error("ConfigurationReader: Root JSON element must be an object");
         return;
     }
 
@@ -51,17 +52,29 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
         int id = integration["id"].int_value();
         std::string name = integration["name"].string_value();
         std::string type = integration["type"].string_value();
-
+        
         if (type == "HomeAssistant") 
         {
             std::string entityId = integration["entityId"].string_value();
-
-            auto switchPtr = std::unique_ptr<HomeAssistantSwitch>(
-                new HomeAssistantSwitch(homeAssistantCreds_, entityId)
-            );
-            switchPtr->SetId(id);
-            switchPtr->SetName(name);
-            switchMap_[id] = std::move(switchPtr);
+            std::string domain = entityId.substr(0, entityId.find('.'));
+            if (domain == "switch") 
+            {
+                auto switchPtr = std::unique_ptr<HomeAssistantSwitch>(
+                    new HomeAssistantSwitch(homeAssistantCreds_, entityId)
+                );
+                switchPtr->SetId(id);
+                switchPtr->SetName(name);
+                switchMap_[id] = std::move(switchPtr);
+            } 
+            else if (domain == "light") 
+            {
+                auto dimmerPtr = std::unique_ptr<HomeAssistantDimmer>(
+                    new HomeAssistantDimmer(homeAssistantCreds_, entityId)
+                );
+                dimmerPtr->SetId(id);
+                dimmerPtr->SetName(name);
+                dimmerMap_[id] = std::move(dimmerPtr);
+            }
         }
     }
 
@@ -84,6 +97,16 @@ IntegrationSwitchBase* IntegrationContainer::GetSwitchById(int id)
 {
     auto it = switchMap_.find(id);
     if (it != switchMap_.end())
+    {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
+IntegrationDimmerBase* IntegrationContainer::GetDimmerById(int id)
+{
+    auto it = dimmerMap_.find(id);
+    if (it != dimmerMap_.end())
     {
         return it->second.get();
     }
