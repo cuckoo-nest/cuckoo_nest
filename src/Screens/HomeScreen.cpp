@@ -1,6 +1,6 @@
 #include "HomeScreen.hpp"
 #include <string>
-#include <iostream>
+#include <spdlog/spdlog.h>
 #include "DimmerScreen.hpp"
 
 static enum screen_color colors[] = {
@@ -39,7 +39,6 @@ std::string HomeScreen::TimeToString(time_t time)
     char buffer[100];
     struct tm *timeinfo = localtime(&time);
     strftime(buffer, sizeof(buffer), "%H:%M:%S", timeinfo);
-    //std::cout << "Formatted time: " << buffer << std::endl;
     return std::string(buffer);
 }
 
@@ -61,7 +60,7 @@ void HomeScreen::handle_input_event(const InputDeviceType device_type, const str
         }
         else
         {
-            std::cout << "Next screen is null!" << std::endl;
+            spdlog::warn("Next screen is null!");
         }
     }
 }

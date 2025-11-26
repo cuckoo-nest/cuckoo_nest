@@ -10,6 +10,7 @@ endif()
 project(CuckooNest CXX)
 
 include(ExternalProject)
+include(FetchContent)
 
 # =====================================================
 # 1. Define the toolchain download information

@@ -1,7 +1,7 @@
 #include "IntegrationActionBase.hpp"
 #include "CurlWrapper.hpp"
 #include <string>
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 class ActionHomeAssistantService : public IntegrationActionBase 
 {
@@ -26,7 +26,7 @@ public:
     void execute() override 
     {
         // Implementation to call Home Assistant service
-        std::cout << "Calling Home Assistant service: " << domain_ << std::endl;
+        spdlog::info("Calling Home Assistant service: {}", domain_);
 
         static CurlWrapper curl_wrapper;
         static bool curl_initialized = false;
@@ -34,7 +34,7 @@ public:
         if (!curl_initialized) {
             curl_initialized = curl_wrapper.initialize();
             if (!curl_initialized) {
-                std::cerr << "Failed to initialize libcurl - functionality disabled" << std::endl;
+                spdlog::error("Failed to initialize libcurl - functionality disabled");
                 return;
             }
         }
@@ -57,7 +57,7 @@ public:
 
             CURLcode res = curl_wrapper.easy_perform(curl);
             if (res != CURLE_OK) {
-                std::cerr << "curl_easy_perform() failed: " << curl_wrapper.easy_strerror(res) << std::endl;
+                spdlog::error("curl_easy_perform() failed: {}", curl_wrapper.easy_strerror(res));
             }
 
             curl_wrapper.easy_cleanup(curl);

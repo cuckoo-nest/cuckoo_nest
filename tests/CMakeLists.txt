@@ -18,6 +18,9 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+# Add tests directory for mock spdlog (BEFORE to take precedence)
+include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
+
 # Include directories for the source code
 include_directories(../src)
 
@@ -63,6 +66,9 @@ target_include_directories(cuckoo_tests PRIVATE ${CURL_INCLUDE_DIRS})
 
 # Add json11 include directory for tests
 target_include_directories(cuckoo_tests PRIVATE ../third-party/json11)
+
+# Add compile definition to use mock spdlog in tests
+target_compile_definitions(cuckoo_tests PRIVATE SPDLOG_HEADER_ONLY)
 
 # Link against GoogleTest libraries and system libcurl
 target_link_libraries(
