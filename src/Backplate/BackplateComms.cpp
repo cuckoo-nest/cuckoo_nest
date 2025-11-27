@@ -54,7 +54,10 @@ bool BackplateComms::DoBurstStage()
     while (true)
     {
         if (IsTimeout(startTime, BurstTimeoutUs))
+        {
+            std::cerr << "Burst stage timed out." << std::endl;
             break;
+        }
 
         uint8_t readBuffer[256];
         size_t totalBytesRead = 0;

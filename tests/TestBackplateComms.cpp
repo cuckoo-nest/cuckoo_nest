@@ -12,7 +12,11 @@ using ::testing::DoAll;
 using ::testing::SetArgPointee;
 using ::testing::ByRef;
 
-class MockDateTimeProvider
+class MockDateTimeProvider : public IDateTimeProvider {
+public:
+    MOCK_METHOD(int, gettimeofday, (struct timeval &timeval), (override));
+};
+
 
 class MockSerialPort : public ISerialPort {
 public:
@@ -44,13 +48,22 @@ protected:
         });
     }
 
+    testing::Action<int(timeval&)> mockGetTimeval(int sec, int usec) {
+        return testing::Invoke([sec, usec](timeval& tv) {
+            tv.tv_sec = sec;
+            tv.tv_usec = usec;
+            return 0;
+        });
+    }
+
     MockSerialPort mockSerialPort;
+    MockDateTimeProvider mockDateTimeProvider;
 };
 
 TEST_F(TestBackplateComms, InitializeOpensSerialPortCorrectly) 
 {
     InSequence s;
-    BackplateComms comms(&mockSerialPort, 1000);
+    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
 
     EXPECT_CALL(mockSerialPort, Open(BaudRate::Baud115200))
         .WillOnce(Return(true));
@@ -69,7 +82,7 @@ TEST_F(TestBackplateComms, InitializeOpensSerialPortCorrectly)
 TEST_F(TestBackplateComms, InitializeFailsIfOpenFails) 
 {
     InSequence s;
-    BackplateComms comms(&mockSerialPort, 1000);
+    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
 
     EXPECT_CALL(mockSerialPort, Open(BaudRate::Baud115200))
         .WillOnce(Return(false));
@@ -80,8 +93,11 @@ TEST_F(TestBackplateComms, InitializeFailsIfOpenFails)
 
 TEST_F(TestBackplateComms, BustStageWorks) 
 {
+    EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
+        .WillRepeatedly(mockGetTimeval(1000, 0));
+
     InSequence s;
-    BackplateComms comms(&mockSerialPort, 1000);
+    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
 
     EXPECT_CALL(mockSerialPort, Open(BaudRate::Baud115200))
         .WillRepeatedly(Return(true));
@@ -118,11 +134,13 @@ TEST_F(TestBackplateComms, BustStageWorks)
 
 TEST_F(TestBackplateComms, GetInfoStageWorks)
 {
+    EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
+        .WillRepeatedly(mockGetTimeval(1000, 0));
+
     InSequence s;
     BackplateComms comms (
         &mockSerialPort,
-        1000,
-        5*1000*1000 // 5 seconds for info gathering timeout
+        &mockDateTimeProvider
     );
 
     ResponseMessage tfeVersionResponse(MessageType::TfeVersion);
