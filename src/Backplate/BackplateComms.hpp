@@ -7,6 +7,8 @@
 #include <string>
 #include <functional>
 #include <sys/time.h>
+#include <thread>
+#include <atomic>
 #include "MessageType.hxx"
 #include "../IDateTimeProvider.hpp"
 
@@ -44,7 +46,7 @@ public:
         SerialPort(serialPort),
         DateTimeProvider(dateTimeProvider) {}
     
-    virtual ~BackplateComms() = default;
+    virtual ~BackplateComms();
 
     bool Initialize();
     bool InitializeSerial();
@@ -73,6 +75,10 @@ public:
 
 private:
     bool IsTimeout(timeval &startTime, int timeoutUs);
+
+    // Background worker thread that runs MainTaskBody periodically
+    std::thread workerThread;
+    std::atomic<bool> running{false};
 
 private:
     const int KeepAliveIntervalSeconds = 15;

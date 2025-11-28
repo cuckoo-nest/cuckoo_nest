@@ -5,6 +5,10 @@
 #include <string>
 #include <cstring>
 #include <spdlog/spdlog.h>
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <atomic>
 
 bool BackplateComms::Initialize() 
 {
@@ -19,7 +23,28 @@ bool BackplateComms::Initialize()
     if (!DoInfoGathering())
         return false;
 
+    // Start background worker thread to run MainTaskBody periodically
+    if (!running.load())
+    {
+        running.store(true);
+        workerThread = std::thread([this]() {
+            while (this->running.load())
+            {
+                this->MainTaskBody();
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            }
+        });
+    }
+
     return true;
+}
+
+BackplateComms::~BackplateComms()
+{
+    // Stop background thread and join
+    running.store(false);
+    if (workerThread.joinable())
+        workerThread.join();
 }
 
 

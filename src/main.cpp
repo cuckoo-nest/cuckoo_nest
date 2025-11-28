@@ -23,6 +23,10 @@
 
 #include "lvgl/lvgl.h"
 
+#include "Backplate/UnixSerialPort.hpp"
+#include "Backplate/BackplateComms.hpp"
+#include "IDateTimeProvider.hpp"
+
 class MyInputEvent{
 public:
     MyInputEvent(InputDeviceType device_type, const struct input_event &event)
@@ -56,6 +60,20 @@ static Inputs inputs("/dev/input/event2", "/dev/input/event1");
 static Backlight backlight("/sys/class/backlight/3-0036/brightness");
 static IntegrationContainer integration_container;
 static ScreenManager screen_manager(&hal, &integration_container);
+
+// Backplate objects (leave them static so they live for program lifetime)
+static UnixSerialPort backplateSerial("/dev/ttyO2");
+
+// Simple system time provider implementation
+class SystemDateTimeProvider : public IDateTimeProvider {
+public:
+    int gettimeofday(struct timeval &tv) override {
+        return ::gettimeofday(&tv, nullptr);
+    }
+};
+
+static SystemDateTimeProvider systemDateTimeProvider;
+static BackplateComms backplateComms(&backplateSerial, &systemDateTimeProvider);
 
 // create a fifo for input events
 std::queue<MyInputEvent> input_event_queue;
@@ -120,6 +138,14 @@ int main()
     }
 
     spdlog::info("Input polling started in background thread...");
+
+    // Initialize backplate communications (this will start its worker thread)
+    if (!backplateComms.Initialize()) {
+        spdlog::error("Failed to initialize Backplate communications");
+        // non-fatal: continue running without backplate comms
+    } else {
+        spdlog::info("Backplate communications initialized and running in background thread");
+    }
 
     // Main thread can now do other work or just wait
     int tick = 0;
