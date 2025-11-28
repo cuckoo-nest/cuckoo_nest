@@ -70,7 +70,6 @@ target_include_directories(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
 
 # Add spdlog (header-only mode)
 target_include_directories(cuckoo PRIVATE ${spdlog_SOURCE_DIR}/include)
-target_compile_definitions(cuckoo PRIVATE SPDLOG_HEADER_ONLY)
 
 # For runtime dynamic linking, we don't link libcurl at build time
 # We use dlopen/dlsym to load it at runtime on the target device
