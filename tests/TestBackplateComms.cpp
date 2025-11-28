@@ -34,6 +34,7 @@ protected:
     void SetUp() override {
         // Code here will be called immediately after the constructor (right
         // before each test).
+        mockCurrentTimeSec = 0;
     }
 
     void TearDown() override {
@@ -56,8 +57,18 @@ protected:
         });
     }
 
+    testing::Action<int(timeval&)> mockGetTimevalSecs() {
+        return testing::Invoke([&](timeval& tv) {
+            
+            tv.tv_sec = mockCurrentTimeSec;
+            tv.tv_usec = 0;
+            return 0;
+        });
+    }
+
     MockSerialPort mockSerialPort;
     MockDateTimeProvider mockDateTimeProvider;
+    int mockCurrentTimeSec;
 };
 
 TEST_F(TestBackplateComms, InitializeOpensSerialPortCorrectly) 
@@ -156,8 +167,39 @@ TEST_F(TestBackplateComms, GetInfoStageWorks)
     EXPECT_TRUE(comms.DoInfoGathering());
 }
 
-// keep alives are send periodically
+TEST_F(TestBackplateComms, PeriodicalRequestsWork)
+{
+    BackplateComms comms (
+        &mockSerialPort,
+        &mockDateTimeProvider
+    );
 
+    EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
+        .WillRepeatedly(mockGetTimevalSecs());
+
+    // keep alive is sent every 15 seconds
+    CommandMessage keepAliveMessage(MessageType::PeriodicStatusRequest);
+     EXPECT_CALL(
+        mockSerialPort, 
+        Write(testing::ElementsAreArray(keepAliveMessage.GetRawMessage()))
+    )
+    .Times(5)
+    .WillRepeatedly(Return(keepAliveMessage.GetRawMessage().size())); // Assume Write returns number of bytes written
+
+    // Historical data is requested every 60 seconds
+    CommandMessage historicalDataRequest(MessageType::GetHistoricalDataBuffers);
+     EXPECT_CALL(
+        mockSerialPort, 
+        Write(testing::ElementsAreArray(historicalDataRequest.GetRawMessage()))
+    )
+    .Times(2)
+    .WillRepeatedly(Return(historicalDataRequest.GetRawMessage().size())); // Assume Write returns number of bytes written
+    
+    for (int i = 0; i < 13; ++i) {
+        comms.MainTaskBody();
+        mockCurrentTimeSec += 5;
+    }
+}
 
 // will need tests for
 // no response received to the read - return false

@@ -200,4 +200,47 @@ bool BackplateComms::GetInfo(MessageType command, MessageType expectedResponse)
 void BackplateComms::MainTaskBody (void)
 {
 
+    if (IsTimeForKeepalive())
+    {
+        CommandMessage keepAliveMsg(MessageType::PeriodicStatusRequest);
+        SerialPort->Write(keepAliveMsg.GetRawMessage());
+    }
+
+    if (IsTimeForHistoricalDataRequest())
+    {
+        CommandMessage historicalDataMsg(MessageType::GetHistoricalDataBuffers);
+        SerialPort->Write(historicalDataMsg.GetRawMessage());
+    }
+
+}
+
+bool BackplateComms::IsTimeForKeepalive()
+{
+    struct timeval currentTime;
+    DateTimeProvider->gettimeofday(currentTime);
+
+    long elapsedSecs = (currentTime.tv_sec - LastKeepAliveTime.tv_sec);
+
+    if (elapsedSecs >= KeepAliveIntervalSeconds
+    || LastKeepAliveTime.tv_sec == 0)
+    {
+        LastKeepAliveTime = currentTime;
+        return true;
+    }
+    return false;
+}
+
+bool BackplateComms::IsTimeForHistoricalDataRequest()
+{
+    struct timeval currentTime;
+    DateTimeProvider->gettimeofday(currentTime);
+
+    long elapsedSecs = (currentTime.tv_sec - LastHistoricalDataRequestTime.tv_sec);
+    if (elapsedSecs >= HistoricalDataIntervalSeconds
+    || LastHistoricalDataRequestTime.tv_sec == 0)
+    {
+        LastHistoricalDataRequestTime = currentTime;
+        return true;
+    }
+    return false;
 }

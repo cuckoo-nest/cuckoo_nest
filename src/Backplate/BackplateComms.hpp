@@ -48,15 +48,21 @@ public:
     bool GetInfo(MessageType command, MessageType expectedResponse);
     void MainTaskBody(void);
 
+    bool IsTimeForKeepalive();
+    bool IsTimeForHistoricalDataRequest();
+
 private:
     bool IsTimeout(timeval &startTime, int timeoutUs);
 
 
 private:
     const int KeepAliveIntervalSeconds = 15;
+    const int HistoricalDataIntervalSeconds = 60;
     const int BurstTimeoutUs = 5000000;
     const int GetInfoTimeoutUs = 200000;
 
     ISerialPort* SerialPort;
     IDateTimeProvider* DateTimeProvider;
+    timeval LastKeepAliveTime {0, 0};
+    timeval LastHistoricalDataRequestTime {0, 0};
 };
