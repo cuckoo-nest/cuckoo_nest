@@ -211,3 +211,30 @@ TEST_F(TestBackplateComms, PeriodicalRequestsWork)
 // No acks are sent until BRK is received
 // Correct number of Acks are sent
 // Reads of partial data 
+
+TEST_F(TestBackplateComms, HandlesPartialMessagesAcrossCalls)
+{
+    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+
+    EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
+        .WillRepeatedly(mockGetTimevalSecs());
+
+    // prepare a response message and split it into two parts
+    ResponseMessage sensorMsg(MessageType::TempHumidityData);
+    sensorMsg.SetPayload(std::vector<uint8_t>{0x10, 0x20, 0x30, 0x40});
+    auto raw = sensorMsg.GetRawMessage();
+    size_t split = raw.size() / 2;
+    std::vector<uint8_t> part1(raw.begin(), raw.begin() + split);
+    std::vector<uint8_t> part2(raw.begin() + split, raw.end());
+
+    // Allow writes (keepalive/historical) without strict checking for this test
+    EXPECT_CALL(mockSerialPort, Write(_)).WillRepeatedly(Return(1));
+
+    EXPECT_CALL(mockSerialPort, Read(_,_))
+        .WillOnce(mockReadResponse(part1))
+        .WillOnce(mockReadResponse(part2));
+
+    // Call MainTaskBody twice simulating two scheduling ticks
+    comms.MainTaskBody(); // reads part1 -> not enough to parse
+    comms.MainTaskBody(); // reads part2 -> should parse and log
+}

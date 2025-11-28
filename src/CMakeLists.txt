@@ -43,6 +43,7 @@ set (
     Backplate/Message.cpp
     Backplate/CommandMessage.cpp
     Backplate/ResponseMessage.cpp
+    Backplate/UnixSerialPort.cpp
 )
 
 add_executable(cuckoo ${SRC_FILES})

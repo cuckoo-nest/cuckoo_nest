@@ -212,6 +212,104 @@ void BackplateComms::MainTaskBody (void)
         SerialPort->Write(historicalDataMsg.GetRawMessage());
     }
 
+    // Read available data and attempt to parse ResponseMessage packets
+    static std::vector<uint8_t> rxBuffer;
+    uint8_t readBuffer[256];
+    int bytesRead = SerialPort->Read(reinterpret_cast<char *>(readBuffer), sizeof(readBuffer));
+
+    if (bytesRead <= 0)
+    {
+        // nothing to do
+        return;
+    }
+
+    rxBuffer.insert(rxBuffer.end(), readBuffer, readBuffer + bytesRead);
+
+    // Attempt to parse one or more messages from rxBuffer
+    while (true)
+    {
+        // We need at least the preamble + command + len + crc (for response preamble is 4)
+        const int preambleSize = 4; // ResponseMessage preamble
+        const size_t minHeader = preambleSize + 2 + 2 + 2; // preamble + cmd(2) + len(2) + crc(2)
+
+        if (rxBuffer.size() < minHeader)
+            break; // wait for more data
+
+        // Ensure preamble is aligned at start; if not, discard until we find it
+        const uint8_t preambleSeq[4] = {0xd5, 0xd5, 0xaa, 0x96};
+        size_t firstPreamble = std::string::npos;
+        for (size_t i = 0; i + preambleSize <= rxBuffer.size(); ++i)
+        {
+            if (std::memcmp(&rxBuffer[i], preambleSeq, preambleSize) == 0)
+            {
+                firstPreamble = i;
+                break;
+            }
+        }
+
+        if (firstPreamble == std::string::npos)
+        {
+            // no preamble in buffer yet - discard everything
+            rxBuffer.clear();
+            break;
+        }
+
+        // Drop any leading garbage
+        if (firstPreamble > 0)
+        {
+            rxBuffer.erase(rxBuffer.begin(), rxBuffer.begin() + firstPreamble);
+            if (rxBuffer.size() < minHeader)
+                break;
+        }
+
+        // Now we have preamble at start
+        // Read payload length to figure full message size
+        uint16_t payloadLen = static_cast<uint16_t>(rxBuffer[preambleSize + 2]) |
+                              (static_cast<uint16_t>(rxBuffer[preambleSize + 3]) << 8);
+
+        size_t fullMsgLen = preambleSize + 2 + 2 + payloadLen + 2;
+        if (rxBuffer.size() < fullMsgLen)
+        {
+            // wait for rest
+            break;
+        }
+
+        // We have enough bytes for a complete message. Try parsing.
+        ResponseMessage resp;
+        if (!resp.ParseMessage(rxBuffer.data(), fullMsgLen))
+        {
+            // Parse failed (likely CRC or corrupt). Drop first byte and retry.
+            rxBuffer.erase(rxBuffer.begin());
+            continue;
+        }
+
+        // Successful parse: emit a simple log point for measurements/events
+        MessageType cmd = resp.GetMessageCommand();
+        switch (cmd)
+        {
+            case MessageType::TempHumidityData:
+            case MessageType::PirDataRaw:
+            case MessageType::AmbientLightSensor:
+            case MessageType::PirMotionEvent:
+            case MessageType::ProximityEvent:
+            case MessageType::ProximitySensorHighDetail:
+            case MessageType::BackplateState:
+            case MessageType::RawAdcData:
+                std::cout << "BackplateComms: Received measurement/event cmd=0x" << std::hex
+                          << static_cast<uint16_t>(cmd) << std::dec << " size="
+                          << resp.GetPayload().size() << std::endl;
+                break;
+            default:
+                std::cout << "BackplateComms: Received cmd=0x" << std::hex
+                          << static_cast<uint16_t>(cmd) << std::dec << " size="
+                          << resp.GetPayload().size() << std::endl;
+                break;
+        }
+
+        // Remove processed bytes
+        rxBuffer.erase(rxBuffer.begin(), rxBuffer.begin() + fullMsgLen);
+    }
+
 }
 
 bool BackplateComms::IsTimeForKeepalive()
