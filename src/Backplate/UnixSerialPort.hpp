@@ -2,10 +2,11 @@
 
 #include "BackplateComms.hpp"
 #include <string>
+#include <vector>
 
 class UnixSerialPort : public ISerialPort {
 public:
-    UnixSerialPort(const std::string &port);
+    explicit UnixSerialPort(const std::string &port);
     virtual ~UnixSerialPort();
 
     bool Open(BaudRate baudRate) override;

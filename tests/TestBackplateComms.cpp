@@ -238,3 +238,179 @@ TEST_F(TestBackplateComms, HandlesPartialMessagesAcrossCalls)
     comms.MainTaskBody(); // reads part1 -> not enough to parse
     comms.MainTaskBody(); // reads part2 -> should parse and log
 }
+
+namespace {
+    static bool s_tempCalled = false;
+    static size_t s_tempLen = 0;
+    static bool s_pirCalled = false;
+    static size_t s_pirLen = 0;
+    static bool s_genericCalled = false;
+    static uint16_t s_genericType = 0;
+    static size_t s_genericLen = 0;
+
+    void testTempCb(const uint8_t* payload, size_t len)
+    {
+        s_tempCalled = true;
+        s_tempLen = len;
+    }
+
+    void testPirCb(const uint8_t* payload, size_t len)
+    {
+        s_pirCalled = true;
+        s_pirLen = len;
+    }
+
+    void testGenericCb(uint16_t type, const uint8_t* payload, size_t len)
+    {
+        s_genericCalled = true;
+        s_genericType = type;
+        s_genericLen = len;
+    }
+}
+
+TEST_F(TestBackplateComms, TemperatureCallbackInvoked)
+{
+    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    comms.AddTemperatureCallback(testTempCb);
+    comms.AddGenericEventCallback(testGenericCb);
+
+    EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
+        .WillRepeatedly(mockGetTimevalSecs());
+
+    ResponseMessage sensorMsg(MessageType::TempHumidityData);
+    sensorMsg.SetPayload(std::vector<uint8_t>{0x11, 0x22});
+
+    EXPECT_CALL(mockSerialPort, Write(_)).WillRepeatedly(Return(1));
+    EXPECT_CALL(mockSerialPort, Read(_,_))
+        .WillOnce(mockReadResponse(sensorMsg.GetRawMessage()));
+
+    s_tempCalled = false; s_genericCalled = false; s_genericType = 0; s_tempLen = 0;
+    comms.MainTaskBody();
+
+    EXPECT_TRUE(s_tempCalled);
+    EXPECT_TRUE(s_genericCalled);
+    EXPECT_EQ(s_genericType, static_cast<uint16_t>(MessageType::TempHumidityData));
+    EXPECT_EQ(s_tempLen, sensorMsg.GetPayload().size());
+}
+
+TEST_F(TestBackplateComms, PIRCallbackInvoked)
+{
+    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    comms.AddPIRCallback(testPirCb);
+    comms.AddGenericEventCallback(testGenericCb);
+
+    EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
+        .WillRepeatedly(mockGetTimevalSecs());
+
+    ResponseMessage pirMsg(MessageType::PirMotionEvent);
+    pirMsg.SetPayload(std::vector<uint8_t>{0x01});
+
+    EXPECT_CALL(mockSerialPort, Write(_)).WillRepeatedly(Return(1));
+    EXPECT_CALL(mockSerialPort, Read(_,_))
+        .WillOnce(mockReadResponse(pirMsg.GetRawMessage()));
+
+    s_pirCalled = false; s_genericCalled = false; s_genericType = 0; s_pirLen = 0;
+    comms.MainTaskBody();
+
+    EXPECT_TRUE(s_pirCalled);
+    EXPECT_TRUE(s_genericCalled);
+    EXPECT_EQ(s_genericType, static_cast<uint16_t>(MessageType::PirMotionEvent));
+    EXPECT_EQ(s_pirLen, pirMsg.GetPayload().size());
+}
+
+TEST_F(TestBackplateComms, CallbacksNotInvokedOnBadCrc)
+{
+    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    comms.AddTemperatureCallback(testTempCb);
+    comms.AddPIRCallback(testPirCb);
+    comms.AddGenericEventCallback(testGenericCb);
+
+
+    EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
+        .WillRepeatedly(mockGetTimevalSecs());
+
+    ResponseMessage sensorMsg(MessageType::TempHumidityData);
+    sensorMsg.SetPayload(std::vector<uint8_t>{0x11, 0x22});
+    auto raw = sensorMsg.GetRawMessage();
+    // Corrupt last CRC byte
+    std::vector<uint8_t> corrupted(raw.begin(), raw.end());
+    if (!corrupted.empty()) corrupted[corrupted.size()-1] ^= 0xFF;
+
+    EXPECT_CALL(mockSerialPort, Write(_)).WillRepeatedly(Return(1));
+    EXPECT_CALL(mockSerialPort, Read(_,_))
+        .WillOnce(mockReadResponse(corrupted));
+
+    s_tempCalled = false; s_pirCalled = false; s_genericCalled = false;
+    comms.MainTaskBody();
+
+    EXPECT_FALSE(s_tempCalled);
+    EXPECT_FALSE(s_pirCalled);
+    EXPECT_FALSE(s_genericCalled);
+}
+
+TEST_F(TestBackplateComms, MultipleSubscribersReceiveEvents)
+{
+    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+
+    std::vector<int> calls;
+    auto cb1 = [&](const uint8_t* p, size_t l) { calls.push_back(1); };
+    auto cb2 = [&](const uint8_t* p, size_t l) { calls.push_back(2); };
+    auto gcb = [&](uint16_t type, const uint8_t* p, size_t l) { calls.push_back(100 + type); };
+
+    comms.AddTemperatureCallback(cb1);
+    comms.AddTemperatureCallback(cb2);
+    comms.AddGenericEventCallback(gcb);
+
+    EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
+        .WillRepeatedly(mockGetTimevalSecs());
+
+    ResponseMessage sensorMsg(MessageType::TempHumidityData);
+    sensorMsg.SetPayload(std::vector<uint8_t>{0x5});
+
+    EXPECT_CALL(mockSerialPort, Write(_)).WillRepeatedly(Return(1));
+    EXPECT_CALL(mockSerialPort, Read(_,_))
+        .WillOnce(mockReadResponse(sensorMsg.GetRawMessage()));
+
+    comms.MainTaskBody();
+
+    // cb1 then cb2 then generic
+    ASSERT_GE(calls.size(), 3);
+    EXPECT_EQ(calls[0], 1);
+    EXPECT_EQ(calls[1], 2);
+    EXPECT_EQ(calls[2], 100 + static_cast<int>(MessageType::TempHumidityData));
+}
+
+TEST_F(TestBackplateComms, EventOrderingPreservedForMultipleMessages)
+{
+    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    std::vector<uint16_t> recvOrder;
+
+    auto gcb = [&](uint16_t type, const uint8_t* p, size_t l) { recvOrder.push_back(type); };
+    comms.AddGenericEventCallback(gcb);
+
+    EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
+        .WillRepeatedly(mockGetTimevalSecs());
+
+    ResponseMessage tempMsg(MessageType::TempHumidityData);
+    tempMsg.SetPayload(std::vector<uint8_t>{0x1});
+
+    ResponseMessage pirMsg(MessageType::PirMotionEvent);
+    pirMsg.SetPayload(std::vector<uint8_t>{0x2});
+
+    // Concatenate two raw messages in one read to simulate back-to-back messages
+    std::vector<uint8_t> combined;
+    auto r1 = tempMsg.GetRawMessage();
+    auto r2 = pirMsg.GetRawMessage();
+    combined.insert(combined.end(), r1.begin(), r1.end());
+    combined.insert(combined.end(), r2.begin(), r2.end());
+
+    EXPECT_CALL(mockSerialPort, Write(_)).WillRepeatedly(Return(1));
+    EXPECT_CALL(mockSerialPort, Read(_,_))
+        .WillOnce(mockReadResponse(combined));
+
+    comms.MainTaskBody();
+
+    ASSERT_EQ(recvOrder.size(), 2);
+    EXPECT_EQ(recvOrder[0], static_cast<uint16_t>(MessageType::TempHumidityData));
+    EXPECT_EQ(recvOrder[1], static_cast<uint16_t>(MessageType::PirMotionEvent));
+}

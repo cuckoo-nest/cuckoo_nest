@@ -1,7 +1,12 @@
 #pragma once
 #include <cstdint>
+#pragma once
+
+#include <cstdint>
 #include <vector>
 #include <string>
+#include <functional>
+#include <sys/time.h>
 #include "MessageType.hxx"
 #include "../IDateTimeProvider.hpp"
 
@@ -15,7 +20,7 @@ enum class BaudRate {
 
 class ISerialPort {
 public:
-    ISerialPort(std::string portName)
+    explicit ISerialPort(std::string portName)
         : portName(std::move(portName)) {}
 
     virtual ~ISerialPort() = default;
@@ -51,9 +56,23 @@ public:
     bool IsTimeForKeepalive();
     bool IsTimeForHistoricalDataRequest();
 
+    // Multi-subscriber event subscriptions using std::function
+    using TemperatureCallback = std::function<void(const uint8_t* payload, size_t length)>;
+    using PIRCallback = std::function<void(const uint8_t* payload, size_t length)>;
+    using GenericEventCallback = std::function<void(uint16_t messageType, const uint8_t* payload, size_t length)>;
+
+    // Add a subscriber; returns an index token (size_t) that can be used with Clear*Callbacks
+    size_t AddTemperatureCallback(TemperatureCallback cb) { tempCallbacks.push_back(std::move(cb)); return tempCallbacks.size()-1; }
+    size_t AddPIRCallback(PIRCallback cb) { pirCallbacks.push_back(std::move(cb)); return pirCallbacks.size()-1; }
+    size_t AddGenericEventCallback(GenericEventCallback cb) { genericCallbacks.push_back(std::move(cb)); return genericCallbacks.size()-1; }
+
+    // Clear all subscribers for a type
+    void ClearTemperatureCallbacks() { tempCallbacks.clear(); }
+    void ClearPIRCallbacks() { pirCallbacks.clear(); }
+    void ClearGenericEventCallbacks() { genericCallbacks.clear(); }
+
 private:
     bool IsTimeout(timeval &startTime, int timeoutUs);
-
 
 private:
     const int KeepAliveIntervalSeconds = 15;
@@ -65,4 +84,8 @@ private:
     IDateTimeProvider* DateTimeProvider;
     timeval LastKeepAliveTime {0, 0};
     timeval LastHistoricalDataRequestTime {0, 0};
+    // callback lists
+    std::vector<TemperatureCallback> tempCallbacks;
+    std::vector<PIRCallback> pirCallbacks;
+    std::vector<GenericEventCallback> genericCallbacks;
 };

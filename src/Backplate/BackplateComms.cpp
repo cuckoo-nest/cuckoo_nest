@@ -303,6 +303,31 @@ void BackplateComms::MainTaskBody (void)
                 break;
         }
 
+        // Invoke any subscribed callbacks (multi-subscriber std::function lists)
+        const std::vector<uint8_t> &payload = resp.GetPayload();
+        const uint8_t* payloadPtr = payload.size() ? payload.data() : nullptr;
+
+        if (cmd == MessageType::TempHumidityData)
+        {
+            for (auto &cb : this->tempCallbacks)
+            {
+                if (cb) cb(payloadPtr, payload.size());
+            }
+        }
+
+        if (cmd == MessageType::PirDataRaw || cmd == MessageType::PirMotionEvent)
+        {
+            for (auto &cb : this->pirCallbacks)
+            {
+                if (cb) cb(payloadPtr, payload.size());
+            }
+        }
+
+        for (auto &cb : this->genericCallbacks)
+        {
+            if (cb) cb(static_cast<uint16_t>(cmd), payloadPtr, payload.size());
+        }
+
         // Remove processed bytes
         rxBuffer.erase(rxBuffer.begin(), rxBuffer.begin() + fullMsgLen);
     }
