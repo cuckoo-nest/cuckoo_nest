@@ -32,6 +32,8 @@ UnixSerialPort::~UnixSerialPort()
 
 bool UnixSerialPort::Open(BaudRate baudRate)
 {
+    LOG_DEBUG_STREAM("UnixSerialPort: Opening port " << portName);
+
     fd = ::open(portName.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (fd < 0)
     {
@@ -73,6 +75,8 @@ bool UnixSerialPort::Open(BaudRate baudRate)
         return false;
     }
 
+    LOG_DEBUG_STREAM("UnixSerialPort: Port " << portName << " opened successfully.");
+
     return true;
 }
 
@@ -93,9 +97,12 @@ int UnixSerialPort::Read(char* buffer, int bufferSize)
     {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
             return 0;
+        
         LOG_ERROR_STREAM("UnixSerialPort: read failed: " << std::strerror(errno));
         return 0;
     }
+
+    LOG_DEBUG_STREAM("UnixSerialPort: Read " << r << " bytes from port " << portName);
     return static_cast<int>(r);
 }
 
@@ -108,11 +115,14 @@ int UnixSerialPort::Write(const std::vector<uint8_t> &data)
         LOG_ERROR_STREAM("UnixSerialPort: write failed: " << std::strerror(errno));
         return -1;
     }
+
+    LOG_DEBUG_STREAM("UnixSerialPort: Wrote " << w << " bytes to port " << portName);
     return static_cast<int>(w);
 }
 
 int UnixSerialPort::SendBreak(int durationMs)
 {
+    LOG_DEBUG_STREAM("UnixSerialPort: Sending break signal on port " << portName);
     if (fd < 0) return -1;
     int rc = tcsendbreak(fd, 0);
     if (rc != 0)
@@ -125,6 +135,7 @@ int UnixSerialPort::SendBreak(int durationMs)
 
 int UnixSerialPort::Flush()
 {
+    LOG_DEBUG_STREAM("UnixSerialPort: Flushing port " << portName);
     if (fd < 0) return -1;
     if (tcflush(fd, TCIOFLUSH) != 0)
     {

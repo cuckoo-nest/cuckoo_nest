@@ -12,16 +12,28 @@
 
 bool BackplateComms::Initialize() 
 {
+    LOG_DEBUG_STREAM("BackplateComms: Initializing...");
     if (!InitializeSerial())
     {
+        LOG_ERROR_STREAM("BackplateComms: Failed to initialize serial port.");
+        return false;
+    }
+    
+    LOG_DEBUG_STREAM("BackplateComms: Serial port initialized.");
+
+    if (!DoBurstStage())
+    {
+        LOG_ERROR_STREAM("BackplateComms: Burst stage failed.");
         return false;
     }
 
-    if (!DoBurstStage())
-        return false;
-
+    LOG_DEBUG_STREAM("BackplateComms: Burst stage completed.");
+    
     if (!DoInfoGathering())
+    {
+        LOG_ERROR_STREAM("BackplateComms: Info gathering failed.");
         return false;
+    }
 
     // Start background worker thread to run MainTaskBody periodically
     if (!running.load())

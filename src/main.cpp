@@ -184,6 +184,7 @@ static void setup_logging()
 {
     // Simple console-only setup.
     // Honor environment variable CUCKOO_LOG_LEVEL if present.
+    cuckoo_log::Logger::set_level(cuckoo_log::Level::Debug);
     cuckoo_log::Logger::set_level_from_env();
     // If CUCKOO_LOG_FILE is set, enable file logging (append)
     cuckoo_log::Logger::set_file_from_env();
