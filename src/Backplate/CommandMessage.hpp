@@ -21,7 +21,7 @@ public:
 
     const uint8_t* GetPreamble() const override
     {
-        static const uint8_t preamble[3] = {0xd5, 0x5d, 0xc3};
+        static const uint8_t preamble[3] = {0xd5, 0xaa, 0x96};
         return preamble;
     }
 

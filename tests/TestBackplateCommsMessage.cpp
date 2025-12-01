@@ -26,7 +26,7 @@ TEST_F(TestBackplateCommsMessage, BasicMessageCreation)
     auto rawMessage = msg.GetRawMessage();
 
     ASSERT_EQ(9, rawMessage.size()); // 3 bytes preamble + 2 bytes command + 2 bytes length + 2 bytes CRC
-    EXPECT_THAT(rawMessage, ElementsAre(0xd5, 0x5d, 0xc3, 0xff, 0x00, 0x00, 0x00, _, _)); // last two bytes are CRC
+    EXPECT_THAT(rawMessage, ElementsAre(0xd5, 0xaa, 0x96, 0xff, 0x00, 0x00, 0x00, _, _)); // last two bytes are CRC
 }
 
 // CRC value is populated correctly
