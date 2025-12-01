@@ -117,6 +117,13 @@ int UnixSerialPort::Write(const std::vector<uint8_t> &data)
     }
 
     LOG_DEBUG_STREAM("UnixSerialPort: Wrote " << w << " bytes to port " << portName);
+
+    // for (size_t i = 0; i < data.size(); ++i)
+    // { 
+    //     LOG_DEBUG("%02x ", data[i]);
+    // }
+    // LOG_DEBUG("\n"); // newline
+    
     return static_cast<int>(w);
 }
 
