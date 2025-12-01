@@ -4,18 +4,7 @@
 include(ExternalProject)
 include(FetchContent)
 
-# =====================================================
-# Download and configure spdlog for ARM cross-compilation (header-only mode)
-# =====================================================
-set(SPDLOG_BUILD_EXAMPLE OFF CACHE BOOL "" FORCE)
-set(SPDLOG_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-FetchContent_Declare(
-    spdlog
-    GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    GIT_TAG v1.13.0
-)
-FetchContent_MakeAvailable(spdlog)
-
+# (removed spdlog FetchContent — using in-tree lightweight logger)
 # Disable dependency file generation for older toolchains
 set(CMAKE_CXX_DEPENDS_USE_COMPILER FALSE)
 set(CMAKE_C_DEPENDS_USE_COMPILER FALSE)
@@ -64,9 +53,8 @@ endif()
 target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR}/third-party/json11)
 target_include_directories(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
 
-# Add spdlog (header-only mode)
-target_include_directories(cuckoo PRIVATE ${spdlog_SOURCE_DIR}/include)
-target_compile_definitions(cuckoo PRIVATE SPDLOG_HEADER_ONLY)
+# Add project include directory (in-tree lightweight logger)
+target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # For runtime dynamic linking, we don't link libcurl at build time
 # We use dlopen/dlsym to load it at runtime on the target device

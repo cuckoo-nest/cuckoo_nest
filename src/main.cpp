@@ -13,9 +13,7 @@
 #include "Integrations/ActionHomeAssistantService.hpp"
 #include "ConfigurationReader.hpp"
 
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/basic_file_sink.h>
+#include "logger.h"
 #include <queue>
 #include <mutex>
 
@@ -64,22 +62,24 @@ std::mutex input_event_queue_mutex;
 
 int main()
 {
+    std::cout << "Cuckoo Nest Starting Up..." << std::endl;
 
-    setup_logging();
-
-    spdlog::info("Cuckoo starting up...");
-
+    setup_logging();    
+    
+    LOG_INFO_STREAM("Cuckoo starting up...");
+    
+    
     // ensure brightness is high on start up
     backlight.set_backlight_brightness(115);
     
     if (!screen.Initialize())
     {
-        spdlog::error("Failed to initialize screen");
+        LOG_ERROR_STREAM("Failed to initialize screen");
         return 1;
     }
-
-    spdlog::info("Screen initialized successfully");
-
+    
+    LOG_INFO_STREAM("Screen initialized successfully");
+    
     hal.beeper = &beeper;
     hal.display = &screen;
     hal.inputs = &inputs;
@@ -88,23 +88,25 @@ int main()
     // Load configuration
     ConfigurationReader config("config.json");
     if (config.load()) {
-        spdlog::info("Configuration loaded successfully");
-        spdlog::info("App name: {}", config.get_string("app_name", "Unknown"));
-        spdlog::info("Debug mode: {}", config.get_bool("debug_mode", false) ? "enabled" : "disabled");
-        spdlog::info("Max screens: {}", config.get_int("max_screens", 5));
+        LOG_INFO_STREAM("Configuration loaded successfully");
+        LOG_INFO_STREAM("App name: " << config.get_string("app_name", "Unknown"));
+        LOG_INFO_STREAM("Debug mode: " << (config.get_bool("debug_mode", false) ? "enabled" : "disabled"));
+        LOG_INFO_STREAM("Max screens: " << config.get_int("max_screens", 5));
         
         // Home Assistant configuration
         if (config.has_home_assistant_config()) {
-            spdlog::info("Home Assistant configured:");
-            spdlog::info("  Base URL: {}", config.get_home_assistant_base_url());
-            spdlog::info("  Token: [configured]");
-            spdlog::info("  Entity ID: {}", config.get_home_assistant_entity_id());
+            LOG_INFO_STREAM("Home Assistant configured:");
+            LOG_INFO_STREAM("  Base URL: " << config.get_home_assistant_base_url());
+            LOG_INFO_STREAM("  Token: [configured]");
+            LOG_INFO_STREAM("  Entity ID: " << config.get_home_assistant_entity_id());
         } else {
-            spdlog::info("Home Assistant not configured");
+            LOG_INFO_STREAM("Home Assistant not configured");
         }
     } else {
-        spdlog::warn("Failed to load configuration, using defaults");
+        LOG_WARN_STREAM("Failed to load configuration, using defaults");
     }
+
+    //return 0;
     
     integration_container.LoadIntegrationsFromConfig("config.json");
     screen_manager.LoadScreensFromConfig("config.json");
@@ -115,11 +117,11 @@ int main()
 
     if (!inputs.start_polling())
     {
-        spdlog::error("Failed to start input polling");
+        LOG_ERROR_STREAM("Failed to start input polling");
         return 1;
     }
 
-    spdlog::info("Input polling started in background thread...");
+    LOG_INFO_STREAM("Input polling started in background thread...");
 
     // Main thread can now do other work or just wait
     int tick = 0;
@@ -129,7 +131,7 @@ int main()
         {
             std::lock_guard<std::mutex> lock(input_event_queue_mutex);
             while (!input_event_queue.empty()) {
-                spdlog::debug("got event from queue");
+                LOG_DEBUG_STREAM("got event from queue");
                 auto event = input_event_queue.front();
                 input_event_queue.pop();
                 screen_manager.ProcessInputEvent(event.device_type, event.event);
@@ -152,39 +154,14 @@ int main()
     return 0;
 }
 
-static void setup_logging() 
+static void setup_logging()
 {
-    auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    std::vector<spdlog::sink_ptr> sinks {console_sink};
-    
-    // Try to create file sink, fall back to console-only if it fails
-    try {
-        auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("/var/log/cuckoo.log");
-        file_sink->set_level(spdlog::level::info);
-        sinks.push_back(file_sink);
-    } catch (const spdlog::spdlog_ex&) {
-        // Try fallback location
-        try {
-            auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("/tmp/cuckoo.log");
-            file_sink->set_level(spdlog::level::info);
-            sinks.push_back(file_sink);
-        } catch (const spdlog::spdlog_ex&) {
-            // Fall back to console-only logging
-            // Logger will be set up with console sink only
-        }
-    }
-    
-    auto logger = std::make_shared<spdlog::logger>("cuckoo", sinks.begin(), sinks.end());
-    
-    spdlog::set_default_logger(logger);
-    spdlog::flush_on(spdlog::level::info);
-    
-    // Check if file sink was successfully added (sinks.size() > 1 means console + file)
-    if (sinks.size() > 1) {
-        spdlog::info("Logging to console and file");
-    } else {
-        spdlog::warn("Logging to console only - failed to create log file");
-    }
+    // Simple console-only setup.
+    // Honor environment variable CUCKOO_LOG_LEVEL if present.
+    cuckoo_log::Logger::set_level_from_env();
+    // If CUCKOO_LOG_FILE is set, enable file logging (append)
+    cuckoo_log::Logger::set_file_from_env();
+    LOG_INFO_STREAM("Logging initialized (console" << (cuckoo_log::Logger::file_enabled() ? " + file" : "") << ")");
 }
 
 // Input event handler callback
@@ -195,8 +172,7 @@ void handle_input_event(const InputDeviceType device_type, const struct input_ev
         return; // Ignore "end of event" markers from rotary encoder
     }
 
-    spdlog::debug("Main: Received input event - type: {}, code: {}, value: {}", 
-                  event.type, event.code, event.value);
+    LOG_DEBUG_STREAM("Main: Received input event - type: " << event.type << ", code: " << event.code << ", value: " << event.value);
 
     std::lock_guard<std::mutex> lock(input_event_queue_mutex);
     input_event_queue.push(MyInputEvent(device_type, event));
