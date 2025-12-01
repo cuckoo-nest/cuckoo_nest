@@ -10,6 +10,7 @@
 #include <chrono>
 #include <atomic>
 #include "logger.h"
+#include <ctype.h>
 
 bool BackplateComms::Initialize() 
 {
@@ -330,15 +331,56 @@ void BackplateComms::MainTaskBody (void)
         switch (cmd)
         {
             case MessageType::TempHumidityData:
+                if (resp.GetPayload().size() >= 4)
+                {
+                    int16_t temp_cc = (resp.GetPayload()[1] << 8) | resp.GetPayload()[0];
+                    uint16_t hum_pm = (resp.GetPayload()[3] << 8) | resp.GetPayload()[2];
+                    LOG_DEBUG_STREAM("temp_cc=" << temp_cc << " hum_pm=" << hum_pm);
+                    double temperature = static_cast<double>(temp_cc) / 100.0;
+                    double humidity = static_cast<double>(hum_pm) / 10.0;
+                    LOG_INFO("BackplateComms: TempHumidityData: Temperature = %.2f C, Humidity = %.2f %%", temperature, humidity);                }
+                break;
+
             case MessageType::PirDataRaw:
+                LOG_INFO_STREAM("BackplateComms: Received PIR data (raw) size=" << resp.GetPayload().size());
+                break;
+
             case MessageType::AmbientLightSensor:
+            {
+                uint16_t lux = 0;
+                if (resp.GetPayload().size() >= 2)
+                {
+                    lux = (resp.GetPayload()[1] << 8) | resp.GetPayload()[0];
+                }
+
+                LOG_INFO_STREAM("BackplateComms: Ambient Light Sensor Value = " << lux);
+                break;
+            }
+
             case MessageType::PirMotionEvent:
+                LOG_INFO_STREAM("BackplateComms: Received PIR motion event size=" << resp.GetPayload().size());
+                break;
+
             case MessageType::ProximityEvent:
+                LOG_INFO_STREAM("BackplateComms: Received proximity event size=" << resp.GetPayload().size());
+                break;
+
             case MessageType::ProximitySensorHighDetail:
+                LOG_INFO_STREAM("BackplateComms: Received proximity sensor (high detail) data size=" << resp.GetPayload().size());
+                break;
+
             case MessageType::BackplateState:
+                LOG_INFO_STREAM("BackplateComms: Received backplate state size=" << resp.GetPayload().size());
+                break;
+
             case MessageType::RawAdcData:
                 LOG_INFO_STREAM("BackplateComms: Received measurement/event cmd=0x" << std::hex << static_cast<uint16_t>(cmd) << " size=" << resp.GetPayload().size());
                 break;
+
+            case MessageType::ProxSensor:
+                LOG_INFO_STREAM("BackplateComms: Received proximity sensor data size=" << resp.GetPayload().size());
+                break;
+
             default:
                 LOG_INFO_STREAM("BackplateComms: Received cmd=0x" << std::hex << static_cast<uint16_t>(cmd) << " size=" << resp.GetPayload().size());
                 break;
