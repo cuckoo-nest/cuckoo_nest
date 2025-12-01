@@ -4,11 +4,11 @@
 #include <unistd.h>
 #include <string>
 #include <cstring>
-#include <spdlog/spdlog.h>
 #include <iostream>
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include "logger.h"
 
 bool BackplateComms::Initialize() 
 {
@@ -82,7 +82,7 @@ bool BackplateComms::DoBurstStage()
     {
         if (IsTimeout(startTime, BurstTimeoutUs))
         {
-            spdlog::error("Burst stage timed out.");
+            LOG_ERROR_STREAM("Burst stage timed out.");
             break;
         }
 
@@ -92,11 +92,11 @@ bool BackplateComms::DoBurstStage()
             reinterpret_cast<char *>(readBuffer),
             sizeof(readBuffer));
 
-        spdlog::debug("Read {} bytes", totalBytesRead);
+        LOG_DEBUG_STREAM("Read " << totalBytesRead << " bytes");
 
         if (totalBytesRead == 0)
         {
-            spdlog::debug("No data read, continuing...");
+            LOG_DEBUG_STREAM("No data read, continuing...");
             usleep(100000); // 100ms
             continue;
         }
@@ -121,13 +121,13 @@ bool BackplateComms::DoBurstStage()
 
     if (!burstDone)
     {
-        spdlog::error("Handshake Error: Did not receive 'BRK' signal.");
+        LOG_ERROR_STREAM("Handshake Error: Did not receive 'BRK' signal.");
         return false;
     }
 
     if (!fet_data_received)
     {
-        spdlog::error("Handshake Error: Did not receive FET presence data.");
+        LOG_ERROR_STREAM("Handshake Error: Did not receive FET presence data.");
         return false;
     }
 
@@ -156,19 +156,19 @@ bool BackplateComms::DoInfoGathering()
 {
     if (!GetInfo(MessageType::GetTfeVersion, MessageType::TfeVersion))
     {
-        spdlog::error("Failed to get TfeVersion");
+        LOG_ERROR_STREAM("Failed to get TfeVersion");
         return false;
     }
 
     if (!GetInfo(MessageType::GetTfeBuildInfo, MessageType::TfeBuildInfo))
     {
-        spdlog::error("Failed to get TfeBuildInfo");
+        LOG_ERROR_STREAM("Failed to get TfeBuildInfo");
         return false;
     }
 
     if (!GetInfo(MessageType::GetBackplateModelAndBslId, MessageType::BackplateModelAndBslId))
     {
-        spdlog::error("Failed to get BackplateModelAndBslId");
+        LOG_ERROR_STREAM("Failed to get BackplateModelAndBslId");
         return false;
     }
 
@@ -204,10 +204,10 @@ bool BackplateComms::GetInfo(MessageType command, MessageType expectedResponse)
         ResponseMessage responseMsg;
         if (!responseMsg.ParseMessage(readBuffer, totalBytesRead))
         {
-            spdlog::warn("GetInfo: ParseMessage failed");
+            LOG_WARN_STREAM("GetInfo: ParseMessage failed");
         }
-        spdlog::debug("GetInfo: Received response for command 0x{:04x}", static_cast<uint16_t>(responseMsg.GetMessageCommand()));
-        spdlog::debug("GetInfo: Payload size: {} bytes", static_cast<uint32_t>(responseMsg.GetPayload().size()));
+        LOG_DEBUG_STREAM("GetInfo: Received response for command" << static_cast<uint16_t>(responseMsg.GetMessageCommand()));
+        LOG_DEBUG_STREAM("GetInfo: Payload size: " << static_cast<uint32_t>(responseMsg.GetPayload().size()) << " bytes");
 
         if (responseMsg.GetMessageCommand() == expectedResponse)
         {
@@ -217,7 +217,7 @@ bool BackplateComms::GetInfo(MessageType command, MessageType expectedResponse)
         }
     }
 
-    spdlog::error("GetInfo Error: Did not receive expected response for command 0x{:04x}", static_cast<uint16_t>(command));
+    LOG_ERROR_STREAM("GetInfo Error: Did not receive expected response for command 0x" << std::hex << static_cast<uint16_t>(command));
     return false;
 }
 
@@ -275,7 +275,7 @@ void BackplateComms::MainTaskBody (void)
         {
             // no preamble in buffer yet - discard everything
             rxBuffer.clear();
-            spdlog::debug("No preamble found in rxBuffer; discarding {} bytes", rxBuffer.size());
+            LOG_DEBUG_STREAM("No preamble found in rxBuffer; discarding all bytes");
             break;
         }
 
@@ -304,7 +304,7 @@ void BackplateComms::MainTaskBody (void)
         if (!resp.ParseMessage(rxBuffer.data(), fullMsgLen))
         {
             // Parse failed (likely CRC or corrupt). Drop first byte and retry.
-            spdlog::warn("ParseMessage failed for candidate message (len={}), dropping one byte and resyncing", fullMsgLen);
+            LOG_WARN_STREAM("ParseMessage failed for candidate message (len=" << fullMsgLen << "), dropping one byte and resyncing");
             rxBuffer.erase(rxBuffer.begin());
             continue;
         }
@@ -321,10 +321,10 @@ void BackplateComms::MainTaskBody (void)
             case MessageType::ProximitySensorHighDetail:
             case MessageType::BackplateState:
             case MessageType::RawAdcData:
-                spdlog::info("BackplateComms: Received measurement/event cmd=0x{:04x} size={}", static_cast<uint16_t>(cmd), resp.GetPayload().size());
+                LOG_INFO_STREAM("BackplateComms: Received measurement/event cmd=0x" << std::hex << static_cast<uint16_t>(cmd) << " size=" << resp.GetPayload().size());
                 break;
             default:
-                spdlog::info("BackplateComms: Received cmd=0x{:04x} size={}", static_cast<uint16_t>(cmd), resp.GetPayload().size());
+                LOG_INFO_STREAM("BackplateComms: Received cmd=0x" << std::hex << static_cast<uint16_t>(cmd) << " size=" << resp.GetPayload().size());
                 break;
         }
 

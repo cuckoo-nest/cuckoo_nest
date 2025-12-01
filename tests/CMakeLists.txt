@@ -23,6 +23,7 @@ include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Include directories for the source code
 include_directories(../src)
+include_directories(../include)
 
 # Define source files that need to be compiled for tests
 # Exclude main.cpp as we don't want the main() function in tests

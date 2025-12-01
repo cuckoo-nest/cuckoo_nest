@@ -1,5 +1,5 @@
 #include "MenuScreen.hpp"
-#include <spdlog/spdlog.h>
+#include "logger.h"
 
 void MenuScreen::Render()
 {
@@ -57,8 +57,7 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
             rotaryAccumulator = 0;
         }
 
-        spdlog::debug("MenuScreen: Rotary event, new selected index: {} accumulator: {}", 
-                      menuSelectedIndex, rotaryAccumulator);
+        LOG_DEBUG_STREAM("MenuScreen: Rotary event, new selected index: " << menuSelectedIndex << " accumulator: " << rotaryAccumulator);
     }
 
     if (device_type == InputDeviceType::BUTTON && event.type == EV_KEY && event.code == 't' && event.value == 1)
@@ -84,7 +83,7 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
 
         if (screenManager_ == nullptr)
         {
-            spdlog::error("MenuScreen: screenManager_ is null!");
+            LOG_ERROR_STREAM("MenuScreen: screenManager_ is null!");
             return;
         }
 

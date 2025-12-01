@@ -2,7 +2,7 @@
 #define CURL_WRAPPER_HPP
 
 #include <dlfcn.h>
-#include <spdlog/spdlog.h>
+#include "logger.h"
 
 // Forward declarations to avoid including curl headers
 typedef void CURL;
@@ -39,7 +39,7 @@ public:
         }
         
         if (!libcurl_handle) {
-            spdlog::error("Could not load libcurl: {}", dlerror());
+            LOG_ERROR_STREAM("Could not load libcurl: " << dlerror());
             return false;
         }
 
@@ -55,7 +55,7 @@ public:
         if (!curl_easy_init_ptr || !curl_easy_cleanup_ptr || !curl_easy_setopt_ptr || 
             !curl_easy_perform_ptr || !curl_easy_strerror_ptr || !curl_slist_append_ptr || 
             !curl_slist_free_all_ptr) {
-            spdlog::error("Could not load curl functions: {}", dlerror());
+            LOG_ERROR_STREAM("Could not load curl functions: " << dlerror());
             return false;
         }
 

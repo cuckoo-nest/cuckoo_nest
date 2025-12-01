@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <linux/input.h>
 #include <cstring>
-#include <spdlog/spdlog.h>
+#include "logger.h"
 
 Beeper::Beeper(std::string device_path) : device_path_(device_path)
 {
@@ -19,7 +19,7 @@ void Beeper::play(int duration_ms)
     int fd = open(device_path_.c_str(), O_WRONLY);
     if (fd < 0)
     {
-        spdlog::error("Failed to open beeper device");
+        LOG_ERROR_STREAM("Failed to open beeper device");
         return;
     }
 

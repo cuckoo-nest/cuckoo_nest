@@ -1,5 +1,5 @@
 #include "ConfigurationReader.hpp"
-#include <spdlog/spdlog.h>
+#include "logger.h"
 #include <fstream>
 #include <sstream>
 #include <unistd.h>
@@ -35,7 +35,7 @@ bool ConfigurationReader::load()
     // Read file content
     std::string content = read_file_content(config_filepath_);
     if (content.empty()) {
-        spdlog::error("ConfigurationReader: Failed to read file: {}", config_filepath_);
+        LOG_ERROR_STREAM("ConfigurationReader: Failed to read file: " << config_filepath_);
         return false;
     }
 
@@ -44,12 +44,12 @@ bool ConfigurationReader::load()
     json11::Json parsed_json = json11::Json::parse(content, parse_error);
     
     if (!parse_error.empty()) {
-        spdlog::error("ConfigurationReader: JSON parse error: {}", parse_error);
+        LOG_ERROR_STREAM("ConfigurationReader: JSON parse error: " << parse_error);
         return false;
     }
     
     if (!parsed_json.is_object()) {
-        spdlog::error("ConfigurationReader: Root JSON element must be an object");
+        LOG_ERROR_STREAM("ConfigurationReader: Root JSON element must be an object");
         return false;
     }
     
@@ -57,7 +57,7 @@ bool ConfigurationReader::load()
     json_root_ = new json11::Json(parsed_json);
     loaded_ = true;
     
-    spdlog::info("ConfigurationReader: Successfully loaded config from {}", config_filepath_);
+    LOG_INFO_STREAM("ConfigurationReader: Successfully loaded config from " << config_filepath_);
     return true;
 }
 
@@ -156,7 +156,7 @@ std::string ConfigurationReader::get_executable_directory() const
     ssize_t count = readlink("/proc/self/exe", path, PATH_MAX);
     
     if (count == -1) {
-        spdlog::error("ConfigurationReader: Failed to get executable path");
+        LOG_ERROR_STREAM("ConfigurationReader: Failed to get executable path");
         return ".";  // fallback to current directory
     }
     

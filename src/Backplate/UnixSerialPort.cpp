@@ -5,7 +5,7 @@
 #include <cstring>
 #include <sys/ioctl.h>
 #include <cerrno>
-#include <spdlog/spdlog.h>
+#include "logger.h"
 
 static speed_t BaudRateToSpeed(BaudRate b)
 {
@@ -35,14 +35,14 @@ bool UnixSerialPort::Open(BaudRate baudRate)
     fd = ::open(portName.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (fd < 0)
     {
-        spdlog::error("UnixSerialPort: open failed: {}", std::strerror(errno));
+        LOG_ERROR_STREAM("UnixSerialPort: open failed: " << std::strerror(errno));
         return false;
     }
 
     struct termios tty;
     if (tcgetattr(fd, &tty) != 0)
     {
-        spdlog::error("UnixSerialPort: tcgetattr failed: {}", std::strerror(errno));
+        LOG_ERROR_STREAM("UnixSerialPort: tcgetattr failed: " << std::strerror(errno));
         ::close(fd);
         fd = -1;
         return false;
@@ -67,7 +67,7 @@ bool UnixSerialPort::Open(BaudRate baudRate)
 
     if (tcsetattr(fd, TCSANOW, &tty) != 0)
     {
-        spdlog::error("UnixSerialPort: tcsetattr failed: {}", std::strerror(errno));
+        LOG_ERROR_STREAM("UnixSerialPort: tcsetattr failed: " << std::strerror(errno));
         ::close(fd);
         fd = -1;
         return false;
@@ -93,7 +93,7 @@ int UnixSerialPort::Read(char* buffer, int bufferSize)
     {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
             return 0;
-        spdlog::error("UnixSerialPort: read failed: {}", std::strerror(errno));
+        LOG_ERROR_STREAM("UnixSerialPort: read failed: " << std::strerror(errno));
         return 0;
     }
     return static_cast<int>(r);
@@ -105,7 +105,7 @@ int UnixSerialPort::Write(const std::vector<uint8_t> &data)
     ssize_t w = ::write(fd, data.data(), data.size());
     if (w < 0)
     {
-        spdlog::error("UnixSerialPort: write failed: {}", std::strerror(errno));
+        LOG_ERROR_STREAM("UnixSerialPort: write failed: " << std::strerror(errno));
         return -1;
     }
     return static_cast<int>(w);
@@ -117,7 +117,7 @@ int UnixSerialPort::SendBreak(int durationMs)
     int rc = tcsendbreak(fd, 0);
     if (rc != 0)
     {
-        spdlog::error("UnixSerialPort: tcsendbreak failed: {}", std::strerror(errno));
+        LOG_ERROR_STREAM("UnixSerialPort: tcsendbreak failed: " << std::strerror(errno));
         return -1;
     }
     return 1;
@@ -128,7 +128,7 @@ int UnixSerialPort::Flush()
     if (fd < 0) return -1;
     if (tcflush(fd, TCIOFLUSH) != 0)
     {
-        spdlog::error("UnixSerialPort: tcflush failed: {}", std::strerror(errno));
+        LOG_ERROR_STREAM("UnixSerialPort: tcflush failed: " << std::strerror(errno));
         return -1;
     }
     return 1;

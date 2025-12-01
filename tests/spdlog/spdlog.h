@@ -1,17 +1,17 @@
+// Minimal compatibility layer for test code that includes <spdlog/spdlog.h>
+// Redirects to the lightweight `logger.h` so test output appears on the console.
+
 #ifndef MOCK_SPDLOG_HPP
 #define MOCK_SPDLOG_HPP
 
-// Mock spdlog for unit tests
-// This provides a minimal interface compatible with spdlog to avoid dependencies in tests
-
-#include <string>
+#include "../include/logger.h"
 #include <memory>
-#include <iostream>
-#include <chrono>
+#include <string>
+#include <cstdarg>
+#include <vector>
 
 namespace spdlog {
 
-// Mock log levels
 enum class level {
     trace = 0,
     debug = 1,
@@ -22,138 +22,44 @@ enum class level {
     off = 6
 };
 
-// Mock logger class
 class logger {
 public:
-    logger(const std::string& name) : name_(name) {}
-    
+    logger(const std::string &n) {}
     template<typename... Args>
-    void trace(const char* fmt, const Args&... args) {
-        // No-op in tests
-    }
-    
+    void trace(const char* fmt, const Args&... args) { cuckoo_log::Logger::log_printf(cuckoo_log::Level::Trace, fmt, args...); }
     template<typename... Args>
-    void debug(const char* fmt, const Args&... args) {
-        // No-op in tests
-    }
-    
+    void debug(const char* fmt, const Args&... args) { cuckoo_log::Logger::log_printf(cuckoo_log::Level::Debug, fmt, args...); }
     template<typename... Args>
-    void info(const char* fmt, const Args&... args) {
-        // No-op in tests
-    }
-    
+    void info(const char* fmt, const Args&... args) { cuckoo_log::Logger::log_printf(cuckoo_log::Level::Info, fmt, args...); }
     template<typename... Args>
-    void warn(const char* fmt, const Args&... args) {
-        // No-op in tests
-    }
-    
+    void warn(const char* fmt, const Args&... args) { cuckoo_log::Logger::log_printf(cuckoo_log::Level::Warn, fmt, args...); }
     template<typename... Args>
-    void error(const char* fmt, const Args&... args) {
-        // No-op in tests
-    }
-    
+    void error(const char* fmt, const Args&... args) { cuckoo_log::Logger::log_printf(cuckoo_log::Level::Error, fmt, args...); }
     template<typename... Args>
-    void critical(const char* fmt, const Args&... args) {
-        // No-op in tests
-    }
-    
-    void set_level(level log_level) {
-        // No-op in tests
-    }
-    
-    void flush() {
-        // No-op in tests
-    }
-
-private:
-    std::string name_;
+    void critical(const char* fmt, const Args&... args) { cuckoo_log::Logger::log_printf(cuckoo_log::Level::Critical, fmt, args...); }
+    void set_level(level) {}
+    void flush() {}
 };
 
-// Mock registry functions
-inline std::shared_ptr<logger> get(const std::string& name) {
-    return std::make_shared<logger>(name);
-}
-
-inline std::shared_ptr<logger> default_logger() {
-    static auto logger = std::make_shared<spdlog::logger>("default");
-    return logger;
-}
-
-inline void set_default_logger(std::shared_ptr<logger> logger) {
-    // No-op in tests
-}
-
-inline void set_level(level log_level) {
-    // No-op in tests
-}
-
-inline void flush_on(level log_level) {
-    // No-op in tests
-}
-
-inline void flush_every(std::chrono::seconds interval) {
-    // No-op in tests
-}
-
-// Mock sink for creating loggers
-namespace sinks {
-    class sink {
-    public:
-        virtual ~sink() = default;
-    };
-    using sink_ptr = std::shared_ptr<sink>;
-}
-
-// Mock logger creation functions
-template<typename... Args>
-inline std::shared_ptr<logger> stdout_color_mt(const std::string& logger_name) {
-    return std::make_shared<logger>(logger_name);
-}
+inline std::shared_ptr<logger> get(const std::string& name) { return std::make_shared<logger>(name); }
+inline std::shared_ptr<logger> default_logger() { static auto l = std::make_shared<logger>("default"); return l; }
+inline void set_default_logger(std::shared_ptr<logger>) {}
+inline void set_level(level) {}
+inline void flush_on(level) {}
+inline void flush_every(int) {}
 
 template<typename... Args>
-inline std::shared_ptr<logger> basic_logger_mt(const std::string& logger_name, const std::string& filename) {
-    return std::make_shared<logger>(logger_name);
-}
-
+inline void trace(const char* fmt, const Args&... args) { cuckoo_log::Logger::log_printf(cuckoo_log::Level::Trace, fmt, args...); }
 template<typename... Args>
-inline std::shared_ptr<logger> rotating_logger_mt(
-    const std::string& logger_name,
-    const std::string& filename,
-    size_t max_file_size,
-    size_t max_files) {
-    return std::make_shared<logger>(logger_name);
-}
-
-// Mock free functions for logging (what the source code actually uses)
+inline void debug(const char* fmt, const Args&... args) { cuckoo_log::Logger::log_printf(cuckoo_log::Level::Debug, fmt, args...); }
 template<typename... Args>
-inline void trace(const char* fmt, const Args&... args) {
-    // No-op in tests
-}
-
+inline void info(const char* fmt, const Args&... args) { cuckoo_log::Logger::log_printf(cuckoo_log::Level::Info, fmt, args...); }
 template<typename... Args>
-inline void debug(const char* fmt, const Args&... args) {
-    // No-op in tests
-}
-
+inline void warn(const char* fmt, const Args&... args) { cuckoo_log::Logger::log_printf(cuckoo_log::Level::Warn, fmt, args...); }
 template<typename... Args>
-inline void info(const char* fmt, const Args&... args) {
-    // No-op in tests
-}
-
+inline void error(const char* fmt, const Args&... args) { cuckoo_log::Logger::log_printf(cuckoo_log::Level::Error, fmt, args...); }
 template<typename... Args>
-inline void warn(const char* fmt, const Args&... args) {
-    // No-op in tests
-}
-
-template<typename... Args>
-inline void error(const char* fmt, const Args&... args) {
-    // No-op in tests
-}
-
-template<typename... Args>
-inline void critical(const char* fmt, const Args&... args) {
-    // No-op in tests
-}
+inline void critical(const char* fmt, const Args&... args) { cuckoo_log::Logger::log_printf(cuckoo_log::Level::Critical, fmt, args...); }
 
 } // namespace spdlog
 

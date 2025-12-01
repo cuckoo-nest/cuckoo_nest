@@ -1,11 +1,10 @@
 #pragma once
-#include <cstdint>
-#pragma once
 
 #include <cstdint>
 #include <vector>
 #include <string>
 #include <functional>
+#include <utility>
 #include <sys/time.h>
 #include <thread>
 #include <atomic>
@@ -42,10 +41,8 @@ class BackplateComms {
 public:
     BackplateComms(
         ISerialPort* serialPort,
-        IDateTimeProvider* dateTimeProvider) : 
-        SerialPort(serialPort),
-        DateTimeProvider(dateTimeProvider) {}
-    
+        IDateTimeProvider* dateTimeProvider);
+
     virtual ~BackplateComms();
 
     bool Initialize();
@@ -78,7 +75,7 @@ private:
 
     // Background worker thread that runs MainTaskBody periodically
     std::thread workerThread;
-    std::atomic<bool> running{false};
+    std::atomic<bool> running;
 
 private:
     const int KeepAliveIntervalSeconds = 15;
@@ -88,10 +85,20 @@ private:
 
     ISerialPort* SerialPort;
     IDateTimeProvider* DateTimeProvider;
-    timeval LastKeepAliveTime {0, 0};
-    timeval LastHistoricalDataRequestTime {0, 0};
+    timeval LastKeepAliveTime;
+    timeval LastHistoricalDataRequestTime;
     // callback lists
     std::vector<TemperatureCallback> tempCallbacks;
     std::vector<PIRCallback> pirCallbacks;
     std::vector<GenericEventCallback> genericCallbacks;
 };
+
+    inline BackplateComms::BackplateComms(ISerialPort* serialPort, IDateTimeProvider* dateTimeProvider)
+        : SerialPort(serialPort), DateTimeProvider(dateTimeProvider)
+    {
+        this->running.store(false);
+        this->LastKeepAliveTime.tv_sec = 0;
+        this->LastKeepAliveTime.tv_usec = 0;
+        this->LastHistoricalDataRequestTime.tv_sec = 0;
+        this->LastHistoricalDataRequestTime.tv_usec = 0;
+    }

@@ -1,6 +1,6 @@
 #include "HomeScreen.hpp"
 #include <string>
-#include <spdlog/spdlog.h>
+#include "logger.h"
 #include "DimmerScreen.hpp"
 
 static enum screen_color colors[] = {
@@ -60,7 +60,7 @@ void HomeScreen::handle_input_event(const InputDeviceType device_type, const str
         }
         else
         {
-            spdlog::warn("Next screen is null!");
+            LOG_WARN_STREAM("Next screen is null!");
         }
     }
 }

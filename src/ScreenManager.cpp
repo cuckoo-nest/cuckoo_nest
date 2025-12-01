@@ -2,7 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <json11.hpp>
-#include <spdlog/spdlog.h>
+#include "logger.h"
 #include <algorithm>
 #include <stdio.h>
 
@@ -35,7 +35,7 @@ void ScreenManager::GoToNextScreen(int id)
     current_screen_ = screen;
     screen_history_.push(current_screen_);
     current_screen_->Render();
-    spdlog::info("ScreenManager: Navigated to screen ID {}", id);
+    LOG_INFO_STREAM("ScreenManager: Navigated to screen ID " << id);
 }
 
 void ScreenManager::GoToPreviousScreen()
@@ -55,7 +55,7 @@ void ScreenManager::RenderCurrentScreen()
     }
     else
     {
-        spdlog::error("ScreenManager: No current screen to render");
+        LOG_ERROR_STREAM("ScreenManager: No current screen to render");
     }
 }
 
@@ -80,12 +80,12 @@ void ScreenManager::LoadScreensFromConfig(const std::string& config_path)
     json11::Json parsed_json = json11::Json::parse(configContent, parse_error);
 
     if (!parse_error.empty()) {
-        spdlog::error("ScreenManager: JSON parse error: {}", parse_error);
+        LOG_ERROR_STREAM("ScreenManager: JSON parse error: " << parse_error);
         return;
     }
     
     if (!parsed_json.is_object()) {
-        spdlog::error("ScreenManager: Root JSON element must be an object");
+        LOG_ERROR_STREAM("ScreenManager: Root JSON element must be an object");
         return;
     }
 
