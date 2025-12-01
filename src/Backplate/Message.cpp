@@ -57,12 +57,24 @@ bool Message::ParseMessage(const uint8_t* data, size_t length)
         return false;
     }
 
-    uint16_t receivedCrc = static_cast<uint16_t>(data[length - 2]) |
-                  (static_cast<int16_t>(data[length - 1]) << 8);
+    // At this point, extract the true length
+    uint16_t payloadLength = static_cast<uint16_t>(data[preambleSize + 2]) |
+                             (static_cast<uint16_t>(data[preambleSize + 3]) << 8);
+
+    if (payloadLength > 0)
+    {
+        payload.resize(payloadLength);
+        std::memcpy(payload.data(), data + preambleSize + 4, payloadLength);
+    }
+
+    uint16_t crcPosition = preambleSize + 2 + 2 + payloadLength;
+
+    uint16_t receivedCrc = static_cast<uint16_t>(data[crcPosition]) |
+                  (static_cast<int16_t>(data[crcPosition + 1]) << 8);
 
     uint16_t calculatedCrc = CrcCalculator.Calculate(
             data + preambleSize,
-            length - preambleSize - 2 // Exclude CRC bytes
+            crcPosition - preambleSize
         );
     
     if (receivedCrc != calculatedCrc)
@@ -74,14 +86,6 @@ bool Message::ParseMessage(const uint8_t* data, size_t length)
         static_cast<uint16_t>(data[preambleSize]) |
         (static_cast<uint16_t>(data[preambleSize + 1]) << 8)
     );
-
-    uint16_t payloadLength = static_cast<uint16_t>(data[preambleSize + 2]) |
-                             (static_cast<uint16_t>(data[preambleSize + 3]) << 8);
-    if (payloadLength > 0)
-    {
-        payload.resize(payloadLength);
-        std::memcpy(payload.data(), data + preambleSize + 4, payloadLength);
-    }
 
     return true;
 }

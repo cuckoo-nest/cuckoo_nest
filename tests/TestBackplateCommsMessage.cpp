@@ -102,4 +102,24 @@ TEST_F(TestBackplateCommsMessage, ParseAsciiResponseMessage)
     EXPECT_THAT(parsedMsg.GetPayload(), ElementsAre('B', 'R', 'K'));
 }
 
+TEST_F(TestBackplateCommsMessage, ParseMessageWithTrailingBytes)
+{
+    ResponseMessage msg(MessageType::ResponseAscii);
+    msg.SetPayload(std::vector<uint8_t>{'B', 'R', 'K'});
+    auto rawMessage = msg.GetRawMessage();
+
+    // Create a buffer that contains a valid message followed by extra bytes
+    std::vector<uint8_t> buffer(rawMessage.begin(), rawMessage.end());
+    buffer.push_back(0x99);
+    buffer.push_back(0x88);
+
+    ResponseMessage parsed;
+    // We expect the parser to accept the valid message even if extra trailing bytes are present
+    bool result = parsed.ParseMessage(buffer.data(), buffer.size());
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(parsed.GetMessageCommand(), MessageType::ResponseAscii);
+    EXPECT_THAT(parsed.GetPayload(), ElementsAre('B', 'R', 'K'));
+}
+
 // Handle data length over the max size of uint16_t
