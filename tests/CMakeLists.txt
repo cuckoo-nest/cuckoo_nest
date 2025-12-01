@@ -43,6 +43,7 @@ set(
     ../src/Backplate/Message.cpp
     ../src/Backplate/CommandMessage.cpp
     ../src/Backplate/ResponseMessage.cpp
+    ../src/Backplate/MessageParser.cpp
     ../src/Backplate/BackplateComms.cpp
 )
 
@@ -55,6 +56,7 @@ set(
     TestIntegrationContainer.cpp
     TestBackplateCommsMessage.cpp
     TestBackplateComms.cpp
+    TestMessageParser.cpp
     TestCRCCITT.cpp
 )
 

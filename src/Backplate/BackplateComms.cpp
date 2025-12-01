@@ -1,6 +1,7 @@
 #include "BackplateComms.hpp"
 #include "CommandMessage.hpp"
 #include "ResponseMessage.hpp"
+#include "MessageParser.hpp"
 #include <unistd.h>
 #include <string>
 #include <cstring>
@@ -90,7 +91,7 @@ bool BackplateComms::DoBurstStage()
     struct timeval startTime;
     DateTimeProvider->gettimeofday(startTime);
 
-    uint8_t readBuffer[512];
+    uint8_t tmpBuffer[256];
     size_t totalBytesRead = 0;
 
     while (true)
@@ -100,8 +101,6 @@ bool BackplateComms::DoBurstStage()
             LOG_ERROR_STREAM("Burst stage timed out.");
             break;
         }
-
-        uint8_t tmpBuffer[256];
 
         int bytesRead = SerialPort->Read(
             reinterpret_cast<char *>(tmpBuffer),
@@ -116,36 +115,27 @@ bool BackplateComms::DoBurstStage()
             continue;
         }
 
-        // Append to readBuffer
-        if (totalBytesRead + bytesRead > sizeof(readBuffer))
-        {
-            LOG_ERROR_STREAM("Read buffer overflow.");
-            return false;
-        }
-
-        std::memcpy(readBuffer + totalBytesRead, tmpBuffer, bytesRead);
         totalBytesRead += bytesRead;
-        LOG_DEBUG_STREAM("Total bytes read so far: " << totalBytesRead);
 
-        // Parse the response to find the BRK message
-        ResponseMessage responseMsg;
-        responseMsg.ParseMessage(readBuffer, totalBytesRead);
-
-        if (responseMsg.GetMessageCommand() == MessageType::FetPresenceData)
+        // Feed into parser
+        auto msgs = parser.Feed(tmpBuffer, bytesRead);
+        for (auto &responseMsg : msgs)
         {
-            fetPresencePayload = responseMsg.GetPayload();
-            fet_data_received = true;
-            totalBytesRead = 0; // reset buffer after successful parse
-            LOG_DEBUG_STREAM("FET presence data received.");
-            continue;
-        }
+            if (responseMsg.GetMessageCommand() == MessageType::FetPresenceData)
+            {
+                fetPresencePayload = responseMsg.GetPayload();
+                fet_data_received = true;
+                LOG_DEBUG_STREAM("FET presence data received.");
+            }
 
-        const std::vector<uint8_t> brk = {'B', 'R', 'K'};
-        if (responseMsg.GetMessageCommand() == MessageType::ResponseAscii && responseMsg.GetPayload() == brk)
-        {
-            burstDone = true;
-            break;
+            const std::vector<uint8_t> brk = {'B', 'R', 'K'};
+            if (responseMsg.GetMessageCommand() == MessageType::ResponseAscii && responseMsg.GetPayload() == brk)
+            {
+                burstDone = true;
+                break;
+            }
         }
+        if (burstDone) break;
     }
 
     if (!burstDone)
@@ -218,31 +208,28 @@ bool BackplateComms::GetInfo(MessageType command, MessageType expectedResponse)
             break;
 
         uint8_t readBuffer[256];
-        size_t totalBytesRead = 0;
-        totalBytesRead = SerialPort->Read(
+        int bytesRead = SerialPort->Read(
             reinterpret_cast<char *>(readBuffer),
             sizeof(readBuffer));
 
-        if (totalBytesRead == 0)
+        if (bytesRead == 0)
         {
             usleep(100000); // 100ms
             continue;
         }
 
-        // Parse the response
-        ResponseMessage responseMsg;
-        if (!responseMsg.ParseMessage(readBuffer, totalBytesRead))
+        auto msgs = parser.Feed(readBuffer, bytesRead);
+        for (auto &responseMsg : msgs)
         {
-            LOG_WARN_STREAM("GetInfo: ParseMessage failed");
-        }
-        LOG_DEBUG_STREAM("GetInfo: Received response for command" << static_cast<uint16_t>(responseMsg.GetMessageCommand()));
-        LOG_DEBUG_STREAM("GetInfo: Payload size: " << static_cast<uint32_t>(responseMsg.GetPayload().size()) << " bytes");
+            LOG_DEBUG_STREAM("GetInfo: Received response for command" << static_cast<uint16_t>(responseMsg.GetMessageCommand()));
+            LOG_DEBUG_STREAM("GetInfo: Payload size: " << static_cast<uint32_t>(responseMsg.GetPayload().size()) << " bytes");
 
-        if (responseMsg.GetMessageCommand() == expectedResponse)
-        {
-            std::cout << "GetInfo: Received expected response for command "
-                      << static_cast<uint16_t>(command) << std::endl;
-            return true;
+            if (responseMsg.GetMessageCommand() == expectedResponse)
+            {
+                std::cout << "GetInfo: Received expected response for command "
+                          << static_cast<uint16_t>(command) << std::endl;
+                return true;
+            }
         }
     }
 

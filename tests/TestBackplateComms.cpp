@@ -287,6 +287,50 @@ TEST_F(TestBackplateComms, DoBurstStageHandlesPartialReads)
     EXPECT_TRUE(comms.DoBurstStage());
 }
 
+TEST_F(TestBackplateComms, DoBurstStageHandlesAllMessagesInOneRead)
+{
+    EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
+        .WillRepeatedly(mockGetTimeval(1000, 0));
+
+    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+
+    CommandMessage resetMessage(MessageType::Reset);
+
+    EXPECT_CALL(
+        mockSerialPort,
+        Write(testing::ElementsAreArray(resetMessage.GetRawMessage()))
+    ).WillOnce(Return(static_cast<int>(resetMessage.GetRawMessage().size())));
+
+    // Prepare a FetPresenceData message
+    ResponseMessage fetPresence(MessageType::FetPresenceData);
+    fetPresence.SetPayload(std::vector<uint8_t>{0x0A, 0x0B});
+
+    // Prepare a BRK message
+    ResponseMessage brkMsg(MessageType::ResponseAscii);
+    brkMsg.SetPayload(std::vector<uint8_t>{'B','R','K'});
+
+    // Concatenate both messages into one read payload
+    std::vector<uint8_t> combined;
+    auto r1 = fetPresence.GetRawMessage();
+    auto r2 = brkMsg.GetRawMessage();
+    combined.insert(combined.end(), r1.begin(), r1.end());
+    combined.insert(combined.end(), r2.begin(), r2.end());
+
+    EXPECT_CALL(mockSerialPort, Read(_,_))
+        .WillOnce(mockReadResponse(combined))
+        .WillRepeatedly(Return(0)); // No more data
+
+    // Expect Ack with the full payload
+    CommandMessage ackMessage(MessageType::FetPresenceAck);
+    ackMessage.SetPayload(std::vector<uint8_t>{0x0A,0x0B});
+    EXPECT_CALL(
+        mockSerialPort,
+        Write(testing::ElementsAreArray(ackMessage.GetRawMessage()))
+    ).WillOnce(Return(static_cast<int>(ackMessage.GetRawMessage().size())));
+
+    EXPECT_TRUE(comms.DoBurstStage());
+}
+
 namespace {
     static bool s_tempCalled = false;
     static size_t s_tempLen = 0;

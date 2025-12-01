@@ -102,7 +102,10 @@ int UnixSerialPort::Read(char* buffer, int bufferSize)
         return 0;
     }
 
-    LOG_DEBUG_STREAM("UnixSerialPort: Read " << r << " bytes from port " << portName);
+    if (r > 0)
+    {
+        LOG_DEBUG_STREAM("UnixSerialPort: Read " << r << " bytes from port " << portName);
+    }
     return static_cast<int>(r);
 }
 

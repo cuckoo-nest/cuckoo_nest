@@ -10,6 +10,7 @@
 #include <atomic>
 #include "MessageType.hxx"
 #include "../IDateTimeProvider.hpp"
+#include "MessageParser.hpp"
 
 enum class BaudRate {
     Baud9600 = 9600,
@@ -91,6 +92,8 @@ private:
     std::vector<TemperatureCallback> tempCallbacks;
     std::vector<PIRCallback> pirCallbacks;
     std::vector<GenericEventCallback> genericCallbacks;
+    // Parser for incoming serial bytes
+    MessageParser parser;
 };
 
     inline BackplateComms::BackplateComms(ISerialPort* serialPort, IDateTimeProvider* dateTimeProvider)
