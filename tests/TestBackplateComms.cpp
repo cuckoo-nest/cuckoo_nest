@@ -239,6 +239,54 @@ TEST_F(TestBackplateComms, HandlesPartialMessagesAcrossCalls)
     comms.MainTaskBody(); // reads part2 -> should parse and log
 }
 
+TEST_F(TestBackplateComms, DoBurstStageHandlesPartialReads)
+{
+    EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
+        .WillRepeatedly(mockGetTimeval(1000, 0));
+
+    InSequence s;
+    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+
+    EXPECT_CALL(mockSerialPort, Open(BaudRate::Baud115200))
+        .WillRepeatedly(Return(true));
+
+    CommandMessage resetMessage(MessageType::Reset);
+
+    EXPECT_CALL(
+        mockSerialPort,
+        Write(testing::ElementsAreArray(resetMessage.GetRawMessage()))
+    ).WillOnce(Return(static_cast<int>(resetMessage.GetRawMessage().size())));
+
+    // Prepare a FetPresenceData message and split it into two parts
+    ResponseMessage fetPresence(MessageType::FetPresenceData);
+    fetPresence.SetPayload(std::vector<uint8_t>{0x01, 0x02, 0x03});
+    auto fetRaw = fetPresence.GetRawMessage();
+    size_t splitAt = fetRaw.size() / 2;
+    std::vector<uint8_t> fetPart1(fetRaw.begin(), fetRaw.begin() + splitAt);
+    std::vector<uint8_t> fetPart2(fetRaw.begin() + splitAt, fetRaw.end());
+
+    ResponseMessage brkMsg(MessageType::ResponseAscii);
+    brkMsg.SetPayload(std::vector<uint8_t>{'B','R','K'});
+
+    // Serial Read will return the fet message in two chunks, then BRK
+    EXPECT_CALL(mockSerialPort, Read(_,_))
+        .WillOnce(mockReadResponse(fetPart1))
+        .WillOnce(mockReadResponse(fetPart2))
+        .WillOnce(mockReadResponse(brkMsg.GetRawMessage()));
+
+    // Expect Ack with the full payload
+    CommandMessage ackMessage(MessageType::FetPresenceAck);
+    ackMessage.SetPayload(std::vector<uint8_t>{0x01,0x02,0x03});
+    EXPECT_CALL(
+        mockSerialPort,
+        Write(testing::ElementsAreArray(ackMessage.GetRawMessage()))
+    ).WillOnce(Return(static_cast<int>(ackMessage.GetRawMessage().size())));
+
+    // The current implementation does not accumulate partial reads in DoBurstStage,
+    // so this test is expected to fail until the implementation is updated.
+    EXPECT_TRUE(comms.DoBurstStage());
+}
+
 namespace {
     static bool s_tempCalled = false;
     static size_t s_tempLen = 0;

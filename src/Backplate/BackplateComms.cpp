@@ -90,6 +90,9 @@ bool BackplateComms::DoBurstStage()
     struct timeval startTime;
     DateTimeProvider->gettimeofday(startTime);
 
+    uint8_t readBuffer[512];
+    size_t totalBytesRead = 0;
+
     while (true)
     {
         if (IsTimeout(startTime, BurstTimeoutUs))
@@ -98,20 +101,31 @@ bool BackplateComms::DoBurstStage()
             break;
         }
 
-        uint8_t readBuffer[256];
-        size_t totalBytesRead = 0;
-        totalBytesRead = SerialPort->Read(
-            reinterpret_cast<char *>(readBuffer),
-            sizeof(readBuffer));
+        uint8_t tmpBuffer[256];
 
-        LOG_DEBUG_STREAM("Read " << totalBytesRead << " bytes");
+        int bytesRead = SerialPort->Read(
+            reinterpret_cast<char *>(tmpBuffer),
+            sizeof(tmpBuffer));
 
-        if (totalBytesRead == 0)
+        LOG_DEBUG_STREAM("Read " << bytesRead << " bytes");
+
+        if (bytesRead == 0)
         {
             LOG_DEBUG_STREAM("No data read, continuing...");
             usleep(100000); // 100ms
             continue;
         }
+
+        // Append to readBuffer
+        if (totalBytesRead + bytesRead > sizeof(readBuffer))
+        {
+            LOG_ERROR_STREAM("Read buffer overflow.");
+            return false;
+        }
+
+        std::memcpy(readBuffer + totalBytesRead, tmpBuffer, bytesRead);
+        totalBytesRead += bytesRead;
+        LOG_DEBUG_STREAM("Total bytes read so far: " << totalBytesRead);
 
         // Parse the response to find the BRK message
         ResponseMessage responseMsg;
@@ -121,6 +135,9 @@ bool BackplateComms::DoBurstStage()
         {
             fetPresencePayload = responseMsg.GetPayload();
             fet_data_received = true;
+            totalBytesRead = 0; // reset buffer after successful parse
+            LOG_DEBUG_STREAM("FET presence data received.");
+            continue;
         }
 
         const std::vector<uint8_t> brk = {'B', 'R', 'K'};
