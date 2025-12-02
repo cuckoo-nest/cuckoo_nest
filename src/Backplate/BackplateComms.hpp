@@ -47,8 +47,8 @@ public:
     void ClearPIRCallbacks() { pirCallbacks.clear(); }
     void ClearGenericEventCallbacks() { genericCallbacks.clear(); }
 
-    double GetCurrentTemperatureC() const { std::lock_guard<std::mutex> lk(dataMutex); return CurrentTemperatureC; }
-    double GetCurrentHumidityPercent() const { std::lock_guard<std::mutex> lk(dataMutex); return CurrentHumidityPercent; }
+    float GetCurrentTemperatureC() const { std::lock_guard<std::mutex> lk(dataMutex); return CurrentTemperatureC; }
+    float GetCurrentHumidityPercent() const { std::lock_guard<std::mutex> lk(dataMutex); return CurrentHumidityPercent; }
 
 private:
     bool IsTimeout(timeval &startTime, int timeoutUs);
@@ -57,8 +57,8 @@ private:
     std::thread workerThread;
     std::atomic<bool> running;
 
-    double CurrentTemperatureC = 0.0;
-    double CurrentHumidityPercent = 0.0;
+    float CurrentTemperatureC = 0.0f;
+    float CurrentHumidityPercent = 0.0f;
     mutable std::mutex dataMutex;
 
 private:
