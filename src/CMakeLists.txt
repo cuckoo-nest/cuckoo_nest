@@ -2,6 +2,12 @@
 # This builds the ARM executable for the embedded target
 
 include(ExternalProject)
+include(FetchContent)
+
+# (removed spdlog FetchContent — using in-tree lightweight logger)
+# Disable dependency file generation for older toolchains
+set(CMAKE_CXX_DEPENDS_USE_COMPILER FALSE)
+set(CMAKE_C_DEPENDS_USE_COMPILER FALSE)
 
 # =====================================================
 # 3. Define your actual build target
@@ -46,6 +52,9 @@ endif()
 # Add json11 include directory
 target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR}/third-party/json11)
 target_include_directories(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
+
+# Add project include directory (in-tree lightweight logger)
+target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # For runtime dynamic linking, we don't link libcurl at build time
 # We use dlopen/dlsym to load it at runtime on the target device

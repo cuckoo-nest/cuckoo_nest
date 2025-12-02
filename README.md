@@ -6,7 +6,7 @@ In order to load this software onto the nest, you will need root access. The fol
 https://github.com/ajb142/cuckoo_loader
 
 There is a public discord server for discussions on ideas and feedback:
-https://discord.gg/EvwzuwJ8
+https://discord.gg/VpWvwuEUwa
 
 # Build instruction
 ## Build

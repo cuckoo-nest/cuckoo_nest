@@ -2,7 +2,8 @@
 
 #include "IntegrationDimmerBase.hpp"
 #include "HomeAssistantCreds.hpp"
-#include"CurlWrapper.hpp"
+#include "CurlWrapper.hpp"
+#include "logger.h"
 
 class HomeAssistantDimmer : public IntegrationDimmerBase
 {
@@ -59,21 +60,20 @@ private:
     void ExecuteBrightness(std::string action, int brightness = -1)
     {
         // Implementation to call Home Assistant service
-        std::cout << "Calling Home Assistant service: " << creds_.GetUrl() << std::endl;
-        std::cout << "Bearer token: " << creds_.GetToken() << std::endl;
+        LOG_INFO_STREAM("Calling Home Assistant service: " << creds_.GetUrl());
 
         static CurlWrapper curl_wrapper;
         static bool curl_initialized = false;
 
-        if (!curl_initialized)
-        {
-            curl_initialized = curl_wrapper.initialize();
             if (!curl_initialized)
             {
-                std::cerr << "Failed to initialize libcurl - functionality disabled" << std::endl;
-                return;
+                curl_initialized = curl_wrapper.initialize();
+                if (!curl_initialized)
+                {
+                    LOG_ERROR_STREAM("Failed to initialize libcurl - functionality disabled");
+                    return;
+                }
             }
-        }
 
         // Prepare JSON data
         std::string jsonData = "{\"entity_id\": \"" + entityId_ + "\"}";
@@ -93,7 +93,7 @@ private:
         if (curl)
         {
             std::string url = creds_.GetUrl() + "/api/services/" + action;
-            std::cout << "HomeAssistantDimmer: URL: " << url << std::endl;
+            LOG_INFO_STREAM("HomeAssistantDimmer: URL: " << url);
             curl_wrapper.easy_setopt(curl, CURLOPT_URL, url.c_str());
             curl_wrapper.easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
             curl_wrapper.easy_setopt(curl, CURLOPT_POSTFIELDS, jsonData.c_str());
@@ -101,12 +101,12 @@ private:
             CURLcode res = curl_wrapper.easy_perform(curl);
             if (res != CURLE_OK)
             {
-                std::cerr << "curl_easy_perform() failed: " << curl_wrapper.easy_strerror(res) << std::endl;
+                LOG_ERROR_STREAM("curl_easy_perform() failed: " << curl_wrapper.easy_strerror(res));
             }
 
             curl_wrapper.easy_cleanup(curl);
             curl_wrapper.slist_free_all(headers);
-            std::cout << "\nHomeAssistantDimmer: Service call completed" << std::endl;
+            LOG_INFO_STREAM("HomeAssistantDimmer: Service call completed");
         }
     }
 };
