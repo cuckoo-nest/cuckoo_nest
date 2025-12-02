@@ -57,7 +57,7 @@ public:
     bool IsTimeForHistoricalDataRequest();
 
     // Multi-subscriber event subscriptions using std::function
-    using TemperatureCallback = std::function<void(const uint8_t* payload, size_t length)>;
+    using TemperatureCallback = std::function<void(float temperatureC)>;
     using PIRCallback = std::function<void(int value)>;
     using GenericEventCallback = std::function<void(uint16_t messageType, const uint8_t* payload, size_t length)>;
 

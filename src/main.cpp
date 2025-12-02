@@ -81,7 +81,6 @@ std::queue<MyInputEvent> input_event_queue;
 // Mutex for thread safety
 std::mutex input_event_queue_mutex;
 
-static int ScreenDimmerDelay = 10;
 
 int main()
 {
@@ -92,8 +91,11 @@ int main()
     LOG_INFO_STREAM("Cuckoo starting up...");
     
     
-    // ensure brightness is high on start up
-    backlight.set_backlight_brightness(115);
+    // ensure brightness is high on start up (use Backlight controller)
+    backlight.set_active_seconds(10); // default - can be changed via setter
+    backlight.set_max_brightness(115);
+    backlight.set_min_brightness(20);
+    backlight.Activate();
     
     if (!screen.Initialize())
     {
@@ -178,14 +180,8 @@ int main()
             tick = 0;
             // Do once-per-second tasks here if needed
             screen_manager.RenderCurrentScreen();
-            if (ScreenDimmerDelay > 0)
-            {
-                ScreenDimmerDelay--;
-                if (ScreenDimmerDelay == 0)
-                {
-                    backlight.set_backlight_brightness(20);
-                }
-            }
+            // Let Backlight manage its own timeout
+            backlight.Tick();
         }
 
         usleep(5000); // Sleep for 5ms
@@ -215,12 +211,15 @@ void handle_input_event(const InputDeviceType device_type, const struct input_ev
 
     LOG_DEBUG_STREAM("Main: Received input event - type: " << event.type << ", code: " << event.code << ", value: " << event.value);
 
+    // Keep the screen bright on any input
+    backlight.Activate();
+
     std::lock_guard<std::mutex> lock(input_event_queue_mutex);
     input_event_queue.push(MyInputEvent(device_type, event));
 }
 
 void ProximityCallback(int value)
 {
-    ScreenDimmerDelay = 10;
-    backlight.set_backlight_brightness(115);
+    // PIR proximity should keep the backlight active
+    backlight.Activate();
 }

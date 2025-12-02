@@ -333,17 +333,17 @@ TEST_F(TestBackplateComms, DoBurstStageHandlesAllMessagesInOneRead)
 
 namespace {
     static bool s_tempCalled = false;
-    static size_t s_tempLen = 0;
+    static float s_tempVal = 0.0f;
     static bool s_pirCalled = false;
     static size_t s_pirVal = 0;
     static bool s_genericCalled = false;
     static uint16_t s_genericType = 0;
     static size_t s_genericLen = 0;
 
-    void testTempCb(const uint8_t* payload, size_t len)
+    void testTempCb(float temp)
     {
         s_tempCalled = true;
-        s_tempLen = len;
+        s_tempVal = temp;
     }
 
     void testPirCb(int value)
@@ -376,13 +376,14 @@ TEST_F(TestBackplateComms, TemperatureCallbackInvoked)
     EXPECT_CALL(mockSerialPort, Read(_,_))
         .WillOnce(mockReadResponse(sensorMsg.GetRawMessage()));
 
-    s_tempCalled = false; s_genericCalled = false; s_genericType = 0; s_tempLen = 0;
+    s_tempCalled = false; s_genericCalled = false; s_genericType = 0; s_tempVal = 0.0f;
     comms.MainTaskBody();
 
     EXPECT_TRUE(s_tempCalled);
     EXPECT_TRUE(s_genericCalled);
     EXPECT_EQ(s_genericType, static_cast<uint16_t>(MessageType::TempHumidityData));
-    EXPECT_EQ(s_tempLen, sensorMsg.GetPayload().size());
+    // payload {0x11,0x22} -> temp_cc = 0x2211 = 8721 -> 87.21 C
+    EXPECT_NEAR(s_tempVal, 87.21f, 0.01f);
 }
 
 TEST_F(TestBackplateComms, PIRCallbackInvoked)
@@ -415,7 +416,6 @@ TEST_F(TestBackplateComms, CallbacksNotInvokedOnBadCrc)
     comms.AddPIRCallback(testPirCb);
     comms.AddGenericEventCallback(testGenericCb);
 
-
     EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
         .WillRepeatedly(mockGetTimevalSecs());
 
@@ -443,8 +443,8 @@ TEST_F(TestBackplateComms, MultipleSubscribersReceiveEvents)
     BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
 
     std::vector<int> calls;
-    auto cb1 = [&](const uint8_t* p, size_t l) { calls.push_back(1); };
-    auto cb2 = [&](const uint8_t* p, size_t l) { calls.push_back(2); };
+    auto cb1 = [&](float t) { calls.push_back(1); };
+    auto cb2 = [&](float t) { calls.push_back(2); };
     auto gcb = [&](uint16_t type, const uint8_t* p, size_t l) { calls.push_back(100 + type); };
 
     comms.AddTemperatureCallback(cb1);

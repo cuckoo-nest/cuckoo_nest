@@ -359,9 +359,18 @@ void BackplateComms::MainTaskBody (void)
 
         if (cmd == MessageType::TempHumidityData)
         {
+            // Compute temperature (little-endian int16_t, scaled by 100)
+            float tempC = 0.0f;
+            if (payload.size() >= 2)
+            {
+                int16_t temp_cc = (static_cast<int16_t>(payload[1]) << 8) | static_cast<int16_t>(payload[0]);
+                tempC = static_cast<float>(temp_cc) / 100.0f;
+                CurrentTemperatureC = tempC;
+            }
+
             for (auto &cb : this->tempCallbacks)
             {
-                if (cb) cb(payloadPtr, payload.size());
+                if (cb) cb(tempC);
             }
         }
 
