@@ -57,7 +57,7 @@ private:
     std::thread workerThread;
     std::atomic<bool> running;
 
-    double CurrentTemperatureC = 0.0f;
+    double CurrentTemperatureC = 0.0;
     double CurrentHumidityPercent = 0.0;
     mutable std::mutex dataMutex;
 
