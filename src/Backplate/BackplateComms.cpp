@@ -2,6 +2,7 @@
 #include "CommandMessage.hpp"
 #include "ResponseMessage.hpp"
 #include "MessageParser.hpp"
+#include <mutex>
 #include <unistd.h>
 #include <string>
 #include <cstring>
@@ -286,9 +287,12 @@ void BackplateComms::MainTaskBody (void)
                     int16_t temp_cc = (resp.GetPayload()[1] << 8) | resp.GetPayload()[0];
                     uint16_t hum_pm = (resp.GetPayload()[3] << 8) | resp.GetPayload()[2];
                     LOG_DEBUG_STREAM("temp_cc=" << temp_cc << " hum_pm=" << hum_pm);
-                    CurrentTemperatureC = static_cast<double>(temp_cc) / 100.0;
-                    CurrentHumidityPercent = static_cast<double>(hum_pm) / 10.0;
-                    LOG_INFO("BackplateComms: TempHumidityData: Temperature = %.2f C, Humidity = %.2f %%", CurrentTemperatureC, CurrentHumidityPercent);
+                    {
+                        std::lock_guard<std::mutex> lk(this->dataMutex);
+                        CurrentTemperatureC = static_cast<double>(temp_cc) / 100.0;
+                        CurrentHumidityPercent = static_cast<double>(hum_pm) / 10.0;
+                        LOG_INFO("BackplateComms: TempHumidityData: Temperature = %.2f C, Humidity = %.2f %%", CurrentTemperatureC, CurrentHumidityPercent);
+                    }
                 }
                 break;
 
@@ -376,7 +380,10 @@ void BackplateComms::MainTaskBody (void)
             {
                 int16_t temp_cc = (static_cast<int16_t>(payload[1]) << 8) | static_cast<int16_t>(payload[0]);
                 tempC = static_cast<float>(temp_cc) / 100.0f;
-                CurrentTemperatureC = tempC;
+                {
+                    std::lock_guard<std::mutex> lk(this->dataMutex);
+                    CurrentTemperatureC = tempC;
+                }
             }
 
             for (auto &cb : this->tempCallbacks)

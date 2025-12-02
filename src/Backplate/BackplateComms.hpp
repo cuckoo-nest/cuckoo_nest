@@ -8,6 +8,7 @@
 #include <sys/time.h>
 #include <thread>
 #include <atomic>
+#include <mutex>
 #include "MessageType.hxx"
 #include "../IDateTimeProvider.hpp"
 #include "MessageParser.hpp"
@@ -71,8 +72,8 @@ public:
     void ClearPIRCallbacks() { pirCallbacks.clear(); }
     void ClearGenericEventCallbacks() { genericCallbacks.clear(); }
 
-    double GetCurrentTemperatureC() const { return CurrentTemperatureC; }
-    double GetCurrentHumidityPercent() const { return CurrentHumidityPercent; }
+    double GetCurrentTemperatureC() const { std::lock_guard<std::mutex> lk(dataMutex); return CurrentTemperatureC; }
+    double GetCurrentHumidityPercent() const { std::lock_guard<std::mutex> lk(dataMutex); return CurrentHumidityPercent; }
 
 private:
     bool IsTimeout(timeval &startTime, int timeoutUs);
@@ -83,6 +84,7 @@ private:
 
     double CurrentTemperatureC = 0.0f;
     double CurrentHumidityPercent = 0.0;
+    mutable std::mutex dataMutex;
 
 private:
     const int KeepAliveIntervalSeconds = 15;
