@@ -23,29 +23,9 @@
 
 #include "Backplate/UnixSerialPort.hpp"
 #include "Backplate/BackplateComms.hpp"
+#include "InputEvent.hpp"
 #include "IDateTimeProvider.hpp"
 
-class MyInputEvent{
-public:
-    MyInputEvent(InputDeviceType device_type, const struct input_event &event)
-        : device_type(device_type), event(event) {}
-    InputDeviceType device_type;
-    struct input_event event;
-};
-
-/**
- * @brief Animation callback to set the size of an object.
- *
- * @param var The object to animate (the arc).
- * @param v The new value for width and height.
- */
-static void anim_size_cb(void * var, int32_t v)
-{
-    lv_obj_t * obj = (lv_obj_t *)var; 
-    lv_obj_set_size(obj, v, v);
-    // Recenter the object as it grows/shrinks to keep it centered
-    lv_obj_center(obj);
-}
 
 // Function declarations
 static void setup_logging();
@@ -77,7 +57,7 @@ static ScreenManager screen_manager(&hal, &integration_container, &backplateComm
 
 
 // create a fifo for input events
-std::queue<MyInputEvent> input_event_queue;
+std::queue<InputEvent> input_event_queue;
 // Mutex for thread safety
 std::mutex input_event_queue_mutex;
 
@@ -215,7 +195,7 @@ void handle_input_event(const InputDeviceType device_type, const struct input_ev
     backlight.Activate();
 
     std::lock_guard<std::mutex> lock(input_event_queue_mutex);
-    input_event_queue.push(MyInputEvent(device_type, event));
+    input_event_queue.push(InputEvent(device_type, event));
 }
 
 void ProximityCallback(int value)
