@@ -25,6 +25,7 @@
 #include "Backplate/BackplateComms.hpp"
 #include "InputEvent.hpp"
 #include "IDateTimeProvider.hpp"
+#include "SystemDateTimeProvider.hpp"
 
 
 // Function declarations
@@ -36,12 +37,7 @@ void ProximityCallback(int len);
 static UnixSerialPort backplateSerial("/dev/ttyO2");
 
 // Simple system time provider implementation
-class SystemDateTimeProvider : public IDateTimeProvider {
-public:
-    int gettimeofday(struct timeval &tv) override {
-        return ::gettimeofday(&tv, nullptr);
-    }
-};
+
 
 static SystemDateTimeProvider systemDateTimeProvider;
 static BackplateComms backplateComms(&backplateSerial, &systemDateTimeProvider);
