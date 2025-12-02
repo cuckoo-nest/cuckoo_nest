@@ -184,6 +184,7 @@ void handle_input_event(const InputDeviceType device_type, const struct input_ev
 {
     if (device_type == InputDeviceType::ROTARY && event.type == 0 && event.code == 0)
     {
+        // Ignore 'end of event' markers from rotary encoder
         return;
     }
 
