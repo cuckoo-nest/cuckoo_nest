@@ -12,6 +12,24 @@
 #include "logger.h"
 #include <ctype.h>
 
+BackplateComms::BackplateComms(ISerialPort* serialPort, IDateTimeProvider* dateTimeProvider)
+    : SerialPort(serialPort), DateTimeProvider(dateTimeProvider)
+{
+    this->running.store(false);
+    this->LastKeepAliveTime.tv_sec = 0;
+    this->LastKeepAliveTime.tv_usec = 0;
+    this->LastHistoricalDataRequestTime.tv_sec = 0;
+    this->LastHistoricalDataRequestTime.tv_usec = 0;
+}
+
+BackplateComms::~BackplateComms()
+{
+    // Stop background thread and join
+    running.store(false);
+    if (workerThread.joinable())
+        workerThread.join();
+}
+
 bool BackplateComms::Initialize() 
 {
     LOG_DEBUG_STREAM("BackplateComms: Initializing...");
@@ -51,14 +69,6 @@ bool BackplateComms::Initialize()
     }
 
     return true;
-}
-
-BackplateComms::~BackplateComms()
-{
-    // Stop background thread and join
-    running.store(false);
-    if (workerThread.joinable())
-        workerThread.join();
 }
 
 

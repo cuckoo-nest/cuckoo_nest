@@ -101,13 +101,3 @@ private:
     // Parser for incoming serial bytes
     MessageParser parser;
 };
-
-    inline BackplateComms::BackplateComms(ISerialPort* serialPort, IDateTimeProvider* dateTimeProvider)
-        : SerialPort(serialPort), DateTimeProvider(dateTimeProvider)
-    {
-        this->running.store(false);
-        this->LastKeepAliveTime.tv_sec = 0;
-        this->LastKeepAliveTime.tv_usec = 0;
-        this->LastHistoricalDataRequestTime.tv_sec = 0;
-        this->LastHistoricalDataRequestTime.tv_usec = 0;
-    }
