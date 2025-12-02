@@ -50,7 +50,7 @@ static void anim_size_cb(void * var, int32_t v)
 // Function declarations
 static void setup_logging();
 void handle_input_event(const InputDeviceType device_type, const struct input_event &event);
-
+void ProximityCallback(const uint8_t* payload, size_t len);
 
 // Backplate objects (leave them static so they live for program lifetime)
 static UnixSerialPort backplateSerial("/dev/ttyO2");
@@ -80,6 +80,8 @@ static ScreenManager screen_manager(&hal, &integration_container, &backplateComm
 std::queue<MyInputEvent> input_event_queue;
 // Mutex for thread safety
 std::mutex input_event_queue_mutex;
+
+static int ScreenDimmerDelay = 10;
 
 int main()
 {
@@ -144,6 +146,7 @@ int main()
 
     LOG_INFO_STREAM("Input polling started in background thread...");
 
+    backplateComms.AddPIRCallback(ProximityCallback);
     // Initialize backplate communications (this will start its worker thread)
     if (!backplateComms.Initialize()) {
         LOG_ERROR_STREAM("Failed to initialize Backplate communications");
@@ -175,6 +178,14 @@ int main()
             tick = 0;
             // Do once-per-second tasks here if needed
             screen_manager.RenderCurrentScreen();
+            if (ScreenDimmerDelay > 0)
+            {
+                ScreenDimmerDelay--;
+                if (ScreenDimmerDelay == 0)
+                {
+                    backlight.set_backlight_brightness(20);
+                }
+            }
         }
 
         usleep(5000); // Sleep for 5ms
@@ -199,14 +210,18 @@ void handle_input_event(const InputDeviceType device_type, const struct input_ev
 {
     if (device_type == InputDeviceType::ROTARY && event.type == 0 && event.code == 0)
     {
-        return; // Ignore "end of event" markers from rotary encoder
+        return;
     }
 
     LOG_DEBUG_STREAM("Main: Received input event - type: " << event.type << ", code: " << event.code << ", value: " << event.value);
 
     std::lock_guard<std::mutex> lock(input_event_queue_mutex);
     input_event_queue.push(MyInputEvent(device_type, event));
+}
 
-    // screen_manager.ProcessInputEvent(device_type, event);
-    // screen_manager.RenderCurrentScreen();
+void ProximityCallback(const uint8_t* payload, size_t len)
+{
+    //hal.beeper->play(100);
+    ScreenDimmerDelay = 10;
+    backlight.set_backlight_brightness(115);
 }
