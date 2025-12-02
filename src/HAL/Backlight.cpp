@@ -36,21 +36,34 @@ void Backlight::set_backlight_brightness(int brightness)
 
 void Backlight::Activate()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    set_backlight_brightness(max_brightness_);
-    remaining_seconds_ = active_seconds_;
+    int brightness;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        brightness = max_brightness_;
+        remaining_seconds_ = active_seconds_;
+    }
+    set_backlight_brightness(brightness);
 }
 
 void Backlight::Tick()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (remaining_seconds_ > 0)
+    bool should_dim = false;
+    int brightness = 0;
     {
-        --remaining_seconds_;
-        if (remaining_seconds_ == 0)
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (remaining_seconds_ > 0)
         {
-            set_backlight_brightness(min_brightness_);
+            --remaining_seconds_;
+            if (remaining_seconds_ == 0)
+            {
+                should_dim = true;
+                brightness = min_brightness_;
+            }
         }
+    }
+    if (should_dim)
+    {
+        set_backlight_brightness(brightness);
     }
 }
 
