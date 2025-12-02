@@ -31,7 +31,7 @@
 // Function declarations
 static void setup_logging();
 void handle_input_event(const InputDeviceType device_type, const struct input_event &event);
-void ProximityCallback(int len);
+void ProximityCallback(int value);
 
 // Backplate objects (leave them static so they live for program lifetime)
 static UnixSerialPort backplateSerial("/dev/ttyO2");
