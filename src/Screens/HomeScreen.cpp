@@ -47,6 +47,10 @@ std::string HomeScreen::TimeToString(time_t time)
 
 std::string HomeScreen::GetTemperatureString()
 {
+    if (backplateComms_ == nullptr) {
+        return "N/A";
+    }
+
     char buffer[16];
     snprintf(buffer, sizeof(buffer), "%.2f C", backplateComms_->GetCurrentTemperatureC());
     return std::string(buffer);
@@ -54,6 +58,10 @@ std::string HomeScreen::GetTemperatureString()
 
 std::string HomeScreen::GetHumidityString()
 {
+    if (backplateComms_ == nullptr) {
+        return "N/A";
+    }
+    
     char buffer[16];
     snprintf(buffer, sizeof(buffer), "%.2f %%", backplateComms_->GetCurrentHumidityPercent());
     return std::string(buffer);
