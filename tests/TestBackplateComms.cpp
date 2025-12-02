@@ -156,12 +156,12 @@ TEST_F(TestBackplateComms, GetInfoStageWorks)
 
     ResponseMessage tfeVersionResponse(MessageType::TfeVersion);
     ResponseMessage tfeBuildInfo(MessageType::TfeBuildInfo);
-    ResponseMessage backplaceModelAndBsl(MessageType::BackplateModelAndBslId);
+    ResponseMessage backplateModelAndBsl(MessageType::BackplateModelAndBslId);
 
     EXPECT_CALL(mockSerialPort, Read(_,_))
         .WillOnce(mockReadResponse(tfeVersionResponse.GetRawMessage()))
         .WillOnce(mockReadResponse(tfeBuildInfo.GetRawMessage()))
-        .WillOnce(mockReadResponse(backplaceModelAndBsl.GetRawMessage()));
+        .WillOnce(mockReadResponse(backplateModelAndBsl.GetRawMessage()));
 
 
     EXPECT_TRUE(comms.DoInfoGathering());
