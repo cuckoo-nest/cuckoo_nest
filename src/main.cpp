@@ -27,6 +27,8 @@
 #include "IDateTimeProvider.hpp"
 #include "SystemDateTimeProvider.hpp"
 
+const int PROXIMITY_THRESHOLD = 3; // example threshold value
+
 
 // Function declarations
 static void setup_logging();
@@ -196,6 +198,9 @@ void handle_input_event(const InputDeviceType device_type, const struct input_ev
 
 void ProximityCallback(int value)
 {
-    // PIR proximity should keep the backlight active
-    backlight.Activate();
+    if (value >= PROXIMITY_THRESHOLD)
+    {
+        // PIR proximity should keep the backlight active
+        backlight.Activate();
+    }
 }

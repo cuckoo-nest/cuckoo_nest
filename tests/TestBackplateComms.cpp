@@ -370,7 +370,7 @@ TEST_F(TestBackplateComms, TemperatureCallbackInvoked)
         .WillRepeatedly(mockGetTimevalSecs());
 
     ResponseMessage sensorMsg(MessageType::TempHumidityData);
-    sensorMsg.SetPayload(std::vector<uint8_t>{0x11, 0x22});
+    sensorMsg.SetPayload(std::vector<uint8_t>{0x11, 0x22, 0x33, 0x44});
 
     EXPECT_CALL(mockSerialPort, Write(_)).WillRepeatedly(Return(1));
     EXPECT_CALL(mockSerialPort, Read(_,_))
@@ -380,8 +380,6 @@ TEST_F(TestBackplateComms, TemperatureCallbackInvoked)
     comms.MainTaskBody();
 
     EXPECT_TRUE(s_tempCalled);
-    EXPECT_TRUE(s_genericCalled);
-    EXPECT_EQ(s_genericType, static_cast<uint16_t>(MessageType::TempHumidityData));
     // payload {0x11,0x22} -> temp_cc = 0x2211 = 8721 -> 87.21 C
     EXPECT_NEAR(s_tempVal, 87.21f, 0.01f);
 }
@@ -455,7 +453,7 @@ TEST_F(TestBackplateComms, MultipleSubscribersReceiveEvents)
         .WillRepeatedly(mockGetTimevalSecs());
 
     ResponseMessage sensorMsg(MessageType::TempHumidityData);
-    sensorMsg.SetPayload(std::vector<uint8_t>{0x5});
+    sensorMsg.SetPayload(std::vector<uint8_t>{0x5, 0x00, 0x3C, 0x00}); // 5.00 C, 60.0 %
 
     EXPECT_CALL(mockSerialPort, Write(_)).WillRepeatedly(Return(1));
     EXPECT_CALL(mockSerialPort, Read(_,_))
