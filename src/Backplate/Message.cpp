@@ -70,7 +70,7 @@ bool Message::ParseMessage(const uint8_t* data, size_t length)
     uint16_t crcPosition = preambleSize + 2 + 2 + payloadLength;
 
     uint16_t receivedCrc = static_cast<uint16_t>(data[crcPosition]) |
-                  (static_cast<int16_t>(data[crcPosition + 1]) << 8);
+                  (static_cast<uint16_t>(data[crcPosition + 1]) << 8);
 
     uint16_t calculatedCrc = CrcCalculator.Calculate(
             data + preambleSize,
