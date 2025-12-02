@@ -32,6 +32,9 @@ void HomeScreen::Render()
     time_t now = time(0);
     display_->DrawText(60, -40, "Home", SCREEN_COLOR_WHITE, Font::FONT_H1);
     display_->DrawText(40, 0, TimeToString(now), text_color, Font::FONT_H1);
+
+    display_->DrawText(40, 60, GetTemperatureString(), SCREEN_COLOR_RED, Font::FONT_H2);
+    display_->DrawText(40, 100, GetHumidityString(), SCREEN_COLOR_BLUE, Font::FONT_H2);
 }
 
 std::string HomeScreen::TimeToString(time_t time)
@@ -40,6 +43,24 @@ std::string HomeScreen::TimeToString(time_t time)
     struct tm *timeinfo = localtime(&time);
     strftime(buffer, sizeof(buffer), "%H:%M:%S", timeinfo);
     return std::string(buffer);
+}
+
+std::string HomeScreen::GetTemperatureString()
+{
+    double tempC = backplateComms_->GetCurrentTemperatureC();
+    if (tempC == 0.0) {
+        return "N/A";
+    }
+    return std::to_string(tempC) + " C";
+}
+
+std::string HomeScreen::GetHumidityString()
+{
+    double humidity = backplateComms_->GetCurrentHumidityPercent();
+    if (humidity == 0.0) {
+        return "N/A";
+    }
+    return std::to_string(humidity) + " %";
 }
 
 void HomeScreen::handle_input_event(const InputDeviceType device_type, const struct input_event& event)

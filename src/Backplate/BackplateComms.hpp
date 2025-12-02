@@ -71,12 +71,18 @@ public:
     void ClearPIRCallbacks() { pirCallbacks.clear(); }
     void ClearGenericEventCallbacks() { genericCallbacks.clear(); }
 
+    double GetCurrentTemperatureC() const { return CurrentTemperatureC; }
+    double GetCurrentHumidityPercent() const { return CurrentHumidityPercent; }
+
 private:
     bool IsTimeout(timeval &startTime, int timeoutUs);
 
     // Background worker thread that runs MainTaskBody periodically
     std::thread workerThread;
     std::atomic<bool> running;
+
+    double CurrentTemperatureC = 0.0f;
+    double CurrentHumidityPercent = 0.0;
 
 private:
     const int KeepAliveIntervalSeconds = 15;

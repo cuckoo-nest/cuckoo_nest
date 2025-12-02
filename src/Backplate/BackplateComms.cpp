@@ -336,9 +336,10 @@ void BackplateComms::MainTaskBody (void)
                     int16_t temp_cc = (resp.GetPayload()[1] << 8) | resp.GetPayload()[0];
                     uint16_t hum_pm = (resp.GetPayload()[3] << 8) | resp.GetPayload()[2];
                     LOG_DEBUG_STREAM("temp_cc=" << temp_cc << " hum_pm=" << hum_pm);
-                    double temperature = static_cast<double>(temp_cc) / 100.0;
-                    double humidity = static_cast<double>(hum_pm) / 10.0;
-                    LOG_INFO("BackplateComms: TempHumidityData: Temperature = %.2f C, Humidity = %.2f %%", temperature, humidity);                }
+                    CurrentTemperatureC = static_cast<double>(temp_cc) / 100.0;
+                    CurrentHumidityPercent = static_cast<double>(hum_pm) / 10.0;
+                    LOG_INFO("BackplateComms: TempHumidityData: Temperature = %.2f C, Humidity = %.2f %%", CurrentTemperatureC, CurrentHumidityPercent);
+                }
                 break;
 
             case MessageType::PirDataRaw:
@@ -353,12 +354,19 @@ void BackplateComms::MainTaskBody (void)
                     lux = (resp.GetPayload()[1] << 8) | resp.GetPayload()[0];
                 }
 
-                LOG_INFO_STREAM("BackplateComms: Ambient Light Sensor Value = " << lux);
+                //LOG_INFO_STREAM("BackplateComms: Ambient Light Sensor Value = " << lux);
                 break;
             }
 
             case MessageType::PirMotionEvent:
-                LOG_INFO_STREAM("BackplateComms: Received PIR motion event size=" << resp.GetPayload().size());
+                if (resp.GetPayload().size() >= 4) {
+                    int16_t val1 = (resp.GetPayload()[1] << 8) | resp.GetPayload()[0];
+                    int16_t val2 = (resp.GetPayload()[3] << 8) | resp.GetPayload()[2];
+                    if (val1 == 0 && val2 == 0)
+                        LOG_INFO("PIR Event: Cleared");
+                    else 
+                        LOG_INFO("PIR Event: Motion Detected (vals: %d, %d)", val1, val2);
+                }
                 break;
 
             case MessageType::ProximityEvent:
@@ -373,13 +381,24 @@ void BackplateComms::MainTaskBody (void)
                 LOG_INFO_STREAM("BackplateComms: Received backplate state size=" << resp.GetPayload().size());
                 break;
 
-            case MessageType::RawAdcData:
-                LOG_INFO_STREAM("BackplateComms: Received measurement/event cmd=0x" << std::hex << static_cast<uint16_t>(cmd) << " size=" << resp.GetPayload().size());
+            case MessageType::ProxSensor:
+                if (resp.GetPayload().size() >= 4) {
+                    int16_t val1 = (resp.GetPayload()[1] << 8) | resp.GetPayload()[0];
+                    int16_t val2 = (resp.GetPayload()[3] << 8) | resp.GetPayload()[2];
+                    LOG_INFO("Proximity Sensor -> Val1: %d, Val2: %d", val1, val2);
+                } else if (resp.GetPayload().size() >= 2) { // Handle the 2-byte case we are seeing
+                    int16_t val1 = (resp.GetPayload()[1] << 8) | resp.GetPayload()[0];
+                    LOG_INFO("Proximity Sensor -> Value: %d", val1);
+                }
                 break;
 
-            case MessageType::ProxSensor:
-                LOG_INFO_STREAM("BackplateComms: Received proximity sensor data size=" << resp.GetPayload().size());
-                break;
+            case MessageType::RawAdcData:
+                if (resp.GetPayload().size() >= 14) {
+                    uint16_t pir_raw = (resp.GetPayload()[1] << 8) | resp.GetPayload()[0];
+                    uint16_t alir_raw = (resp.GetPayload()[11] << 8) | resp.GetPayload()[10];
+                    uint16_t alvis_raw = (resp.GetPayload()[13] << 8) | resp.GetPayload()[12];
+                    LOG_INFO("Sensor ADC -> PIR: %u, AL_IR: %u, AL_VIS: %u", pir_raw, alir_raw, alvis_raw);
+                }
 
             default:
                 LOG_INFO_STREAM("BackplateComms: Received cmd=0x" << std::hex << static_cast<uint16_t>(cmd) << " size=" << resp.GetPayload().size());

@@ -51,13 +51,6 @@ static void anim_size_cb(void * var, int32_t v)
 static void setup_logging();
 void handle_input_event(const InputDeviceType device_type, const struct input_event &event);
 
-static HAL hal;
-static Beeper beeper("/dev/input/event0");
-static Display screen("/dev/fb0");
-static Inputs inputs("/dev/input/event2", "/dev/input/event1");
-static Backlight backlight("/sys/class/backlight/3-0036/brightness");
-static IntegrationContainer integration_container;
-static ScreenManager screen_manager(&hal, &integration_container);
 
 // Backplate objects (leave them static so they live for program lifetime)
 static UnixSerialPort backplateSerial("/dev/ttyO2");
@@ -72,6 +65,16 @@ public:
 
 static SystemDateTimeProvider systemDateTimeProvider;
 static BackplateComms backplateComms(&backplateSerial, &systemDateTimeProvider);
+
+
+static HAL hal;
+static Beeper beeper("/dev/input/event0");
+static Display screen("/dev/fb0");
+static Inputs inputs("/dev/input/event2", "/dev/input/event1");
+static Backlight backlight("/sys/class/backlight/3-0036/brightness");
+static IntegrationContainer integration_container;
+static ScreenManager screen_manager(&hal, &integration_container, &backplateComms);
+
 
 // create a fifo for input events
 std::queue<MyInputEvent> input_event_queue;

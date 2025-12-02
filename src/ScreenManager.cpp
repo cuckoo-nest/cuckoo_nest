@@ -13,11 +13,15 @@
 #include "Screens/SwitchScreen.hpp"
 #include "Screens/DimmerScreen.hpp"
 
-ScreenManager::ScreenManager(HAL *hal, IntegrationContainer* integrationContainer) : 
+ScreenManager::ScreenManager(
+    HAL *hal, 
+    IntegrationContainer* integrationContainer,
+    BackplateComms *backplateComms) : 
     screen_history_(),
     current_screen_(nullptr),
     hal_(hal),
-    integrationContainer_(integrationContainer)
+    integrationContainer_(integrationContainer),
+    backplateComms_(backplateComms)
 {
 }
 
@@ -139,7 +143,10 @@ std::string ScreenManager::ReadFileContents(const std::string& filepath) const
 void ScreenManager::BuildHomeScreenFromJSON(const json11::Json &screenJson, int id)
 {
     int nextScreenId = screenJson["nextScreen"].int_value();
-    auto homeScreen = new HomeScreen(hal_, this);
+    auto homeScreen = new HomeScreen(
+        hal_, 
+        this,
+        backplateComms_);
     homeScreen->SetNextScreenId(nextScreenId);
     screens_[id] = std::unique_ptr<ScreenBase>(homeScreen);
 }
