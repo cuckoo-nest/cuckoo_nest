@@ -394,7 +394,7 @@ void BackplateComms::MainTaskBody (void)
                         for (auto &cb : this->pirCallbacks)
                         {
                             if (cb)
-                                cb(nullptr, val1);
+                                cb(val1);
                         }
                     }
                 }
@@ -424,14 +424,6 @@ void BackplateComms::MainTaskBody (void)
                 if (cb) cb(payloadPtr, payload.size());
             }
         }
-
-        // if (cmd == MessageType::PirDataRaw || cmd == MessageType::PirMotionEvent)
-        // {
-        //     for (auto &cb : this->pirCallbacks)
-        //     {
-        //         if (cb) cb(payloadPtr, payload.size());
-        //     }
-        // }
 
         for (auto &cb : this->genericCallbacks)
         {

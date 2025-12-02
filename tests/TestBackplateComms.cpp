@@ -335,7 +335,7 @@ namespace {
     static bool s_tempCalled = false;
     static size_t s_tempLen = 0;
     static bool s_pirCalled = false;
-    static size_t s_pirLen = 0;
+    static size_t s_pirVal = 0;
     static bool s_genericCalled = false;
     static uint16_t s_genericType = 0;
     static size_t s_genericLen = 0;
@@ -346,10 +346,10 @@ namespace {
         s_tempLen = len;
     }
 
-    void testPirCb(const uint8_t* payload, size_t len)
+    void testPirCb(int value)
     {
         s_pirCalled = true;
-        s_pirLen = len;
+        s_pirVal = value;
     }
 
     void testGenericCb(uint16_t type, const uint8_t* payload, size_t len)
@@ -394,20 +394,18 @@ TEST_F(TestBackplateComms, PIRCallbackInvoked)
     EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
         .WillRepeatedly(mockGetTimevalSecs());
 
-    ResponseMessage pirMsg(MessageType::PirMotionEvent);
-    pirMsg.SetPayload(std::vector<uint8_t>{0x01});
+    ResponseMessage pirMsg(MessageType::ProxSensor);
+    pirMsg.SetPayload(std::vector<uint8_t>{0x03, 0x00});
 
     EXPECT_CALL(mockSerialPort, Write(_)).WillRepeatedly(Return(1));
     EXPECT_CALL(mockSerialPort, Read(_,_))
         .WillOnce(mockReadResponse(pirMsg.GetRawMessage()));
 
-    s_pirCalled = false; s_genericCalled = false; s_genericType = 0; s_pirLen = 0;
+    s_pirCalled = false; s_genericCalled = false; s_genericType = 0; s_pirVal = 0;
     comms.MainTaskBody();
 
     EXPECT_TRUE(s_pirCalled);
-    EXPECT_TRUE(s_genericCalled);
-    EXPECT_EQ(s_genericType, static_cast<uint16_t>(MessageType::PirMotionEvent));
-    EXPECT_EQ(s_pirLen, pirMsg.GetPayload().size());
+    EXPECT_EQ(s_pirVal, 3);
 }
 
 TEST_F(TestBackplateComms, CallbacksNotInvokedOnBadCrc)

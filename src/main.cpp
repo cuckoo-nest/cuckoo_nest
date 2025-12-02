@@ -50,7 +50,7 @@ static void anim_size_cb(void * var, int32_t v)
 // Function declarations
 static void setup_logging();
 void handle_input_event(const InputDeviceType device_type, const struct input_event &event);
-void ProximityCallback(const uint8_t* payload, size_t len);
+void ProximityCallback(int len);
 
 // Backplate objects (leave them static so they live for program lifetime)
 static UnixSerialPort backplateSerial("/dev/ttyO2");
@@ -219,9 +219,8 @@ void handle_input_event(const InputDeviceType device_type, const struct input_ev
     input_event_queue.push(MyInputEvent(device_type, event));
 }
 
-void ProximityCallback(const uint8_t* payload, size_t len)
+void ProximityCallback(int value)
 {
-    //hal.beeper->play(100);
     ScreenDimmerDelay = 10;
     backlight.set_backlight_brightness(115);
 }

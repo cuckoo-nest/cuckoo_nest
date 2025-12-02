@@ -58,7 +58,7 @@ public:
 
     // Multi-subscriber event subscriptions using std::function
     using TemperatureCallback = std::function<void(const uint8_t* payload, size_t length)>;
-    using PIRCallback = std::function<void(const uint8_t* payload, size_t length)>;
+    using PIRCallback = std::function<void(int value)>;
     using GenericEventCallback = std::function<void(uint16_t messageType, const uint8_t* payload, size_t length)>;
 
     // Add a subscriber; returns an index token (size_t) that can be used with Clear*Callbacks
