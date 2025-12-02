@@ -84,7 +84,7 @@ bool BackplateComms::DoBurstStage()
     CommandMessage resetMsg(MessageType::Reset);
     SerialPort->Write(resetMsg.GetRawMessage());
 
-    // Wait for 5s for backplate to send a bust of data
+    // Wait for 5s for backplate to send a burst of data
     // there will be a bunch of data points, ending with a BRK
     bool burstDone = false;
     bool fet_data_received = false;
