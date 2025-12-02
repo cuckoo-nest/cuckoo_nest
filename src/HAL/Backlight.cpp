@@ -1,4 +1,3 @@
-
 #include "Backlight.hpp"
 #include "logger.h"
 #include <fcntl.h>
