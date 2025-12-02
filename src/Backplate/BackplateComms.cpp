@@ -347,6 +347,7 @@ void BackplateComms::MainTaskBody (void)
                     uint16_t alvis_raw = (resp.GetPayload()[13] << 8) | resp.GetPayload()[12];
                     LOG_INFO("Sensor ADC -> PIR: %u, AL_IR: %u, AL_VIS: %u", pir_raw, alir_raw, alvis_raw);
                 }
+                break;
 
             default:
                 LOG_INFO_STREAM("BackplateComms: Received cmd=0x" << std::hex << static_cast<uint16_t>(cmd) << " size=" << resp.GetPayload().size());
