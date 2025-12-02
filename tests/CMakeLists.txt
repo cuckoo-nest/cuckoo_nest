@@ -77,8 +77,6 @@ target_include_directories(cuckoo_tests PRIVATE ${CURL_INCLUDE_DIRS})
 # Add json11 include directory for tests
 target_include_directories(cuckoo_tests PRIVATE ../third-party/json11)
 
-# Tests will pick up spdlog behavior from included headers or external configuration
-
 # Link against GoogleTest libraries (including GMock) and system libcurl
 target_link_libraries(
     cuckoo_tests
