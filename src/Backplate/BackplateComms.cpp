@@ -293,6 +293,12 @@ void BackplateComms::MainTaskBody (void)
                         CurrentHumidityPercent = static_cast<double>(hum_pm) / 10.0;
                         LOG_INFO("BackplateComms: TempHumidityData: Temperature = %.2f C, Humidity = %.2f %%", CurrentTemperatureC, CurrentHumidityPercent);
                     }
+
+                    for (auto &cb : this->tempCallbacks)
+                    {
+                        if (cb)
+                            cb(CurrentTemperatureC);
+                    }
                 }
                 break;
 
@@ -371,26 +377,6 @@ void BackplateComms::MainTaskBody (void)
         // Invoke any subscribed callbacks (multi-subscriber std::function lists)
         const std::vector<uint8_t> &payload = resp.GetPayload();
         const uint8_t* payloadPtr = payload.size() ? payload.data() : nullptr;
-
-        if (cmd == MessageType::TempHumidityData)
-        {
-            // Compute temperature (little-endian int16_t, scaled by 100)
-            float tempC = 0.0f;
-            if (payload.size() >= 2)
-            {
-                int16_t temp_cc = (static_cast<int16_t>(payload[1]) << 8) | static_cast<int16_t>(payload[0]);
-                tempC = static_cast<float>(temp_cc) / 100.0f;
-                {
-                    std::lock_guard<std::mutex> lk(this->dataMutex);
-                    CurrentTemperatureC = tempC;
-                }
-            }
-
-            for (auto &cb : this->tempCallbacks)
-            {
-                if (cb) cb(tempC);
-            }
-        }
 
         for (auto &cb : this->genericCallbacks)
         {
