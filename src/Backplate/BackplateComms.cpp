@@ -222,7 +222,7 @@ bool BackplateComms::GetInfo(MessageType command, MessageType expectedResponse)
         auto msgs = parser.Feed(readBuffer, bytesRead);
         for (auto &responseMsg : msgs)
         {
-            LOG_DEBUG_STREAM("GetInfo: Received response for command" << static_cast<uint16_t>(responseMsg.GetMessageCommand()));
+            LOG_DEBUG_STREAM("GetInfo: Received response for command " << static_cast<uint16_t>(responseMsg.GetMessageCommand()));
             LOG_DEBUG_STREAM("GetInfo: Payload size: " << static_cast<uint32_t>(responseMsg.GetPayload().size()) << " bytes");
 
             if (responseMsg.GetMessageCommand() == expectedResponse)
