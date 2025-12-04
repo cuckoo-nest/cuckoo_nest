@@ -28,7 +28,7 @@ void Backlight::set_backlight_brightness(int brightness)
 
     fprintf(f, "%d\n", brightness);
 
-    LOG_INFO_STREAM("Brightness set to: " << brightness);
+    LOG_DEBUG_STREAM("Brightness set to: " << brightness);
 
     fclose(f);
 }

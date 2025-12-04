@@ -348,7 +348,7 @@ void BackplateComms::MainTaskBody (void)
                     LOG_INFO("Proximity Sensor -> Val1: %d, Val2: %d", val1, val2);
                 } else if (resp.GetPayload().size() >= 2) { // Handle the 2-byte case we are seeing
                     int16_t val1 = (resp.GetPayload()[1] << 8) | resp.GetPayload()[0];
-                    LOG_INFO("Proximity Sensor -> Value: %d", val1);
+                    LOG_DEBUG("Proximity Sensor -> Value: %d", val1);
                     for (auto &cb : this->pirCallbacks)
                     {
                         if (cb)
