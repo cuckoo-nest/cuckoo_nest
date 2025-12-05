@@ -9,11 +9,15 @@
 #include "HAL/HAL.hpp"
 #include "Screens/ScreenBase.hpp"
 #include "Integrations/IntegrationContainer.hpp"
+#include "Backplate/BackplateComms.hpp"
 
 class ScreenManager 
 {
 public:
-    ScreenManager(HAL *hal, IntegrationContainer* integrationContainer);
+    ScreenManager(
+        HAL *hal, 
+        IntegrationContainer* integrationContainer,
+        BackplateComms *backplateComms);
     ~ScreenManager();
     
     void GoToNextScreen(int id);
@@ -52,4 +56,5 @@ private:
     std::map<int, std::unique_ptr<ScreenBase>> screens_;
     HAL *hal_;
     IntegrationContainer* integrationContainer_;
+    BackplateComms *backplateComms_;
 };

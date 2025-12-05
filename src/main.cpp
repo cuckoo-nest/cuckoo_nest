@@ -21,31 +21,29 @@
 
 #include "lvgl/lvgl.h"
 
-class MyInputEvent{
-public:
-    MyInputEvent(InputDeviceType device_type, const struct input_event &event)
-        : device_type(device_type), event(event) {}
-    InputDeviceType device_type;
-    struct input_event event;
-};
+#include "Backplate/UnixSerialPort.hpp"
+#include "Backplate/BackplateComms.hpp"
+#include "InputEvent.hpp"
+#include "IDateTimeProvider.hpp"
+#include "SystemDateTimeProvider.hpp"
 
-/**
- * @brief Animation callback to set the size of an object.
- *
- * @param var The object to animate (the arc).
- * @param v The new value for width and height.
- */
-static void anim_size_cb(void * var, int32_t v)
-{
-    lv_obj_t * obj = (lv_obj_t *)var; 
-    lv_obj_set_size(obj, v, v);
-    // Recenter the object as it grows/shrinks to keep it centered
-    lv_obj_center(obj);
-}
+const int PROXIMITY_THRESHOLD = 3; // example threshold value
+
 
 // Function declarations
 static void setup_logging();
 void handle_input_event(const InputDeviceType device_type, const struct input_event &event);
+void ProximityCallback(int value);
+
+// Backplate objects (leave them static so they live for program lifetime)
+static UnixSerialPort backplateSerial("/dev/ttyO2");
+
+// Simple system time provider implementation
+
+
+static SystemDateTimeProvider systemDateTimeProvider;
+static BackplateComms backplateComms(&backplateSerial, &systemDateTimeProvider);
+
 
 static HAL hal;
 static Beeper beeper("/dev/input/event0");
@@ -53,12 +51,14 @@ static Display screen("/dev/fb0");
 static Inputs inputs("/dev/input/event2", "/dev/input/event1");
 static Backlight backlight("/sys/class/backlight/3-0036/brightness");
 static IntegrationContainer integration_container;
-static ScreenManager screen_manager(&hal, &integration_container);
+static ScreenManager screen_manager(&hal, &integration_container, &backplateComms);
+
 
 // create a fifo for input events
-std::queue<MyInputEvent> input_event_queue;
+std::queue<InputEvent> input_event_queue;
 // Mutex for thread safety
 std::mutex input_event_queue_mutex;
+
 
 int main()
 {
@@ -69,8 +69,11 @@ int main()
     LOG_INFO_STREAM("Cuckoo starting up...");
     
     
-    // ensure brightness is high on start up
-    backlight.set_backlight_brightness(115);
+    // ensure brightness is high on start up (use Backlight controller)
+    backlight.set_active_seconds(10); // default - can be changed via setter
+    backlight.set_max_brightness(115);
+    backlight.set_min_brightness(20);
+    backlight.Activate();
     
     if (!screen.Initialize())
     {
@@ -123,6 +126,15 @@ int main()
 
     LOG_INFO_STREAM("Input polling started in background thread...");
 
+    backplateComms.AddPIRCallback(ProximityCallback);
+    // Initialize backplate communications (this will start its worker thread)
+    if (!backplateComms.Initialize()) {
+        LOG_ERROR_STREAM("Failed to initialize Backplate communications");
+        // non-fatal: continue running without backplate comms
+    } else {
+        LOG_INFO_STREAM("Backplate communications initialized and running in background thread");
+    }
+
     // Main thread can now do other work or just wait
     int tick = 0;
     const int ticks_per_second = 1 * 1000 * 1000 / 5000; // 1 second / input polling interval (5ms)
@@ -146,6 +158,8 @@ int main()
             tick = 0;
             // Do once-per-second tasks here if needed
             screen_manager.RenderCurrentScreen();
+            // Let Backlight manage its own timeout
+            backlight.Tick();
         }
 
         usleep(5000); // Sleep for 5ms
@@ -158,6 +172,7 @@ static void setup_logging()
 {
     // Simple console-only setup.
     // Honor environment variable CUCKOO_LOG_LEVEL if present.
+    //cuckoo_log::Logger::set_level(cuckoo_log::Level::Debug);
     cuckoo_log::Logger::set_level_from_env();
     // If CUCKOO_LOG_FILE is set, enable file logging (append)
     cuckoo_log::Logger::set_file_from_env();
@@ -169,14 +184,24 @@ void handle_input_event(const InputDeviceType device_type, const struct input_ev
 {
     if (device_type == InputDeviceType::ROTARY && event.type == 0 && event.code == 0)
     {
-        return; // Ignore "end of event" markers from rotary encoder
+        // Ignore 'end of event' markers from rotary encoder
+        return;
     }
 
     LOG_DEBUG_STREAM("Main: Received input event - type: " << event.type << ", code: " << event.code << ", value: " << event.value);
 
-    std::lock_guard<std::mutex> lock(input_event_queue_mutex);
-    input_event_queue.push(MyInputEvent(device_type, event));
+    // Keep the screen bright on any input
+    backlight.Activate();
 
-    // screen_manager.ProcessInputEvent(device_type, event);
-    // screen_manager.RenderCurrentScreen();
+    std::lock_guard<std::mutex> lock(input_event_queue_mutex);
+    input_event_queue.push(InputEvent(device_type, event));
+}
+
+void ProximityCallback(int value)
+{
+    if (value >= PROXIMITY_THRESHOLD)
+    {
+        // PIR proximity should keep the backlight active
+        backlight.Activate();
+    }
 }

@@ -12,7 +12,7 @@ class ScreenManagerConfigLoadTest : public ::testing::Test {
 protected:
 
     void SetUp() override {
-        screen_manager = new ScreenManager(&hal, nullptr);
+        screen_manager = new ScreenManager(&hal, nullptr, nullptr);
     }
 
     void TearDown() override {

@@ -40,6 +40,11 @@ set(
     ../src/Screens/DimmerScreen.cpp
     ../src/Screens/SwitchScreen.cpp
     ../src/Integrations/IntegrationContainer.cpp
+    ../src/Backplate/Message.cpp
+    ../src/Backplate/CommandMessage.cpp
+    ../src/Backplate/ResponseMessage.cpp
+    ../src/Backplate/MessageParser.cpp
+    ../src/Backplate/BackplateComms.cpp
 )
 
 # Define test files
@@ -49,6 +54,10 @@ set(
     TestScreenManager.cpp
     TestConfigurationReader.cpp
     TestIntegrationContainer.cpp
+    TestBackplateCommsMessage.cpp
+    TestBackplateComms.cpp
+    TestMessageParser.cpp
+    TestCRCCITT.cpp
 )
 
 # Create the test executable
@@ -68,14 +77,13 @@ target_include_directories(cuckoo_tests PRIVATE ${CURL_INCLUDE_DIRS})
 # Add json11 include directory for tests
 target_include_directories(cuckoo_tests PRIVATE ../third-party/json11)
 
-# Add compile definition to use mock spdlog in tests
-target_compile_definitions(cuckoo_tests PRIVATE SPDLOG_HEADER_ONLY)
-
-# Link against GoogleTest libraries and system libcurl
+# Link against GoogleTest libraries (including GMock) and system libcurl
 target_link_libraries(
     cuckoo_tests
     gtest_main
     gtest
+    gmock
+    gmock_main
     pthread
     ${CURL_LIBRARIES}
 )

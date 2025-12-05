@@ -28,8 +28,60 @@ void Backlight::set_backlight_brightness(int brightness)
 
     fprintf(f, "%d\n", brightness);
 
-    LOG_INFO_STREAM("Brightness set to: " << brightness);
+    LOG_DEBUG_STREAM("Brightness set to: " << brightness);
 
     fclose(f);
+}
+
+
+void Backlight::Activate()
+{
+    int brightness;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        brightness = max_brightness_;
+        remaining_seconds_ = active_seconds_;
+    }
+    set_backlight_brightness(brightness);
+}
+
+void Backlight::Tick()
+{
+    bool should_dim = false;
+    int brightness = 0;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (remaining_seconds_ > 0)
+        {
+            --remaining_seconds_;
+            if (remaining_seconds_ == 0)
+            {
+                should_dim = true;
+                brightness = min_brightness_;
+            }
+        }
+    }
+    if (should_dim)
+    {
+        set_backlight_brightness(brightness);
+    }
+}
+
+void Backlight::set_active_seconds(int secs)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    active_seconds_ = secs;
+}
+
+void Backlight::set_max_brightness(int brightness)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    max_brightness_ = brightness;
+}
+
+void Backlight::set_min_brightness(int brightness)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    min_brightness_ = brightness;
 }
 
