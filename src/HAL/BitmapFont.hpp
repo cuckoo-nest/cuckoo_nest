@@ -8,7 +8,6 @@
 namespace BitmapFont {
 
 // Font dimensions
-constexpr int CHAR_WIDTH = 8;
 constexpr int CHAR_HEIGHT = 8;
 constexpr int FONT_START_CHAR = 0;
 constexpr int FONT_END_CHAR = 127;
