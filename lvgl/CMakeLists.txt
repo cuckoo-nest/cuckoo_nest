@@ -17,6 +17,11 @@ if(IS_HOST_BUILD)
     message(STATUS "LVGL will be built with SDL support for host platform")
 endif()
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(LVGL_C_FLAGS "${LVGL_C_FLAGS} -DBUILD_TARGET_LINUX")
+    set(LVGL_CXX_FLAGS "${LVGL_CXX_FLAGS} -DBUILD_TARGET_LINUX")
+endif()
+
 ExternalProject_Add(lvgl
     GIT_REPOSITORY https://github.com/lvgl/lvgl.git
     GIT_TAG ${LVGL_VERSION}
@@ -31,6 +36,8 @@ ExternalProject_Add(lvgl
         -D CONFIG_LV_BUILD_EXAMPLES=OFF
         -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
         -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+	-D CONFIG_LV_BUILD_DEMOS=OFF
+	-D CONFIG_LV_BUILD_EXAMPLES=OFF
         -DCMAKE_SYSROOT=${CMAKE_SYSROOT}
         -DCMAKE_C_FLAGS=${LVGL_C_FLAGS}
         -DCMAKE_CXX_FLAGS=${LVGL_CXX_FLAGS}

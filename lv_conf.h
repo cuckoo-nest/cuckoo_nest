@@ -1210,8 +1210,6 @@
 /** Use SDL to open window on PC and handle mouse and keyboard. */
 #ifdef HOST_TOOLCHAIN
     #define LV_USE_SDL              1
-#else
-    #define LV_USE_SDL              0
 #endif
 #if LV_USE_SDL
     #define LV_SDL_INCLUDE_PATH     <SDL2/SDL.h>
@@ -1245,7 +1243,9 @@
 #endif
 
 /** Driver for /dev/fb */
-#define LV_USE_LINUX_FBDEV      1
+#ifdef BUILD_TARGET_LINUX
+	#define LV_USE_LINUX_FBDEV      1
+#endif
 #if LV_USE_LINUX_FBDEV
     #define LV_LINUX_FBDEV_BSD           0
     #define LV_LINUX_FBDEV_RENDER_MODE   LV_DISPLAY_RENDER_MODE_PARTIAL

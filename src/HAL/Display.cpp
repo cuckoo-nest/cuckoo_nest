@@ -1,7 +1,9 @@
 #include "Display.hpp"
 #include "BitmapFont.hpp"
 #include "../Screens/CuckooLogoNest.hpp"
+#ifdef BUILD_TARGET_LINUX
 #include <linux/fb.h>
+#endif
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -29,6 +31,7 @@ Display::~Display()
 bool Display::Initialize(bool emulate)
 {
     lv_init();
+	lv_display_t *disp = NULL;
     if (emulate)
     {
 #ifdef HOST_TOOLCHAIN
@@ -40,6 +43,7 @@ bool Display::Initialize(bool emulate)
     }
     else
     {
+#ifdef BUILD_TARGET_LINUX
         //Create a display
         disp = lv_linux_fbdev_create();
         if (disp == NULL) {
@@ -48,8 +52,9 @@ bool Display::Initialize(bool emulate)
         }
 
         lv_linux_fbdev_set_file(disp, "/dev/fb0");
-        lv_display_set_resolution(disp, 320, 320);
+#endif
     }
+	lv_display_set_resolution(disp, 320, 320);
 
     // Setup fonts
     fontH1 = new lv_style_t;
