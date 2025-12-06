@@ -11,11 +11,14 @@
 
 #include "Integrations/IntegrationContainer.hpp"
 #include "Integrations/ActionHomeAssistantService.hpp"
-#include "ConfigurationReader.hpp"
 
 #include "logger.h"
 #include <queue>
 #include <mutex>
+#include <memory>
+#include <fstream>
+#include <sstream>
+#include <json11.hpp>
 
 #include <ctype.h>
 
@@ -29,30 +32,37 @@
 
 const int PROXIMITY_THRESHOLD = 3; // example threshold value
 
+// HAL Configuration structure
+struct HALConfig {
+    std::string beeper_device;
+    std::string display_device;
+    std::string button_device;
+    std::string rotary_device;
+    std::string backlight_device;
+    std::string backplate_serial_device;
+    bool emulate_display;
+    int backlight_active_seconds;
+    int backlight_max_brightness;
+    int backlight_min_brightness;
+};
 
 // Function declarations
 static void setup_logging();
+static HALConfig load_hal_config(const std::string& config_file);
 void handle_input_event(const InputDeviceType device_type, const struct input_event &event);
 void ProximityCallback(int value);
 
-// Backplate objects (leave them static so they live for program lifetime)
-static UnixSerialPort backplateSerial("/dev/ttyO2");
-
-// Simple system time provider implementation
-
-
-static SystemDateTimeProvider systemDateTimeProvider;
-static BackplateComms backplateComms(&backplateSerial, &systemDateTimeProvider);
-
-
-static HAL hal;
-static Beeper beeper("/dev/input/event0");
-static Display screen("/dev/fb0");
-static Inputs inputs("/dev/input/event2", "/dev/input/event1");
-static Backlight backlight("/sys/class/backlight/3-0036/brightness");
-static IntegrationContainer integration_container;
-static ScreenManager screen_manager(&hal, &integration_container, &backplateComms);
-
+// Global pointers to HAL objects (will be initialized after config loading)
+static std::unique_ptr<UnixSerialPort> backplateSerial;
+static std::unique_ptr<SystemDateTimeProvider> systemDateTimeProvider;
+static std::unique_ptr<BackplateComms> backplateComms;
+static std::unique_ptr<HAL> hal;
+static std::unique_ptr<Beeper> beeper;
+static std::unique_ptr<Display> screen;
+static std::unique_ptr<Inputs> inputs;
+static std::unique_ptr<Backlight> backlight;
+static std::unique_ptr<IntegrationContainer> integration_container;
+static std::unique_ptr<ScreenManager> screen_manager;
 
 // create a fifo for input events
 std::queue<InputEvent> input_event_queue;
@@ -68,14 +78,40 @@ int main()
     
     LOG_INFO_STREAM("Cuckoo starting up...");
     
+    // Load HAL configuration from config file
+    HALConfig hal_config = load_hal_config("config.json");
     
-    // ensure brightness is high on start up (use Backlight controller)
-    backlight.set_active_seconds(10); // default - can be changed via setter
-    backlight.set_max_brightness(115);
-    backlight.set_min_brightness(20);
-    backlight.Activate();
+    if (hal_config.emulate_display) {
+        LOG_INFO_STREAM("Running in display emulation mode");
+    }
+    else {
+        LOG_INFO_STREAM("Running on embedded target mode");
+    }
     
-    if (!screen.Initialize())
+    // Create HAL objects with configuration
+    LOG_INFO_STREAM("Initializing HAL components...");
+    beeper.reset(new Beeper(hal_config.beeper_device));
+    screen.reset(new Display(hal_config.display_device));
+    inputs.reset(new Inputs(hal_config.button_device, hal_config.rotary_device));
+    backlight.reset(new Backlight(hal_config.backlight_device));
+    
+    // Initialize backplate communication components
+    backplateSerial.reset(new UnixSerialPort(hal_config.backplate_serial_device));
+    systemDateTimeProvider.reset(new SystemDateTimeProvider());
+    backplateComms.reset(new BackplateComms(backplateSerial.get(), systemDateTimeProvider.get()));
+    
+    // Create HAL structure and containers
+    hal.reset(new HAL());
+    integration_container.reset(new IntegrationContainer());
+    screen_manager.reset(new ScreenManager(hal.get(), integration_container.get(), backplateComms.get()));
+    
+    // Configure backlight with loaded settings
+    backlight->set_active_seconds(hal_config.backlight_active_seconds);
+    backlight->set_max_brightness(hal_config.backlight_max_brightness);
+    backlight->set_min_brightness(hal_config.backlight_min_brightness);
+    backlight->Activate();
+    
+    if (!screen->Initialize(hal_config.emulate_display))
     {
         LOG_ERROR_STREAM("Failed to initialize screen");
         return 1;
@@ -83,42 +119,21 @@ int main()
     
     LOG_INFO_STREAM("Screen initialized successfully");
     
-    hal.beeper = &beeper;
-    hal.display = &screen;
-    hal.inputs = &inputs;
-    hal.backlight = &backlight;
-
-    // Load configuration
-    ConfigurationReader config("config.json");
-    if (config.load()) {
-        LOG_INFO_STREAM("Configuration loaded successfully");
-        LOG_INFO_STREAM("App name: " << config.get_string("app_name", "Unknown"));
-        LOG_INFO_STREAM("Debug mode: " << (config.get_bool("debug_mode", false) ? "enabled" : "disabled"));
-        LOG_INFO_STREAM("Max screens: " << config.get_int("max_screens", 5));
-        
-        // Home Assistant configuration
-        if (config.has_home_assistant_config()) {
-            LOG_INFO_STREAM("Home Assistant configured:");
-            LOG_INFO_STREAM("  Base URL: " << config.get_home_assistant_base_url());
-            LOG_INFO_STREAM("  Token: [configured]");
-            LOG_INFO_STREAM("  Entity ID: " << config.get_home_assistant_entity_id());
-        } else {
-            LOG_INFO_STREAM("Home Assistant not configured");
-        }
-    } else {
-        LOG_WARN_STREAM("Failed to load configuration, using defaults");
-    }
+    hal->beeper = beeper.get();
+    hal->display = screen.get();
+    hal->inputs = inputs.get();
+    hal->backlight = backlight.get();
 
     //return 0;
     
-    integration_container.LoadIntegrationsFromConfig("config.json");
-    screen_manager.LoadScreensFromConfig("config.json");
-    screen_manager.GoToNextScreen(1);
+    integration_container->LoadIntegrationsFromConfig("config.json");
+    screen_manager->LoadScreensFromConfig("config.json");
+    screen_manager->GoToNextScreen(1);
 
     // Set up input event callback
-    inputs.set_callback(handle_input_event);
+    inputs->set_callback(handle_input_event);
 
-    if (!inputs.start_polling())
+    if (!inputs->start_polling())
     {
         LOG_ERROR_STREAM("Failed to start input polling");
         return 1;
@@ -126,9 +141,9 @@ int main()
 
     LOG_INFO_STREAM("Input polling started in background thread...");
 
-    backplateComms.AddPIRCallback(ProximityCallback);
+    backplateComms->AddPIRCallback(ProximityCallback);
     // Initialize backplate communications (this will start its worker thread)
-    if (!backplateComms.Initialize()) {
+    if (!backplateComms->Initialize()) {
         LOG_ERROR_STREAM("Failed to initialize Backplate communications");
         // non-fatal: continue running without backplate comms
     } else {
@@ -146,20 +161,20 @@ int main()
                 LOG_DEBUG_STREAM("got event from queue");
                 auto event = input_event_queue.front();
                 input_event_queue.pop();
-                screen_manager.ProcessInputEvent(event.device_type, event.event);
-                screen_manager.RenderCurrentScreen();
+                screen_manager->ProcessInputEvent(event.device_type, event.event);
+                screen_manager->RenderCurrentScreen();
             }
         }
 
-        screen.TimerHandler();
+        screen->TimerHandler();
         tick++;
         if (tick >= ticks_per_second)
         {
             tick = 0;
             // Do once-per-second tasks here if needed
-            screen_manager.RenderCurrentScreen();
+            screen_manager->RenderCurrentScreen();
             // Let Backlight manage its own timeout
-            backlight.Tick();
+            backlight->Tick();
         }
 
         usleep(5000); // Sleep for 5ms
@@ -172,7 +187,7 @@ static void setup_logging()
 {
     // Simple console-only setup.
     // Honor environment variable CUCKOO_LOG_LEVEL if present.
-    //cuckoo_log::Logger::set_level(cuckoo_log::Level::Debug);
+    cuckoo_log::Logger::set_level(cuckoo_log::Level::Debug);
     cuckoo_log::Logger::set_level_from_env();
     // If CUCKOO_LOG_FILE is set, enable file logging (append)
     cuckoo_log::Logger::set_file_from_env();
@@ -191,7 +206,7 @@ void handle_input_event(const InputDeviceType device_type, const struct input_ev
     LOG_DEBUG_STREAM("Main: Received input event - type: " << event.type << ", code: " << event.code << ", value: " << event.value);
 
     // Keep the screen bright on any input
-    backlight.Activate();
+    backlight->Activate();
 
     std::lock_guard<std::mutex> lock(input_event_queue_mutex);
     input_event_queue.push(InputEvent(device_type, event));
@@ -202,6 +217,104 @@ void ProximityCallback(int value)
     if (value >= PROXIMITY_THRESHOLD)
     {
         // PIR proximity should keep the backlight active
-        backlight.Activate();
+        backlight->Activate();
     }
+}
+
+// Load HAL configuration from JSON file with sensible defaults
+static HALConfig load_hal_config(const std::string& config_file)
+{
+    HALConfig config;
+    
+    // Set default values for embedded target
+    config.beeper_device = "/dev/input/event0";
+    config.display_device = "/dev/fb0";
+    config.button_device = "/dev/input/event2";
+    config.rotary_device = "/dev/input/event1";
+    config.backlight_device = "/sys/class/backlight/3-0036/brightness";
+    config.backplate_serial_device = "/dev/ttyO2";
+    config.emulate_display = false;
+    config.backlight_active_seconds = 10;
+    config.backlight_max_brightness = 115;
+    config.backlight_min_brightness = 20;
+    
+    // Try to load configuration from file
+    std::ifstream file(config_file);
+    if (!file.is_open()) {
+        LOG_WARN_STREAM("Could not open " << config_file << ", using default HAL configuration");
+        return config;
+    }
+    
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string configContent = buffer.str();
+    
+    if (configContent.empty()) {
+        LOG_ERROR_STREAM("Config file " << config_file << " is empty, using defaults");
+        return config;
+    }
+
+    std::string parse_error;
+    json11::Json parsed_json = json11::Json::parse(configContent, parse_error);
+
+    if (!parse_error.empty()) {
+        LOG_ERROR_STREAM("JSON parse error: " << parse_error << ", using defaults");
+        return config;
+    }
+    
+    if (!parsed_json.is_object()) {
+        LOG_ERROR_STREAM("Root JSON element must be an object, using defaults");
+        return config;
+    }
+    
+    LOG_INFO_STREAM("Loading HAL configuration from " << config_file);
+    
+    // Override defaults with values from config file if present
+    auto hal = parsed_json["hal"];
+    if (hal.is_object()) {
+        if (hal["beeper_device"].is_string()) {
+            config.beeper_device = hal["beeper_device"].string_value();
+            LOG_DEBUG_STREAM("  beeper_device: " << config.beeper_device);
+        }
+        if (hal["display_device"].is_string()) {
+            config.display_device = hal["display_device"].string_value();
+            LOG_DEBUG_STREAM("  display_device: " << config.display_device);
+        }
+        if (hal["button_device"].is_string()) {
+            config.button_device = hal["button_device"].string_value();
+            LOG_DEBUG_STREAM("  button_device: " << config.button_device);
+        }
+        if (hal["rotary_device"].is_string()) {
+            config.rotary_device = hal["rotary_device"].string_value();
+            LOG_DEBUG_STREAM("  rotary_device: " << config.rotary_device);
+        }
+        if (hal["backlight_device"].is_string()) {
+            config.backlight_device = hal["backlight_device"].string_value();
+            LOG_DEBUG_STREAM("  backlight_device: " << config.backlight_device);
+        }
+        if (hal["backplate_serial_device"].is_string()) {
+            config.backplate_serial_device = hal["backplate_serial_device"].string_value();
+            LOG_DEBUG_STREAM("  backplate_serial_device: " << config.backplate_serial_device);
+        }
+        if (hal["emulate_display"].is_bool()) {
+            config.emulate_display = hal["emulate_display"].bool_value();
+            LOG_INFO_STREAM("  emulate_display: " << (config.emulate_display ? "true" : "false"));
+        }
+        if (hal["backlight_active_seconds"].is_number()) {
+            config.backlight_active_seconds = hal["backlight_active_seconds"].int_value();
+            LOG_DEBUG_STREAM("  backlight_active_seconds: " << config.backlight_active_seconds);
+        }
+        if (hal["backlight_max_brightness"].is_number()) {
+            config.backlight_max_brightness = hal["backlight_max_brightness"].int_value();
+            LOG_DEBUG_STREAM("  backlight_max_brightness: " << config.backlight_max_brightness);
+        }
+        if (hal["backlight_min_brightness"].is_number()) {
+            config.backlight_min_brightness = hal["backlight_min_brightness"].int_value();
+            LOG_DEBUG_STREAM("  backlight_min_brightness: " << config.backlight_min_brightness);
+        }
+    } else {
+        LOG_WARN_STREAM("No 'hal' section found in config, using defaults");
+    }
+    
+    return config;
 }

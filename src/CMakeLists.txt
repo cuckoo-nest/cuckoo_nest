@@ -61,9 +61,29 @@ target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR}/include)
 # We use dlopen/dlsym to load it at runtime on the target device
 target_link_libraries(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src/lvgl-build/lib/liblvgl.a pthread dl)
 
+# Link SDL2 for host builds
+if(IS_HOST_BUILD)
+    find_package(SDL2 REQUIRED)
+    target_link_libraries(cuckoo PRIVATE SDL2::SDL2)
+    message(STATUS "Linking SDL2 for host build")
+endif()
+
 # =====================================================
 # Output location
 # =====================================================
 set_target_properties(cuckoo PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output
 )
+
+# =====================================================
+# Copy emulation config for host builds
+# =====================================================
+if(IS_HOST_BUILD)
+    message(STATUS "Host build detected - will copy emulation config")
+    add_custom_command(TARGET cuckoo POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/config.emulation.json
+            ${CMAKE_BINARY_DIR}/output/config.json
+        COMMENT "Copying config.emulation.json to output directory as config.json"
+    )
+endif()

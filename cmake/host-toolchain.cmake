@@ -12,6 +12,9 @@ set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Optional: Add host-specific flags
-# set(CMAKE_C_FLAGS_INIT "-Wall -Wextra")
-# set(CMAKE_CXX_FLAGS_INIT "-Wall -Wextra")
+# Define a flag the source code can check to see if it's being built
+# with the host toolchain
+add_definitions(-DHOST_TOOLCHAIN)
+
+# Set a CMake variable that can be checked in CMakeLists.txt
+set(IS_HOST_BUILD TRUE CACHE BOOL "Building for host platform" FORCE)

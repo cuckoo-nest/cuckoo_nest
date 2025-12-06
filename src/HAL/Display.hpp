@@ -10,7 +10,7 @@ class Display : public IDisplay {
 public:
     Display(std::string device_path);
     ~Display() override;
-    bool Initialize() override;
+    bool Initialize(bool emulate) override;
     void SetBackgroundColor(uint32_t color) override;
     void DrawText(int x, int y, const std::string &text, uint32_t color = 0xFFFFFF, Font font = Font::FONT_DEFAULT) override;
     void TimerHandler() override;
