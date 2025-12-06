@@ -30,6 +30,11 @@
 #include "IDateTimeProvider.hpp"
 #include "SystemDateTimeProvider.hpp"
 
+#if defined(LV_USE_SDL) && LV_USE_SDL == 1
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_events.h>
+#endif
+
 const int PROXIMITY_THRESHOLD = 3; // example threshold value
 
 // HAL Configuration structure
@@ -132,11 +137,13 @@ int main()
 
     // Set up input event callback
     inputs->set_callback(handle_input_event);
-
-    if (!inputs->start_polling())
+    if (!hal_config.emulate_display)
     {
-        LOG_ERROR_STREAM("Failed to start input polling");
-        return 1;
+        if (!inputs->start_polling())
+        {
+            LOG_ERROR_STREAM("Failed to start input polling");
+            return 1;
+        }
     }
 
     LOG_INFO_STREAM("Input polling started in background thread...");
@@ -177,7 +184,45 @@ int main()
             backlight->Tick();
         }
 
+#if defined(LV_USE_SDL) && LV_USE_SDL == 1
+        {
+            SDL_Event e;
+            while (SDL_PollEvent(&e))
+            {
+                switch (e.type)
+                {
+                case SDL_QUIT:
+                    exit(0);
+                    break;
+
+                default:
+                    LOG_DEBUG_STREAM("SDL event not handled " << e.type);
+                    break;
+                case SDL_MOUSEWHEEL:
+
+                    // LOG_DEBUG_STREAM("mouse wheel to " << e.wheel.y);
+                    handle_input_event(InputDeviceType::ROTARY, {.type = 1, .code = 1, .value = e.wheel.y * 100});
+                    break;
+                case SDL_MOUSEMOTION:
+                    // LOG_DEBUG_STREAM("mouse motion to (" << e.motion.x << ", " << e.motion.y << ")");
+                    break;
+                case SDL_MOUSEBUTTONDOWN:
+                {
+                    SDL_MouseButtonEvent be = *(SDL_MouseButtonEvent *)(&e);
+                    LOG_DEBUG_STREAM("mouse button down, clicks: " << be.clicks);
+                    if (be.clicks == 1)
+                        handle_input_event(InputDeviceType::BUTTON, {.type = EV_KEY, .code = 't', .value = 1});
+                }
+                break;
+                }
+            }
+        }
+        // #endif
+
+        usleep(1000); // Sleep for 1ms
+#else
         usleep(5000); // Sleep for 5ms
+#endif
     }
 
     return 0;
