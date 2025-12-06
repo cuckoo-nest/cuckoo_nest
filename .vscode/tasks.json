@@ -1,4 +1,60 @@
 {
 	"version": "2.0.0",
-	"tasks": []
+	"tasks": [
+		{
+			"label": "CMake: Configure",
+			"type": "shell",
+			"command": "cmake",
+			"args": [
+				"-S",
+				"${workspaceFolder}",
+				"-B",
+				"${workspaceFolder}/build",
+				"-DCMAKE_TOOLCHAIN_FILE=../cmake/host-toolchain.cmake"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Build",
+			"command": "cmake",
+			"args": [
+				"--build",
+				"${command:cmake.buildDirectory}"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": {
+				"owner": "cpp",
+				"fileLocation": [
+					"relative",
+					"${workspaceFolder}"
+				],
+				"pattern": {
+					"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+					"file": 1,
+					"line": 2,
+					"column": 3,
+					"severity": 4,
+					"message": 5
+				}
+			},
+			"dependsOn": "CMake: Configure"
+		},
+		{
+			"label": "Build and Run",
+			"type": "shell",
+			"command": "${workspaceFolder}/bin/main",
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+			"dependsOn": "Build"
+		}
+	],
 }

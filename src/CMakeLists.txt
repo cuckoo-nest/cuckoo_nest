@@ -71,9 +71,17 @@ endif()
 # =====================================================
 # Output location
 # =====================================================
+if(IS_HOST_BUILD)
 set_target_properties(cuckoo PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin
+    RUNTIME_OUTPUT_NAME cuckoo_emulation
 )
+else()
+set_target_properties(cuckoo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin
+    RUNTIME_OUTPUT_NAME cuckoo
+)
+endif()
 
 # =====================================================
 # Copy emulation config for host builds

@@ -75,16 +75,22 @@ std::queue<InputEvent> input_event_queue;
 std::mutex input_event_queue_mutex;
 
 
-int main()
+int main(int argc, char* argv[])
 {
     std::cout << "Cuckoo Nest Starting Up..." << std::endl;
 
     setup_logging();    
     
     LOG_INFO_STREAM("Cuckoo starting up...");
+
+    std::string config_file = "config.json";
+    if (argc > 1) {
+        config_file = argv[1];
+    }
+
     
     // Load HAL configuration from config file
-    HALConfig hal_config = load_hal_config("config.json");
+    HALConfig hal_config = load_hal_config(config_file);
     
     if (hal_config.emulate_display) {
         LOG_INFO_STREAM("Running in display emulation mode");
@@ -131,8 +137,8 @@ int main()
 
     //return 0;
     
-    integration_container->LoadIntegrationsFromConfig("config.json");
-    screen_manager->LoadScreensFromConfig("config.json");
+    integration_container->LoadIntegrationsFromConfig(config_file);
+    screen_manager->LoadScreensFromConfig(config_file);
     screen_manager->GoToNextScreen(1);
 
     // Set up input event callback
