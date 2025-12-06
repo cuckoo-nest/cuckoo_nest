@@ -40,7 +40,7 @@
 # debug information files
 *.dwo
 
-build*
+build*/
 bin*
 Testing
 upload.sh
