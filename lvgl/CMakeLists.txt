@@ -10,6 +10,7 @@ ExternalProject_Add(lvgl
     GIT_REPOSITORY https://github.com/lvgl/lvgl.git
     GIT_TAG ${LVGL_VERSION}
     GIT_SHALLOW ON
+    GIT_PROGRESS ON
     PREFIX ${CMAKE_BINARY_DIR}/lvgl
     CMAKE_ARGS
         -DLV_BUILD_CONF_PATH=${LV_CONF_PATH}
