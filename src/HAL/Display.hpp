@@ -1,7 +1,9 @@
 #pragma once
 #include <string>
 #include <stdint.h>
+#ifdef BUILD_TARGET_LINUX
 #include <linux/fb.h>
+#endif
 
 #include "lvgl/lvgl.h"
 #include "IDisplay.hpp"
@@ -23,8 +25,10 @@ private:
     long screensize;
     
     // Screen info
+#ifdef BUILD_TARGET_LINUX
     struct fb_var_screeninfo vinfo;
     struct fb_fix_screeninfo finfo;
+#endif
 
     // lvgl display members
     lv_display_t *disp;

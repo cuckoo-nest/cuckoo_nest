@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "linux/input.h"
+#include "HAL/InputEvent.hpp"
 
 #include "HAL/HAL.hpp"
 #include "HAL/Display.hpp"

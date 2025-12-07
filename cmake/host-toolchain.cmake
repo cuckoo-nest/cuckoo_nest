@@ -18,3 +18,9 @@ add_definitions(-DHOST_TOOLCHAIN)
 
 # Set a CMake variable that can be checked in CMakeLists.txt
 set(IS_HOST_BUILD TRUE CACHE BOOL "Building for host platform" FORCE)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	add_definitions(-DBUILD_TARGET_LINUX)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+	add_definitions(-DBUILD_TARGET_MACOS)
+endif()

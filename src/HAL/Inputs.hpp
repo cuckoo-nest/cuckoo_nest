@@ -3,7 +3,7 @@
 #include <thread>
 #include <atomic>
 #include <functional>
-#include <linux/input.h>
+#include "InputEvent.hpp"
 #include "InputDevices.hxx"
 
 class Inputs {

@@ -60,3 +60,6 @@ set(CMAKE_CXX_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -march=armv7-a")
 # Enable C++11 support
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_definitions(-DBUILD_TARGET_LINUX)
+add_definitions(-DBUILD_TARGET_NEST)
