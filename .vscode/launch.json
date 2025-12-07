@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Cuckoo with gdb",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/cuckoo_emulation",
+            "args": ["./config.emulation.json"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Build",
+            "stopAtEntry": false,
+            "linux": {
+                "MIMode": "gdb",
+                "miDebuggerPath": "/usr/bin/gdb"
+            },
+            "osx": {
+                "MIMode": "lldb"
+            },
+            "windows": {
+                "MIMode": "gdb",
+                "miDebuggerPath": "C:\\MinGw\\bin\\gdb.exe"
+            }
+        }
+    ],
+}

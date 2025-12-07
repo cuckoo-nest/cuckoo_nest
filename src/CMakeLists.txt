@@ -1,13 +1,11 @@
-# Cross-compiled main application build configuration
-# This builds the ARM executable for the embedded target
+# Main application build configuration
+# Use with ARM toolchain: cmake -DCMAKE_TOOLCHAIN_FILE=cmake/arm-toolchain.cmake ..
+# Use with host toolchain: cmake -DCMAKE_TOOLCHAIN_FILE=cmake/host-toolchain.cmake ..
 
 include(ExternalProject)
 include(FetchContent)
 
 # (removed spdlog FetchContent — using in-tree lightweight logger)
-# Disable dependency file generation for older toolchains
-set(CMAKE_CXX_DEPENDS_USE_COMPILER FALSE)
-set(CMAKE_C_DEPENDS_USE_COMPILER FALSE)
 
 # =====================================================
 # 3. Define your actual build target
@@ -39,11 +37,8 @@ set (
 
 add_executable(cuckoo ${SRC_FILES})
 
-# Tell CMake that this target depends on the toolchain being ready
-add_dependencies(cuckoo linaro_toolchain)
-
 # =====================================================
-# 4. Configure libcurl for cross-compilation
+# Configure libcurl for cross-compilation
 # =====================================================
 # Use the libcurl headers we've copied to the project for cross-compilation
 set(CURL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/third-party/libcurl/include")
@@ -66,31 +61,37 @@ target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR}/include)
 # We use dlopen/dlsym to load it at runtime on the target device
 target_link_libraries(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src/lvgl-build/lib/liblvgl.a pthread dl)
 
-# =====================================================
-# 5. Set the cross-compiler for this project
-# =====================================================
-set(CMAKE_SYSTEM_NAME Linux)
-set(CMAKE_SYSTEM_PROCESSOR arm)
-set(CMAKE_C_COMPILER ${LINARO_BIN}/arm-linux-gnueabi-gcc)
-set(CMAKE_CXX_COMPILER ${LINARO_BIN}/arm-linux-gnueabi-g++)
-set(CMAKE_FIND_ROOT_PATH ${LINARO_DIR}/arm-linux-gnueabi/libc)
-set(CMAKE_SYSROOT ${CMAKE_FIND_ROOT_PATH})
-
-# Enable C++11 support
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-
-# Optional: Add flags, sysroot, etc.
-target_compile_options(cuckoo PRIVATE
-    --sysroot=${CMAKE_SYSROOT}
-    -march=armv7-a
-    -std=c++11
-)
+# Link SDL2 for host builds
+if(IS_HOST_BUILD)
+    find_package(SDL2 REQUIRED)
+    target_link_libraries(cuckoo PRIVATE SDL2::SDL2)
+    message(STATUS "Linking SDL2 for host build")
+endif()
 
 # =====================================================
-# 6. Output location
+# Output location
 # =====================================================
+if(IS_HOST_BUILD)
 set_target_properties(cuckoo PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/output
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin
+    RUNTIME_OUTPUT_NAME cuckoo_emulation
 )
+else()
+set_target_properties(cuckoo PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin
+    RUNTIME_OUTPUT_NAME cuckoo
+)
+endif()
+
+# =====================================================
+# Copy emulation config for host builds
+# =====================================================
+if(IS_HOST_BUILD)
+    message(STATUS "Host build detected - will copy emulation config")
+    add_custom_command(TARGET cuckoo POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/config.emulation.json
+            ${CMAKE_BINARY_DIR}/output/config.json
+        COMMENT "Copying config.emulation.json to output directory as config.json"
+    )
+endif()

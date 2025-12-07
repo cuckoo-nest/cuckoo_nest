@@ -79,5 +79,8 @@
         "variant": "cpp"
     },
     "testMate.cpp.test.executables": "{build,Build,BUILD,out,Out,OUT,build-tests}/**/*{test,Test,TEST}*",
-    "cmake.ctest.testExplorerIntegrationEnabled": false
+    "cmake.ctest.testExplorerIntegrationEnabled": false,
+    "cmake.configureArgs": [
+        "-DCMAKE_TOOLCHAIN_FILE=../cmake/host-toolchain.cmake"
+    ]
 }

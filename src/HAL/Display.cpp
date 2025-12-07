@@ -1,7 +1,9 @@
 #include "Display.hpp"
 #include "BitmapFont.hpp"
 #include "../Screens/CuckooLogoNest.hpp"
+#ifdef BUILD_TARGET_LINUX
 #include <linux/fb.h>
+#endif
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -26,19 +28,33 @@ Display::~Display()
     }
 }
 
-bool Display::Initialize()
+bool Display::Initialize(bool emulate)
 {
     lv_init();
-
-    //Create a display
-    disp = lv_linux_fbdev_create();
-    if (disp == NULL) {
-        perror("lv_linux_fbdev_create failed");
+	lv_display_t *disp = NULL;
+    if (emulate)
+    {
+#ifdef HOST_TOOLCHAIN
+        disp = lv_sdl_window_create(320, 320);
+#else
+        std::cerr << "Emulation mode requested but not compiled with SDL support" << std::endl;
         return false;
+#endif
     }
+    else
+    {
+#ifdef BUILD_TARGET_LINUX
+        //Create a display
+        disp = lv_linux_fbdev_create();
+        if (disp == NULL) {
+            perror("lv_linux_fbdev_create failed");
+            return false;
+        }
 
-    lv_linux_fbdev_set_file(disp, "/dev/fb0");
-    lv_display_set_resolution(disp, 320, 320);
+        lv_linux_fbdev_set_file(disp, "/dev/fb0");
+#endif
+    }
+	lv_display_set_resolution(disp, 320, 320);
 
     // Setup fonts
     fontH1 = new lv_style_t;

@@ -1,7 +1,7 @@
 #include "Beeper.hpp"
 #include <fcntl.h>
 #include <unistd.h>
-#include <linux/input.h>
+#include "InputEvent.hpp"
 #include <cstring>
 #include "logger.h"
 

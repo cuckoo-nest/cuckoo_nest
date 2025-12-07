@@ -1,6 +1,6 @@
 #pragma once
 
-#include <linux/input.h>
+#include "HAL/InputEvent.hpp"
 #include "HAL/InputDevices.hxx"
 
 class InputEvent{

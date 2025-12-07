@@ -1,6 +1,6 @@
 #pragma once
 #include "../HAL/InputDevices.hxx"
-#include <linux/input.h>
+#include "../HAL/InputEvent.hpp"
 
 enum screen_color
 {
