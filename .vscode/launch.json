@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug LVGL demo with gdb",
+            "name": "Debug Cuckoo with gdb",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/cuckoo_emulation",
