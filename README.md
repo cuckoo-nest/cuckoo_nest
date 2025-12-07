@@ -15,13 +15,30 @@ The project supports two build configurations using CMake toolchain files:
 - **ARM cross-compilation** (for Nest thermostat): Uses `cmake/arm-toolchain.cmake`
 - **Host native compilation** (for testing): Uses `cmake/host-toolchain.cmake`
 
+### Run emulation mode from vscode
+It is possible to launch the emulation mode directly from vscode: 
+ - Navigate to the run & debug view
+ - Select "Debug Cuckoo with GDB"
+ - Press start
+  
+To interact with the screen:
+ - Left mouse press = main button press
+ - Mouse scrool wheel = navigation ring 
+
 ### ARM Build (for Nest Thermostat)
+Run the bash script:
+```bash
+./build_arm.sh
+```
+or
+
 ```bash
 mkdir build && cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/arm-toolchain.cmake ..
 cmake --build .
 cd ..
 ```
+**Note:** The ARM build will automatically download the Linaro toolchain on first run. This may take a few minutes.
 
 ### Host Build (for local testing)
 ```bash
@@ -30,8 +47,6 @@ cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/host-toolchain.cmake ..
 cmake --build .
 cd ..
 ```
-
-**Note:** The ARM build will automatically download the Linaro toolchain on first run. This may take a few minutes.
 
 ## Upload
 SSH to the Nest and start a simple server to receive the file:
