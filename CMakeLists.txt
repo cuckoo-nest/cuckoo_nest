@@ -17,4 +17,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_subdirectory("lvgl")
 add_subdirectory("src")
+
+if(IS_HOST_BUILD)
 add_subdirectory("tests")
+endif()
