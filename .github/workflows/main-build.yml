@@ -33,7 +33,7 @@ jobs:
       run: cmake --version
 
     - name: Configure tests
-      run: cmake -G "Unix Makefiles" -B ${{github.workspace}}/build_tests -DCMAKE_TOOLCHAIN_FILE=../cmake/host-toolchain.cmake
+      run: cmake -G "Unix Makefiles" -B ${{github.workspace}}/build_tests -DCMAKE_TOOLCHAIN_FILE=../cmake/host-toolchain.cmake ./tests
 
     - name: Build tests
       # Build your program with the given configuration
