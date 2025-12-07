@@ -25,6 +25,7 @@ set (
     Screens/DimmerScreen.cpp
     Screens/MenuScreen.cpp
     Screens/SwitchScreen.cpp
+    Screens/AnalogClockScreen.cpp
     Integrations/IntegrationContainer.cpp
     Screens/CuckooLogoNest.cpp
     Backplate/Message.cpp

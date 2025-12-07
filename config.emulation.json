@@ -48,7 +48,7 @@
     "screens":[
         {
             "name": "Home Screen",
-            "type": "home",
+            "type": "analogclock",
             "id": 1,
             "nextScreen": 2
         },

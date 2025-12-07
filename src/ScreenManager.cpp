@@ -12,6 +12,7 @@
 #include "Screens/MenuScreen.hpp"
 #include "Screens/SwitchScreen.hpp"
 #include "Screens/DimmerScreen.hpp"
+#include "Screens/AnalogClockScreen.hpp"
 
 ScreenManager::ScreenManager(
     HAL *hal, 
@@ -124,6 +125,16 @@ void ScreenManager::LoadScreensFromConfig(const std::string& config_path)
         {
             BuildDimmerScreenFromJSON(screen, id);
         }
+        #ifndef UNIT_TESTS
+        else if (type == "analogclock") 
+        {
+            BuildAnalogClockScreenFromJson(screen, id);
+        }
+        #endif
+        else 
+        {
+            LOG_ERROR_STREAM("ScreenManager: Unknown screen type '" << type << "' for screen ID " << id);
+        }
     }
 }
 
@@ -183,4 +194,15 @@ void ScreenManager::BuildDimmerScreenFromJSON(const json11::Json &screenJson, in
     auto dimmerScreen = new DimmerScreen(hal_, this);
     dimmerScreen->SetIntegrationId(integrationId);
     screens_[id] = std::unique_ptr<ScreenBase>(dimmerScreen);
+}
+
+void ScreenManager::BuildAnalogClockScreenFromJson(const json11::Json &screenJson, int id)
+{
+    #ifndef UNIT_TESTS
+    int nextScreenId = screenJson["nextScreen"].int_value();
+    auto analogClockScreen = new AnalogClockScreen(hal_, this);
+    analogClockScreen->SetId(id);
+    analogClockScreen->SetNextScreenId(nextScreenId);
+    screens_[id] = std::unique_ptr<ScreenBase>(analogClockScreen);
+    #endif
 }

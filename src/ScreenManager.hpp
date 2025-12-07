@@ -25,8 +25,8 @@ public:
     void RenderCurrentScreen();
     void ProcessInputEvent(const InputDeviceType device_type, const input_event &event);
 
-    void LoadScreensFromConfig(const std::string& config_path);
-    
+    void LoadScreensFromConfig(const std::string &config_path);
+
     size_t CountScreens() const { return screens_.size(); }
     
     ScreenBase* GetScreenById(int id) const {
@@ -50,6 +50,7 @@ private:
     void BuildMenuScreenFromJSON(const json11::Json &screenJson, int id);
     void BuildSwitchScreenFromJSON(const json11::Json &screenJson, int id);
     void BuildDimmerScreenFromJSON(const json11::Json &screenJson, int id);
+    void BuildAnalogClockScreenFromJson(const json11::Json &screenJson, int id);
 
     std::stack<ScreenBase*> screen_history_;
     ScreenBase* current_screen_;

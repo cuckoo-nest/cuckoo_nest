@@ -18,12 +18,16 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+#Define symbol to indicate unit tests are being built
+add_definitions(-DUNIT_TESTS)
+
 # Add tests directory for mock spdlog (BEFORE to take precedence)
 include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Include directories for the source code
 include_directories(../src)
 include_directories(../include)
+
 
 # Define source files that need to be compiled for tests
 # Exclude main.cpp as we don't want the main() function in tests
@@ -76,6 +80,7 @@ target_include_directories(cuckoo_tests PRIVATE ${CURL_INCLUDE_DIRS})
 
 # Add json11 include directory for tests
 target_include_directories(cuckoo_tests PRIVATE ../third-party/json11)
+target_include_directories(cuckoo_tests PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
 
 # Link against GoogleTest libraries (including GMock) and system libcurl
 target_link_libraries(
