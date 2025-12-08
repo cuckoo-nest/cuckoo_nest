@@ -34,7 +34,7 @@ void AnalogClockScreen::Render()
         return;
     }
 
-    std::cout << "Initializing Analog Clock..." << std::endl;
+    LOG_INFO_STREAM("Initializing Analog Clock...");
     display_->SetBackgroundColor(SCREEN_COLOR_BLACK); // Clears screen
 
     CreateClockFace();
