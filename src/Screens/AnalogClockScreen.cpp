@@ -170,14 +170,14 @@ void AnalogClockScreen::CreateClockFace()
 
     // Create face (circle)
     face = lv_scale_create(parent);
-    lv_obj_set_size(face, 300, 300);
+    lv_obj_set_size(face, 298, 298);
     lv_scale_set_mode(face, LV_SCALE_MODE_ROUND_INNER);
     lv_obj_set_style_bg_opa(face, LV_OPA_TRANSP, 0);
     lv_obj_set_style_line_width(face, 3, 0);
-    lv_obj_set_style_line_color(face, lv_color_white(), 0);
     lv_scale_set_label_show(face, true);
     lv_scale_set_total_tick_count(face, 61);
     lv_scale_set_major_tick_every(face, 5);
+    lv_obj_set_style_bg_color(face, lv_color_black(), 0);
     
     static const char * custom_labels[] = {"12", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", NULL};
     lv_scale_set_text_src(face, custom_labels);
