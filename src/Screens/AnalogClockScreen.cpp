@@ -41,7 +41,7 @@ void AnalogClockScreen::Render()
     
     // Create timer for 60fps smooth updates (approx 16ms)
     if (!clock_timer) {
-        clock_timer = lv_timer_create(update_clock_cb, 16, this);
+        clock_timer = lv_timer_create(update_clock_cb, 250, this);
     }
 
     StartIntroAnimation();
@@ -240,7 +240,7 @@ void AnalogClockScreen::UpdateClock()
     
     // Calculate angles (0-360 degrees)
     // 12 o'clock = 0 degrees for calculations
-    float sec_angle = (t->tm_sec + ts.tv_nsec / 1000000000.0f) * 6.0f; 
+    int sec_angle = t->tm_sec * 6; 
     float min_angle = (t->tm_min + t->tm_sec / 60.0f) * 6.0f;
     float hour_angle = (t->tm_hour % 12 + t->tm_min / 60.0f) * 30.0f;
     
