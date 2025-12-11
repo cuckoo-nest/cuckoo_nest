@@ -27,13 +27,13 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install Ubuntu dependencies
-      run: sudo apt-get install -y libcurl4-openssl-dev
+      run: sudo apt-get install -y libcurl4-openssl-dev libsdl2-dev
     
     - name: Get cmake version
       run: cmake --version
 
     - name: Configure tests
-      run: cmake -G "Unix Makefiles" -B ${{github.workspace}}/build_tests -DCMAKE_TOOLCHAIN_FILE=../cmake/host-toolchain.cmake ./tests
+      run: cmake -G "Unix Makefiles" -B ${{github.workspace}}/build_tests -DCMAKE_TOOLCHAIN_FILE=../cmake/host-toolchain.cmake
 
     - name: Build tests
       # Build your program with the given configuration
