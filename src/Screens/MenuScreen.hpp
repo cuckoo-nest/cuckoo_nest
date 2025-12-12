@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ScreenBase.hpp"
+#include <lvgl/lvgl.h>
 #include "../ScreenManager.hpp"
 #include "../HAL/IDisplay.hpp"
 #include "../HAL/Beeper.hpp"
@@ -39,6 +40,9 @@ public:
     int CountMenuItems() const {
         return menuItems.size();
     }
+
+    // Create icon helper: creates and returns an lvgl object for the menu item
+    lv_obj_t* CreateIcon(int index, int ix, int iy, bool selected, int iconSize);
 
 private:
     ScreenManager* screenManager_;

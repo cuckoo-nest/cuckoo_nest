@@ -74,46 +74,91 @@ void MenuScreen::Render()
 
         int iconSize = selected ? 60 : 40;
 
-        lv_obj_t * icon = lv_obj_create(lv_scr_act());
-        lv_obj_set_size(icon, iconSize, iconSize);
-        lv_obj_set_style_radius(icon, LV_RADIUS_CIRCLE, 0);
-        // Disable scrolling/scrollbars on the icon to avoid scroll artifacts
-        lv_obj_clear_flag(icon, LV_OBJ_FLAG_SCROLLABLE);
-        lv_obj_set_scrollbar_mode(icon, LV_SCROLLBAR_MODE_OFF);
-
-        // pick a color per-item (simple hash)
-        int nameSum = 0;
-        for (size_t k = 0; k < menuItems[i].name.size(); ++k)
-        {
-            nameSum += static_cast<unsigned char>(menuItems[i].name[k]);
-        }
-        uint8_t r = static_cast<uint8_t>((nameSum * 37) % 256);
-        uint8_t g = static_cast<uint8_t>((nameSum * 73) % 256);
-        uint8_t b = static_cast<uint8_t>((nameSum * 21) % 256);
-
-        lv_obj_set_style_bg_color(icon, lv_color_make(r, g, b), 0);
-        lv_obj_set_style_bg_opa(icon, LV_OPA_COVER, 0);
-        lv_obj_set_style_border_width(icon, selected ? 4 : 2, 0);
-        lv_obj_set_style_border_color(icon, lv_palette_main(LV_PALETTE_GREY), 0);
-
-        // place centered at computed position
-        lv_obj_set_pos(icon, ix - iconSize / 2, iy - iconSize / 2);
-
-        // add a small label as placeholder icon (first letter)
-        lv_obj_t * lbl = lv_label_create(icon);
-        std::string s(1, menuItems[i].name.empty() ? '?' : menuItems[i].name[0]);
-        lv_label_set_text(lbl, s.c_str());
-        lv_obj_center(lbl);
-        lv_obj_set_style_text_color(lbl, lv_color_white(), 0);
-        if (selected)
-        {
-            // make selected label larger
-            lv_obj_set_style_text_font(lbl, &lv_font_montserrat_28, 0);
-        }
-        // Disable scrolling/scrollbars on the label as well
-        lv_obj_clear_flag(lbl, LV_OBJ_FLAG_SCROLLABLE);
-        lv_obj_set_scrollbar_mode(lbl, LV_SCROLLBAR_MODE_OFF);
+        // Extracted icon creation
+        lv_obj_t* created = CreateIcon(i, ix, iy, selected, iconSize);
+        (void)created; // created is parented to screen by CreateIcon
     }
+}
+
+lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int iconSize)
+{
+    lv_obj_t * icon = lv_obj_create(lv_scr_act());
+    lv_obj_set_size(icon, iconSize, iconSize);
+    lv_obj_set_style_radius(icon, LV_RADIUS_CIRCLE, 0);
+    // Disable scrolling/scrollbars on the icon to avoid scroll artifacts
+    lv_obj_clear_flag(icon, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scrollbar_mode(icon, LV_SCROLLBAR_MODE_OFF);
+
+    // pick a color per-item (simple hash)
+    int nameSum = 0;
+    for (size_t k = 0; k < menuItems[index].name.size(); ++k)
+    {
+        nameSum += static_cast<unsigned char>(menuItems[index].name[k]);
+    }
+    uint8_t r = static_cast<uint8_t>((nameSum * 37) % 256);
+    uint8_t g = static_cast<uint8_t>((nameSum * 73) % 256);
+    uint8_t b = static_cast<uint8_t>((nameSum * 21) % 256);
+
+    lv_obj_set_style_bg_color(icon, lv_color_make(r, g, b), 0);
+    lv_obj_set_style_bg_opa(icon, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(icon, selected ? 4 : 2, 0);
+    lv_obj_set_style_border_color(icon, lv_palette_main(LV_PALETTE_GREY), 0);
+
+    // place centered at computed position
+    lv_obj_set_pos(icon, ix - iconSize / 2, iy - iconSize / 2);
+
+    // LVGL symbol list to choose from for demo (fallback will be letter)
+    static const char* symbols[] = {
+        LV_SYMBOL_OK,
+        LV_SYMBOL_CLOSE,
+        LV_SYMBOL_HOME,
+        LV_SYMBOL_POWER,
+        LV_SYMBOL_SETTINGS,
+        LV_SYMBOL_GPS,
+        LV_SYMBOL_BLUETOOTH,
+        LV_SYMBOL_WIFI,
+        LV_SYMBOL_USB,
+        LV_SYMBOL_BELL,
+        LV_SYMBOL_WARNING,
+        LV_SYMBOL_TRASH
+    };
+    const size_t symCount = sizeof(symbols) / sizeof(symbols[0]);
+
+    // choose a symbol index pseudo-randomly from the name hash for demo
+    size_t symIndex = static_cast<size_t>(nameSum) % symCount;
+
+    // add a small label for the symbol or fallback to first letter
+    lv_obj_t * lbl = lv_label_create(icon);
+    const std::string &name = menuItems[index].name;
+    if (!name.empty())
+    {
+        // 50% chance to use symbol demo vs fallback first letter
+        //if ((nameSum % 2) == 0)
+        if(true)
+        {
+            lv_label_set_text(lbl, symbols[symIndex]);
+        }
+        else
+        {
+            std::string s(1, name[0]);
+            lv_label_set_text(lbl, s.c_str());
+        }
+    }
+    else
+    {
+        lv_label_set_text(lbl, "?");
+    }
+    lv_obj_center(lbl);
+    lv_obj_set_style_text_color(lbl, lv_color_white(), 0);
+    if (selected)
+    {
+        lv_obj_set_style_text_font(lbl, &lv_font_montserrat_28, 0);
+    }
+    // Disable scrolling/scrollbars on the label as well
+    lv_obj_clear_flag(lbl, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scrollbar_mode(lbl, LV_SCROLLBAR_MODE_OFF);
+
+    return icon;
 }
 
 void MenuScreen::handle_input_event(const InputDeviceType device_type, const struct input_event &event)
