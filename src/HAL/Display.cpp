@@ -79,7 +79,11 @@ bool Display::Initialize(bool emulate)
     // Force a render
     lv_timer_handler();
     
-    sleep(3);
+    #ifdef HOST_TOOLCHAIN
+        usleep ( 500 * 1000 );   // 500ms
+    #else
+        sleep (3);
+    #endif
 
     return true;
 }
