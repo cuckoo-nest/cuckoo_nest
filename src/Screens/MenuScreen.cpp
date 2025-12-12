@@ -77,6 +77,9 @@ void MenuScreen::Render()
         lv_obj_t * icon = lv_obj_create(lv_scr_act());
         lv_obj_set_size(icon, iconSize, iconSize);
         lv_obj_set_style_radius(icon, LV_RADIUS_CIRCLE, 0);
+        // Disable scrolling/scrollbars on the icon to avoid scroll artifacts
+        lv_obj_clear_flag(icon, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_scrollbar_mode(icon, LV_SCROLLBAR_MODE_OFF);
 
         // pick a color per-item (simple hash)
         int nameSum = 0;
@@ -107,6 +110,9 @@ void MenuScreen::Render()
             // make selected label larger
             lv_obj_set_style_text_font(lbl, &lv_font_montserrat_28, 0);
         }
+        // Disable scrolling/scrollbars on the label as well
+        lv_obj_clear_flag(lbl, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_scrollbar_mode(lbl, LV_SCROLLBAR_MODE_OFF);
     }
 }
 
