@@ -18,7 +18,7 @@ void MenuScreen::Render()
     std::string selectdMenu = "No ITems";
     if (!menuItems.empty())
     {
-        selectdMenu = menuItems[menuSelectedIndex].name;
+        selectdMenu = menuItems[menuSelectedIndex].GetName();
     } 
     display_->DrawText(0, 0, selectdMenu, SCREEN_COLOR_WHITE, Font::FONT_H2);
         
@@ -91,9 +91,9 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
 
     // pick a color per-item (simple hash)
     int nameSum = 0;
-    for (size_t k = 0; k < menuItems[index].name.size(); ++k)
+    for (size_t k = 0; k < menuItems[index].GetName().size(); ++k)
     {
-        nameSum += static_cast<unsigned char>(menuItems[index].name[k]);
+        nameSum += static_cast<unsigned char>(menuItems[index].GetName()[k]);
     }
     uint8_t r = static_cast<uint8_t>((nameSum * 37) % 256);
     uint8_t g = static_cast<uint8_t>((nameSum * 73) % 256);
@@ -129,7 +129,7 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
 
     // add a small label for the symbol or fallback to first letter
     lv_obj_t * lbl = lv_label_create(icon);
-    const std::string &name = menuItems[index].name;
+    const std::string &name = menuItems[index].GetName();
     if (!name.empty())
     {
         // 50% chance to use symbol demo vs fallback first letter
@@ -210,7 +210,7 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
             return; // Invalid index
         }
 
-        if (menuItems[menuSelectedIndex].name == "Back")
+        if (menuItems[menuSelectedIndex].GetName() == "Back")
         {
             screenManager_->GoToPreviousScreen();
             menuSelectedIndex = 0; // Reset selection
@@ -225,6 +225,6 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
             return;
         }
 
-        screenManager_->GoToNextScreen(selectedItem.nextScreenId);
+        screenManager_->GoToNextScreen(selectedItem.GetNextScreenId());
     }
 }

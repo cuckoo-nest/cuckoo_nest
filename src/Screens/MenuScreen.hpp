@@ -14,8 +14,13 @@ class MenuItem
             name(name), 
             nextScreenId(nextScreenId) {}
 
+        const int GetNextScreenId() const { return nextScreenId; }
+        const std::string &GetName() const { return name; }
+        
+    private:
         std::string name;
         int nextScreenId;
+
 };
 
 class MenuScreen : public ScreenBase
