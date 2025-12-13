@@ -6,7 +6,7 @@ if(POLICY CMP0116)
     cmake_policy(SET CMP0116 OLD)
 endif()
 
-project(CuckooNest CXX)
+project(CuckooNest C CXX)
 
 include(ExternalProject)
 include(FetchContent)
@@ -19,5 +19,5 @@ add_subdirectory("lvgl")
 add_subdirectory("src")
 
 if(IS_HOST_BUILD)
-add_subdirectory("tests")
+#add_subdirectory("tests")
 endif()

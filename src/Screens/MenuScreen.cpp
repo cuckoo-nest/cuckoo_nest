@@ -3,6 +3,10 @@
 #include <lvgl/lvgl.h>
 #include <cmath>
 
+extern "C" {
+    LV_FONT_DECLARE(cuckoo_fontawesome);
+}
+
 void MenuScreen::Render()
 {
     if (display_ == nullptr)
@@ -117,7 +121,8 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
             symbol = LV_SYMBOL_CLOSE;
             break;
         case MenuIcon::HOME:
-            symbol = LV_SYMBOL_HOME;
+            //symbol = LV_SYMBOL_HOME;
+            symbol = "\xEF\x82\xB1";
             break;
         case MenuIcon::POWER:
             symbol = LV_SYMBOL_POWER;
@@ -148,6 +153,10 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
             symbol = LV_SYMBOL_TRASH;
             break;
 
+        case MenuIcon::GAMEPAD:
+            symbol = "\xEF\x82\xB1"; // Unicode f0b1 (gamepad)
+            break;
+
         case MenuIcon::NONE:
         default:
             // No icon specified, we will use first letter of name instead
@@ -161,7 +170,16 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
     {
         if(menuItems[index].GetIcon() != MenuIcon::NONE)
         {
-            lv_label_set_text(lbl, symbol);
+            // Use custom font for Font Awesome icons
+            if (menuItems[index].GetIcon() == MenuIcon::HOME)
+            {
+                lv_obj_set_style_text_font(lbl, &cuckoo_fontawesome, 0);
+                lv_label_set_text(lbl, symbol);
+            }
+            else
+            {
+                lv_label_set_text(lbl, symbol);
+            }
         }
         else
         {
@@ -178,7 +196,12 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
     lv_obj_set_style_text_color(lbl, lv_color_white(), 0);
     if (selected)
     {
-        lv_obj_set_style_text_font(lbl, &lv_font_montserrat_28, 0);
+        // Only override with Montserrat if not using custom font
+        if (menuItems[index].GetIcon() != MenuIcon::GAMEPAD && 
+            menuItems[index].GetIcon() != MenuIcon::HOME)
+        {
+            lv_obj_set_style_text_font(lbl, &lv_font_montserrat_28, 0);
+        }
     }
     // Disable scrolling/scrollbars on the label as well
     lv_obj_clear_flag(lbl, LV_OBJ_FLAG_SCROLLABLE);

@@ -14,5 +14,6 @@ enum class MenuIcon
     USB,
     BELL,
     WARNING,
-    TRASH
+    TRASH,
+    GAMEPAD
 };

@@ -34,9 +34,13 @@ set (
     Backplate/MessageParser.cpp
     Backplate/UnixSerialPort.cpp
     Backplate/BackplateComms.cpp
+    fonts/cuckoo_fontawesome.c
 )
 
 add_executable(cuckoo ${SRC_FILES})
+
+# Explicitly set C language for the font file
+set_source_files_properties(fonts/cuckoo_fontawesome.c PROPERTIES LANGUAGE C)
 
 # =====================================================
 # Configure libcurl for cross-compilation
