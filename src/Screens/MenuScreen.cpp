@@ -170,16 +170,8 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
     {
         if(menuItems[index].GetIcon() != MenuIcon::NONE)
         {
-            // Use custom font for Font Awesome icons
-            if (menuItems[index].GetIcon() == MenuIcon::HOME)
-            {
-                lv_obj_set_style_text_font(lbl, &cuckoo_fontawesome, 0);
-                lv_label_set_text(lbl, symbol);
-            }
-            else
-            {
-                lv_label_set_text(lbl, symbol);
-            }
+            lv_obj_set_style_text_font(lbl, &cuckoo_fontawesome, 0);
+            lv_label_set_text(lbl, symbol);
         }
         else
         {
@@ -194,15 +186,7 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
     
     lv_obj_center(lbl);
     lv_obj_set_style_text_color(lbl, lv_color_white(), 0);
-    if (selected)
-    {
-        // Only override with Montserrat if not using custom font
-        if (menuItems[index].GetIcon() != MenuIcon::GAMEPAD && 
-            menuItems[index].GetIcon() != MenuIcon::HOME)
-        {
-            lv_obj_set_style_text_font(lbl, &lv_font_montserrat_28, 0);
-        }
-    }
+
     // Disable scrolling/scrollbars on the label as well
     lv_obj_clear_flag(lbl, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_scrollbar_mode(lbl, LV_SCROLLBAR_MODE_OFF);
