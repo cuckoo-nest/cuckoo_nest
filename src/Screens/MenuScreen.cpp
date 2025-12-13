@@ -149,10 +149,9 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
             break;
 
         case MenuIcon::NONE:
-        
         default:
-            // No icon specified, return the blank colored circle
-            return icon;
+            // No icon specified, we will use first letter of name instead
+            break;
     }
 
     // add a small label for the symbol or fallback to first letter
