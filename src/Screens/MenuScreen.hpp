@@ -6,22 +6,9 @@
 #include "../HAL/IDisplay.hpp"
 #include "../HAL/Beeper.hpp"
 #include "../Integrations/IntegrationActionBase.hpp"
+#include "MenuIcon.hpp"
+#include "MenuItem.hpp"
 
-class MenuItem
-{
-    public:
-        MenuItem(const std::string& name, int nextScreenId) : 
-            name(name), 
-            nextScreenId(nextScreenId) {}
-
-        const int GetNextScreenId() const { return nextScreenId; }
-        const std::string &GetName() const { return name; }
-        
-    private:
-        std::string name;
-        int nextScreenId;
-
-};
 
 class MenuScreen : public ScreenBase
 {

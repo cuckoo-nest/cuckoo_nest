@@ -8,6 +8,7 @@
 #include <json11.hpp>
 #include "HAL/HAL.hpp"
 #include "Screens/ScreenBase.hpp"
+#include "Screens/MenuIcon.hpp"
 #include "Integrations/IntegrationContainer.hpp"
 #include "Backplate/BackplateComms.hpp"
 
@@ -48,6 +49,7 @@ private:
 
     void BuildHomeScreenFromJSON(const json11::Json &screenJson, int id);
     void BuildMenuScreenFromJSON(const json11::Json &screenJson, int id);
+    MenuIcon DetermineMenuIcon(std::string &iconStr);
     void BuildSwitchScreenFromJSON(const json11::Json &screenJson, int id);
     void BuildDimmerScreenFromJSON(const json11::Json &screenJson, int id);
     void BuildAnalogClockScreenFromJson(const json11::Json &screenJson, int id);
