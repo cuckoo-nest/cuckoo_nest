@@ -185,7 +185,6 @@ int main(int argc, char* argv[])
         {
             tick = 0;
             // Do once-per-second tasks here if needed
-            screen_manager->RenderCurrentScreen();
             // Let Backlight manage its own timeout
             backlight->Tick();
         }
