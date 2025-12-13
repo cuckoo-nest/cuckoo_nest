@@ -15,5 +15,8 @@ enum class MenuIcon
     BELL,
     WARNING,
     TRASH,
-    GAMEPAD
+    BREIFCASE,
+    LIGHT,
+    FAN,
+    TEMPERATURE,
 };

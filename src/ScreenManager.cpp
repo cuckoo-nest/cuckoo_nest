@@ -214,6 +214,14 @@ MenuIcon ScreenManager::DetermineMenuIcon(std::string &iconStr)
         icon = MenuIcon::WARNING;
     else if (iconStr == "TRASH")
         icon = MenuIcon::TRASH;
+    else if (iconStr == "BREIFCASE")
+        icon = MenuIcon::BREIFCASE;
+    else if (iconStr == "LIGHT")
+        icon = MenuIcon::LIGHT;
+    else if (iconStr == "FAN")
+        icon = MenuIcon::FAN;
+    else if (iconStr == "TEMPERATURE")
+        icon = MenuIcon::TEMPERATURE;
 
     return icon;
 }

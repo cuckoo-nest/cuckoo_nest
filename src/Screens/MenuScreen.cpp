@@ -2,6 +2,7 @@
 #include "logger.h"
 #include <lvgl/lvgl.h>
 #include <cmath>
+#include "../fonts/CuckooFontAwesomeDefs.h"
 
 extern "C" {
     LV_FONT_DECLARE(cuckoo_fontawesome);
@@ -115,46 +116,52 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
     switch (menuItems[index].GetIcon())
     {
         case MenuIcon::OK:
-            symbol = LV_SYMBOL_OK;
+            symbol = CUCKOO_SYMBOL_OK;
             break;
         case MenuIcon::CLOSE:
-            symbol = LV_SYMBOL_CLOSE;
+            symbol = CUCKOO_SYMBOL_CLOSE;
             break;
         case MenuIcon::HOME:
-            //symbol = LV_SYMBOL_HOME;
-            symbol = "\xEF\x82\xB1";
+            symbol = CUCKOO_SYMBOL_HOME;
             break;
         case MenuIcon::POWER:
-            symbol = LV_SYMBOL_POWER;
+            symbol = CUCKOO_SYMBOL_POWER;
             break;
         case MenuIcon::SETTINGS:
-            symbol = LV_SYMBOL_SETTINGS;
+            symbol = CUCKOO_SYMBOL_SETTINGS;
             break;
         case MenuIcon::GPS:
-            symbol = LV_SYMBOL_GPS;
+            symbol = CUCKOO_SYMBOL_GPS;
             break; 
         case MenuIcon::BLUETOOTH:
-            symbol = LV_SYMBOL_BLUETOOTH;
+            symbol = CUCKOO_SYMBOL_BLUETOOTH;
             break;
         case MenuIcon::WIFI:
-            symbol = LV_SYMBOL_WIFI;
+            symbol = CUCKOO_SYMBOL_WIFI;
             break;
         case MenuIcon::USB:
-            symbol = LV_SYMBOL_USB;
+            symbol = CUCKOO_SYMBOL_USB;
             break;
         case MenuIcon::BELL:
-            symbol = LV_SYMBOL_BELL;
+            symbol = CUCKOO_SYMBOL_BELL;
             break;
         case MenuIcon::WARNING:
-            symbol = LV_SYMBOL_WARNING;
+            symbol = CUCKOO_SYMBOL_WARNING;
             break;  
-
         case MenuIcon::TRASH:
-            symbol = LV_SYMBOL_TRASH;
+            symbol = CUCKOO_SYMBOL_TRASH;
             break;
-
-        case MenuIcon::GAMEPAD:
-            symbol = "\xEF\x82\xB1"; // Unicode f0b1 (gamepad)
+        case MenuIcon::BREIFCASE:
+            symbol = CUCKOO_SYMBOL_BREIFCASE;
+            break;
+        case MenuIcon::LIGHT:
+            symbol = CUCKOO_SYMBOL_LIGHT;
+            break;
+        case MenuIcon::FAN:
+            symbol = CUCKOO_SYMBOL_FAN;
+            break;
+        case MenuIcon::TEMPERATURE:
+            symbol = CUCKOO_SYMBOL_TEMPERATURE;
             break;
 
         case MenuIcon::NONE:
