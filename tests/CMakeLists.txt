@@ -50,6 +50,7 @@ set(
     ../src/Backplate/ResponseMessage.cpp
     ../src/Backplate/MessageParser.cpp
     ../src/Backplate/BackplateComms.cpp
+    ../src/fonts/CuckooFontAwesome.c
 )
 
 # Define test files
