@@ -27,6 +27,8 @@ include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 # Include directories for the source code
 include_directories(../src)
 include_directories(../include)
+include_directories(../src/Screens)
+
 
 
 # Define source files that need to be compiled for tests
@@ -39,18 +41,12 @@ set(
     ../src/HAL/Beeper.cpp
     ../src/HAL/BitmapFont.cpp
     ../src/HAL/Inputs.cpp
-    ../src/Screens/HomeScreen.cpp
-    ../src/Screens/MenuScreen.cpp
-    ../src/Screens/DimmerScreen.cpp
-    ../src/Screens/SwitchScreen.cpp
-    ../src/Screens/AnalogClockScreen.cpp
     ../src/Integrations/IntegrationContainer.cpp
     ../src/Backplate/Message.cpp
     ../src/Backplate/CommandMessage.cpp
     ../src/Backplate/ResponseMessage.cpp
     ../src/Backplate/MessageParser.cpp
     ../src/Backplate/BackplateComms.cpp
-    ../src/fonts/CuckooFontAwesome.c
 )
 
 # Define test files
@@ -64,6 +60,11 @@ set(
     TestBackplateComms.cpp
     TestMessageParser.cpp
     TestCRCCITT.cpp
+    ScreenStubs/DimmerScreen.cpp
+    ScreenStubs/SwitchScreen.cpp
+    ScreenStubs/MenuScreen.cpp
+    ScreenStubs/HomeScreen.cpp
+    ScreenStubs/AnalogClockScreen.cpp
 )
 
 # Create the test executable
@@ -84,8 +85,6 @@ target_include_directories(cuckoo_tests PRIVATE ${CURL_INCLUDE_DIRS})
 target_include_directories(cuckoo_tests PRIVATE ../third-party/json11)
 target_include_directories(cuckoo_tests PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
 
-target_link_directories(cuckoo_tests PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src/lvgl-build/lib)
-
 # Link against GoogleTest libraries (including GMock) and system libcurl
 target_link_libraries(
     cuckoo_tests
@@ -95,7 +94,6 @@ target_link_libraries(
     gmock_main
     pthread
     ${CURL_LIBRARIES}
-    liblvgl.a
 )
 
 # Enable testing

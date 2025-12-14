@@ -19,6 +19,5 @@ add_subdirectory("lvgl")
 add_subdirectory("src")
 
 if(IS_HOST_BUILD)
-# Disable unit tests for now
-#add_subdirectory("tests")
+add_subdirectory("tests")
 endif()
