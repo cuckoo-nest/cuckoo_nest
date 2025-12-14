@@ -47,7 +47,7 @@ void MenuScreen::Render()
     double frac = 0.0;
     if (std::abs(rotaryAccumulator) > 10)
     {
-        frac = static_cast<double>(rotaryAccumulator) / 100.0; // accumulator threshold is 100
+        frac = (double)rotaryAccumulator / RotaryAccumulatorThreshold;
         if (frac > 0.99) frac = 0.99;
         if (frac < -0.99) frac = -0.99;
     }
@@ -61,19 +61,20 @@ void MenuScreen::Render()
     if (menuSelectedIndex >= count - 1 && frac > 0.0)
     {
         frac = 0.0;
-    }
-
-    const double baseAngle = -90.0 - ((static_cast<double>(menuSelectedIndex) + frac) * angleStep);
-
-    LOG_ERROR_STREAM("Base angle: " << baseAngle << " selectedIndex: " << menuSelectedIndex << " rotaryAccumulator: " << rotaryAccumulator);    
+    }   
+    
+    const double baseAngle = -90.0 - ((double)menuSelectedIndex + frac) * angleStep;
 
     for (int i = 0; i < count; ++i)
     {
         double angleDeg = baseAngle + i * angleStep;
-        double ang = angleDeg * M_PI / 180.0;
+        int16_t angle = static_cast<int16_t>(angleDeg);
 
-        int ix = static_cast<int>(std::round(centerX + radius * std::cos(ang)));
-        int iy = static_cast<int>(std::round(centerY + radius * std::sin(ang)));
+        // Use LVGL's integer trigonometry (works around GCC 4.9.4 soft-float math lib bug)
+        // lv_trigo_sin/cos return fixed-point: -32768 to 32768 representing -1.0 to 1.0
+        // Optimized: (radius * trig_value) >> 15 instead of radius * (trig_value / 32768.0)
+        int ix = centerX + ((radius * lv_trigo_cos(angle)) >> 15);
+        int iy = centerY + ((radius * lv_trigo_sin(angle)) >> 15);
 
         bool selected = (i == menuSelectedIndex);
 
@@ -216,7 +217,7 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
         {
             rotaryAccumulator = 0;
         }
-        if (rotaryAccumulator >= 100)
+        if (rotaryAccumulator >= RotaryAccumulatorThreshold)
         {
             menuSelectedIndex++;
             if (menuSelectedIndex >= static_cast<int>(menuItems.size()))
@@ -225,7 +226,7 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
             }
             rotaryAccumulator = 0;
         }
-        else if (rotaryAccumulator <= -100)
+        else if (rotaryAccumulator <= -RotaryAccumulatorThreshold)
         {   
             menuSelectedIndex--;
             if (menuSelectedIndex < 0)
@@ -234,8 +235,6 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
             }
             rotaryAccumulator = 0;
         }
-
-        LOG_DEBUG_STREAM("MenuScreen: Rotary event, new selected index: " << menuSelectedIndex << " accumulator: " << rotaryAccumulator);
     }
 
     if (device_type == InputDeviceType::BUTTON && event.type == EV_KEY && event.code == 't' && event.value == 1)
@@ -265,6 +264,6 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
             return;
         }
 
-        screenManager_->GoToNextScreen(selectedItem.GetNextScreenId());
+        screenManager_->GoToNextScreen(selectedItem.GetNextScreenId()); 
     }
 }

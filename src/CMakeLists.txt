@@ -71,6 +71,7 @@ target_link_libraries(
     liblvgl.a 
     pthread 
     dl
+    m
 )
 
 # Link SDL2 for host builds

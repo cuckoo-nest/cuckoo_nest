@@ -54,8 +54,8 @@ set(CMAKE_CXX_DEPENDS_USE_COMPILER FALSE)
 set(CMAKE_C_DEPENDS_USE_COMPILER FALSE)
 
 # Set common ARM flags
-set(CMAKE_C_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -march=armv7-a")
-set(CMAKE_CXX_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -march=armv7-a")
+set(CMAKE_C_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -march=armv7-a -mfloat-abi=soft")
+set(CMAKE_CXX_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -march=armv7-a -mfloat-abi=soft")
 
 # Enable C++11 support
 set(CMAKE_CXX_STANDARD 11)

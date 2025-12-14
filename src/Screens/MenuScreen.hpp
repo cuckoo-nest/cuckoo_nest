@@ -43,4 +43,6 @@ private:
     int menuSelectedIndex;
     int rotaryAccumulator;
     std::vector<MenuItem> menuItems;
+
+    static constexpr int RotaryAccumulatorThreshold = 500;
 };
