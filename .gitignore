@@ -44,6 +44,7 @@ build*/
 bin*
 Testing
 upload.sh
+icons/*
 
 # CodeQL
 _codeql_detected_source_root

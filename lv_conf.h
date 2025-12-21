@@ -643,8 +643,8 @@
  *  #define LV_FONT_CUSTOM_DECLARE   LV_FONT_DECLARE(my_font_1) LV_FONT_DECLARE(my_font_2)
  *  @endcode
  */
-#define CUCKOO_FONTAWESOME 1
-#define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(cuckoo_fontawesome)
+#define CUCKOOFONTAWESOME 1
+#define LV_FONT_CUSTOM_DECLARE LV_FONT_DECLARE(CuckooFontAwesome)
 
 /** Always set a default font */
 #define LV_FONT_DEFAULT &lv_font_montserrat_14
