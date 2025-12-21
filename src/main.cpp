@@ -185,7 +185,6 @@ int main(int argc, char* argv[])
         {
             tick = 0;
             // Do once-per-second tasks here if needed
-            screen_manager->RenderCurrentScreen();
             // Let Backlight manage its own timeout
             backlight->Tick();
         }
@@ -207,7 +206,7 @@ int main(int argc, char* argv[])
                 case SDL_MOUSEWHEEL:
 
                     // LOG_DEBUG_STREAM("mouse wheel to " << e.wheel.y);
-                    handle_input_event(InputDeviceType::ROTARY, {.type = 1, .code = 1, .value = e.wheel.y * 100});
+                    handle_input_event(InputDeviceType::ROTARY, {.type = 1, .code = 1, .value = e.wheel.y * 10});
                     break;
                 case SDL_MOUSEMOTION:
                     // LOG_DEBUG_STREAM("mouse motion to (" << e.motion.x << ", " << e.motion.y << ")");

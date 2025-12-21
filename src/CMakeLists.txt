@@ -34,9 +34,13 @@ set (
     Backplate/MessageParser.cpp
     Backplate/UnixSerialPort.cpp
     Backplate/BackplateComms.cpp
+    fonts/CuckooFontAwesome.c
 )
 
 add_executable(cuckoo ${SRC_FILES})
+
+# Explicitly set C language for the font file
+set_source_files_properties(fonts/CuckooFontAwesome.c PROPERTIES LANGUAGE C)
 
 # =====================================================
 # Configure libcurl for cross-compilation
@@ -58,9 +62,17 @@ target_include_directories(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
 # Add project include directory (in-tree lightweight logger)
 target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
+target_link_directories(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src/lvgl-build/lib)
+
 # For runtime dynamic linking, we don't link libcurl at build time
 # We use dlopen/dlsym to load it at runtime on the target device
-target_link_libraries(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src/lvgl-build/lib/liblvgl.a pthread dl)
+target_link_libraries(
+    cuckoo PRIVATE 
+    liblvgl.a 
+    pthread 
+    dl
+    m
+)
 
 # Link SDL2 for host builds
 if(IS_HOST_BUILD)

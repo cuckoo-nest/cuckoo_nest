@@ -60,12 +60,23 @@
             "menuItems": [
                 {
                     "name": "Garage",
-                    "nextScreen": 3
+                    "nextScreen": 3,
+                    "icon": "light"
                 },{
                     "name": "Office Ex",
-                    "nextScreen": 4
+                    "nextScreen": 4,
+                    "icon": "fan"
                 },{
                     "name": "Office in",
+                    "nextScreen": 5,
+                    "icon": "breifcase"
+                },{
+                    "name": "Temperature",
+                    "nextScreen": 5,
+                    "icon": "temperature"
+                },
+                {
+                    "name": "no icon",
                     "nextScreen": 5
                 }
             ]

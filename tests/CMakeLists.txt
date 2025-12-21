@@ -43,12 +43,14 @@ set(
     ../src/Screens/MenuScreen.cpp
     ../src/Screens/DimmerScreen.cpp
     ../src/Screens/SwitchScreen.cpp
+    ../src/Screens/AnalogClockScreen.cpp
     ../src/Integrations/IntegrationContainer.cpp
     ../src/Backplate/Message.cpp
     ../src/Backplate/CommandMessage.cpp
     ../src/Backplate/ResponseMessage.cpp
     ../src/Backplate/MessageParser.cpp
     ../src/Backplate/BackplateComms.cpp
+    ../src/fonts/CuckooFontAwesome.c
 )
 
 # Define test files
@@ -82,6 +84,8 @@ target_include_directories(cuckoo_tests PRIVATE ${CURL_INCLUDE_DIRS})
 target_include_directories(cuckoo_tests PRIVATE ../third-party/json11)
 target_include_directories(cuckoo_tests PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
 
+target_link_directories(cuckoo_tests PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src/lvgl-build/lib)
+
 # Link against GoogleTest libraries (including GMock) and system libcurl
 target_link_libraries(
     cuckoo_tests
@@ -91,6 +95,7 @@ target_link_libraries(
     gmock_main
     pthread
     ${CURL_LIBRARIES}
+    liblvgl.a
 )
 
 # Enable testing

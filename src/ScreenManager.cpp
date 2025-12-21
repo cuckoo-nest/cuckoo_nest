@@ -125,12 +125,10 @@ void ScreenManager::LoadScreensFromConfig(const std::string& config_path)
         {
             BuildDimmerScreenFromJSON(screen, id);
         }
-        #ifndef UNIT_TESTS
         else if (type == "analogclock") 
         {
             BuildAnalogClockScreenFromJson(screen, id);
         }
-        #endif
         else 
         {
             LOG_ERROR_STREAM("ScreenManager: Unknown screen type '" << type << "' for screen ID " << id);
@@ -170,12 +168,62 @@ void ScreenManager::BuildMenuScreenFromJSON(const json11::Json &screenJson, int 
     {
         std::string itemName = itemJson["name"].string_value();
         int nextScreenId = itemJson["nextScreen"].int_value();
-        menuScreen->AddMenuItem(MenuItem(itemName, nextScreenId));
+        std::string iconStr = itemJson["icon"].string_value();
+
+        auto menuIcon = DetermineMenuIcon(iconStr);
+
+        menuScreen->AddMenuItem(
+            MenuItem(
+                itemName, 
+                nextScreenId, 
+                menuIcon
+            )
+        );
     }
 
-    menuScreen->AddMenuItem(MenuItem("Back", -1)); // Add Back option
+    menuScreen->AddMenuItem(MenuItem("Back", -1, MenuIcon::CLOSE)); // Add Back option
     
     screens_[id] = std::unique_ptr<ScreenBase>(menuScreen);
+}
+
+MenuIcon ScreenManager::DetermineMenuIcon(std::string &iconStr)
+{
+    transform(iconStr.begin(), iconStr.end(), iconStr.begin(), ::toupper);
+    MenuIcon icon = MenuIcon::NONE;
+    if (iconStr == "OK")
+        icon = MenuIcon::OK;
+    else if (iconStr == "CLOSE")
+        icon = MenuIcon::CLOSE;
+    else if (iconStr == "HOME")
+        icon = MenuIcon::HOME;
+    else if (iconStr == "POWER")
+        icon = MenuIcon::POWER;
+    else if (iconStr == "SETTINGS")
+        icon = MenuIcon::SETTINGS;
+    else if (iconStr == "GPS")
+        icon = MenuIcon::GPS;
+    else if (iconStr == "BLUETOOTH")
+        icon = MenuIcon::BLUETOOTH;
+    else if (iconStr == "WIFI")
+        icon = MenuIcon::WIFI;
+    else if (iconStr == "USB")
+        icon = MenuIcon::USB;
+    else if (iconStr == "BELL")
+        icon = MenuIcon::BELL;
+    else if (iconStr == "WARNING")
+        icon = MenuIcon::WARNING;
+    else if (iconStr == "TRASH")
+        icon = MenuIcon::TRASH;
+    else if (iconStr == "BREIFCASE")
+        icon = MenuIcon::BREIFCASE;
+    else if (iconStr == "LIGHT")
+        icon = MenuIcon::LIGHT;
+    else if (iconStr == "FAN")
+        icon = MenuIcon::FAN;
+    else if (iconStr == "TEMPERATURE")
+        icon = MenuIcon::TEMPERATURE;
+
+    return icon;
 }
 
 void ScreenManager::BuildSwitchScreenFromJSON(const json11::Json &screenJson, int id)
@@ -198,11 +246,9 @@ void ScreenManager::BuildDimmerScreenFromJSON(const json11::Json &screenJson, in
 
 void ScreenManager::BuildAnalogClockScreenFromJson(const json11::Json &screenJson, int id)
 {
-    #ifndef UNIT_TESTS
     int nextScreenId = screenJson["nextScreen"].int_value();
     auto analogClockScreen = new AnalogClockScreen(hal_, this);
     analogClockScreen->SetId(id);
     analogClockScreen->SetNextScreenId(nextScreenId);
     screens_[id] = std::unique_ptr<ScreenBase>(analogClockScreen);
-    #endif
 }
