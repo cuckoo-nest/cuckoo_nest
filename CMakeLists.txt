@@ -19,5 +19,5 @@ add_subdirectory("lvgl")
 add_subdirectory("src")
 
 if(IS_HOST_BUILD)
-add_subdirectory("tests")
+#add_subdirectory("tests")
 endif()

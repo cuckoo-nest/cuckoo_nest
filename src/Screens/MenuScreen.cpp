@@ -5,7 +5,7 @@
 #include "../fonts/CuckooFontAwesomeDefs.h"
 
 extern "C" {
-    LV_FONT_DECLARE(cuckoo_fontawesome);
+    LV_FONT_DECLARE(CuckooFontAwesome);
 }
 
 void MenuScreen::Render()
@@ -178,7 +178,7 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
     {
         if(menuItems[index].GetIcon() != MenuIcon::NONE)
         {
-            lv_obj_set_style_text_font(lbl, &cuckoo_fontawesome, 0);
+            lv_obj_set_style_text_font(lbl, &CuckooFontAwesome, 0);
             lv_label_set_text(lbl, symbol);
         }
         else

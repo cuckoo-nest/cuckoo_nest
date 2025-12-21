@@ -1,30 +1,20 @@
 /*******************************************************************************
  * Size: 28 px
  * Bpp: 4
- * Opts: --bpp 4 --size 28 --no-compress --stride 1 --align 1 --font fa-solid-900.ttf --range 61441,61448,61451,61452,61453,61457,61459,61461,61465,61468,61473,61478,61479,61480,61502,61507,61512,61515,61516,61517,61521,61522,61523,61524,61543,61544,61550,61552,61553,61556,61559,61560,61561,61563,61587,61589,61617,61636,61637,61639,61641,61664,61671,61674,61675,61683,61724,61732,61784,61931,62016,62017,62018,62019,62020,62153,62189,62212,62810,63426,63587 --font fa-brands-400.ttf --range 62087,62099 --format lvgl -o cuckoo_fontawesome.c
+ * Opts: --bpp 4 --size 28 --no-compress --font ./fontawesome-free-6.7.2-web/webfonts/fa-solid-900.ttf --range 61441 --range 61448 --range 61451 --range 61452 --range 61453 --range 61457 --range 61459 --range 61461 --range 61465 --range 61468 --range 61473 --range 61478 --range 61479 --range 61480 --range 61502 --range 61507 --range 61512 --range 61515 --range 61516 --range 61517 --range 61521 --range 61522 --range 61523 --range 61524 --range 61543 --range 61544 --range 61550 --range 61552 --range 61553 --range 61556 --range 61559 --range 61560 --range 61561 --range 61563 --range 61587 --range 61589 --range 61617 --range 61636 --range 61637 --range 61639 --range 61641 --range 61664 --range 61671 --range 61674 --range 61675 --range 61683 --range 61724 --range 61732 --range 61784 --range 61931 --range 62016 --range 62017 --range 62018 --range 62019 --range 62020 --range 62153 --range 62189 --range 62212 --range 62810 --range 63426 --range 63587 --font ./fontawesome-free-6.7.2-web/webfonts/fa-brands-400.ttf --range 62087 --range 62099 --format lvgl -o CuckooFontAwesome.c
  ******************************************************************************/
 
-#ifdef __has_include
-    #if __has_include("lvgl.h")
-        #ifndef LV_LVGL_H_INCLUDE_SIMPLE
-            #define LV_LVGL_H_INCLUDE_SIMPLE
-        #endif
-    #endif
-#endif
-
 #ifdef LV_LVGL_H_INCLUDE_SIMPLE
-    #include "lvgl.h"
+#include "lvgl.h"
 #else
-    #include "lvgl/lvgl.h"
+#include "lvgl/lvgl.h"
 #endif
 
-
-
-#ifndef CUCKOO_FONTAWESOME
-#define CUCKOO_FONTAWESOME 1
+#ifndef CUCKOOFONTAWESOME
+#define CUCKOOFONTAWESOME 1
 #endif
 
-#if CUCKOO_FONTAWESOME
+#if CUCKOOFONTAWESOME
 
 /*-----------------
  *    BITMAPS
@@ -2864,7 +2854,6 @@ static lv_font_fmt_txt_dsc_t font_dsc = {
 #if LVGL_VERSION_MAJOR == 8
     .cache = &cache
 #endif
-
 };
 
 
@@ -2875,9 +2864,9 @@ static lv_font_fmt_txt_dsc_t font_dsc = {
 
 /*Initialize a public general font descriptor*/
 #if LVGL_VERSION_MAJOR >= 8
-const lv_font_t cuckoo_fontawesome = {
+const lv_font_t CuckooFontAwesome = {
 #else
-lv_font_t cuckoo_fontawesome = {
+lv_font_t CuckooFontAwesome = {
 #endif
     .get_glyph_dsc = lv_font_get_glyph_dsc_fmt_txt,    /*Function pointer to get glyph's data*/
     .get_glyph_bitmap = lv_font_get_bitmap_fmt_txt,    /*Function pointer to get glyph's bitmap*/
@@ -2890,7 +2879,6 @@ lv_font_t cuckoo_fontawesome = {
     .underline_position = -2,
     .underline_thickness = 1,
 #endif
-    .static_bitmap = 0,
     .dsc = &font_dsc,          /*The custom font data. Will be accessed by `get_glyph_bitmap/dsc` */
 #if LV_VERSION_CHECK(8, 2, 0) || LVGL_VERSION_MAJOR >= 9
     .fallback = NULL,
@@ -2900,4 +2888,5 @@ lv_font_t cuckoo_fontawesome = {
 
 
 
-#endif /*#if CUCKOO_FONTAWESOME*/
+#endif /*#if CUCKOOFONTAWESOME*/
+
