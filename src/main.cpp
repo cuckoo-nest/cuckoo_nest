@@ -84,21 +84,17 @@ int main(int argc, char* argv[])
     LOG_INFO_STREAM("Cuckoo starting up...");
 
     std::string config_file = "config.json";
-    if (argc > 1) {
+    if (argc > 1)
         config_file = argv[1];
-    }
 
-    
     // Load HAL configuration from config file
     HALConfig hal_config = load_hal_config(config_file);
-    
-    if (hal_config.emulate_display) {
+
+    if (hal_config.emulate_display)
         LOG_INFO_STREAM("Running in display emulation mode");
-    }
-    else {
+    else
         LOG_INFO_STREAM("Running on embedded target mode");
-    }
-    
+
     // Create HAL objects with configuration
     LOG_INFO_STREAM("Initializing HAL components...");
     beeper.reset(new Beeper(hal_config.beeper_device));
@@ -110,7 +106,7 @@ int main(int argc, char* argv[])
     backplateSerial.reset(new UnixSerialPort(hal_config.backplate_serial_device));
     systemDateTimeProvider.reset(new SystemDateTimeProvider());
     backplateComms.reset(new BackplateComms(backplateSerial.get(), systemDateTimeProvider.get()));
-    
+
     // Create HAL structure and containers
     hal.reset(new HAL());
     integration_container.reset(new IntegrationContainer());
@@ -121,15 +117,15 @@ int main(int argc, char* argv[])
     backlight->set_max_brightness(hal_config.backlight_max_brightness);
     backlight->set_min_brightness(hal_config.backlight_min_brightness);
     backlight->Activate();
-    
+
     if (!screen->Initialize(hal_config.emulate_display))
     {
         LOG_ERROR_STREAM("Failed to initialize screen");
         return 1;
     }
-    
+
     LOG_INFO_STREAM("Screen initialized successfully");
-    
+
     hal->beeper = beeper.get();
     hal->display = screen.get();
     hal->inputs = inputs.get();
@@ -153,13 +149,7 @@ int main(int argc, char* argv[])
     LOG_INFO_STREAM("Input polling started in background thread...");
 
     backplateComms->AddPIRCallback(ProximityCallback);
-    // Initialize backplate communications (this will start its worker thread)
-    if (!backplateComms->Initialize()) {
-        LOG_ERROR_STREAM("Failed to initialize Backplate communications");
-        // non-fatal: continue running without backplate comms
-    } else {
-        LOG_INFO_STREAM("Backplate communications initialized and running in background thread");
-    }
+    backplateComms->Initialize();
 
     // Main thread can now do other work or just wait
     int tick = 0;
@@ -193,34 +183,32 @@ int main(int argc, char* argv[])
             {
                 switch (e.type)
                 {
-                case SDL_QUIT:
-                    exit(0);
-                    break;
+                    case SDL_QUIT:
+                        exit(0);
+                        break;
 
-                default:
-                    LOG_DEBUG_STREAM("SDL event not handled " << e.type);
-                    break;
-                case SDL_MOUSEWHEEL:
+                    default:
+                        LOG_DEBUG_STREAM("SDL event not handled " << e.type);
+                        break;
+                    case SDL_MOUSEWHEEL:
 
-                    // LOG_DEBUG_STREAM("mouse wheel to " << e.wheel.y);
-                    handle_input_event(InputDeviceType::ROTARY, {.type = 1, .code = 1, .value = e.wheel.y * 10});
-                    break;
-                case SDL_MOUSEMOTION:
-                    // LOG_DEBUG_STREAM("mouse motion to (" << e.motion.x << ", " << e.motion.y << ")");
-                    break;
-                case SDL_MOUSEBUTTONDOWN:
-                {
-                    SDL_MouseButtonEvent be = *(SDL_MouseButtonEvent *)(&e);
-                    LOG_DEBUG_STREAM("mouse button down, clicks: " << be.clicks);
-                    if (be.clicks == 1)
-                        handle_input_event(InputDeviceType::BUTTON, {.type = EV_KEY, .code = 't', .value = 1});
-                }
-                break;
+                        // LOG_DEBUG_STREAM("mouse wheel to " << e.wheel.y);
+                        handle_input_event(InputDeviceType::ROTARY, {.type = 1, .code = 1, .value = e.wheel.y * 10});
+                        break;
+                    case SDL_MOUSEMOTION:
+                        // LOG_DEBUG_STREAM("mouse motion to (" << e.motion.x << ", " << e.motion.y << ")");
+                        break;
+                    case SDL_MOUSEBUTTONDOWN:
+                        {
+                            SDL_MouseButtonEvent be = *(SDL_MouseButtonEvent *)(&e);
+                            LOG_DEBUG_STREAM("mouse button down, clicks: " << be.clicks);
+                            if (be.clicks == 1)
+                                handle_input_event(InputDeviceType::BUTTON, {.type = EV_KEY, .code = 't', .value = 1});
+                        }
+                        break;
                 }
             }
         }
-        // #endif
-
         usleep(1000); // Sleep for 1ms
 #else
         usleep(5000); // Sleep for 5ms
@@ -265,7 +253,7 @@ void ProximityCallback(int value)
 static HALConfig load_hal_config(const std::string& config_file)
 {
     HALConfig config;
-    
+
     // Set default values for embedded target
     config.beeper_device = "/dev/input/event0";
     config.display_device = "/dev/fb0";
@@ -284,11 +272,11 @@ static HALConfig load_hal_config(const std::string& config_file)
         LOG_WARN_STREAM("Could not open " << config_file << ", using default HAL configuration");
         return config;
     }
-    
+
     std::stringstream buffer;
     buffer << file.rdbuf();
     std::string configContent = buffer.str();
-    
+
     if (configContent.empty()) {
         LOG_ERROR_STREAM("Config file " << config_file << " is empty, using defaults");
         return config;
@@ -301,14 +289,14 @@ static HALConfig load_hal_config(const std::string& config_file)
         LOG_ERROR_STREAM("JSON parse error: " << parse_error << ", using defaults");
         return config;
     }
-    
+
     if (!parsed_json.is_object()) {
         LOG_ERROR_STREAM("Root JSON element must be an object, using defaults");
         return config;
     }
-    
+
     LOG_INFO_STREAM("Loading HAL configuration from " << config_file);
-    
+
     // Override defaults with values from config file if present
     auto hal = parsed_json["hal"];
     if (hal.is_object()) {
@@ -355,6 +343,6 @@ static HALConfig load_hal_config(const std::string& config_file)
     } else {
         LOG_WARN_STREAM("No 'hal' section found in config, using defaults");
     }
-    
+
     return config;
 }

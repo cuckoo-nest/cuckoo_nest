@@ -1,7 +1,3 @@
-#include "BackplateComms.hpp"
-#include "CommandMessage.hpp"
-#include "ResponseMessage.hpp"
-#include "MessageParser.hpp"
 #include <mutex>
 #include <unistd.h>
 #include <string>
@@ -10,8 +6,14 @@
 #include <thread>
 #include <chrono>
 #include <atomic>
-#include "logger.h"
 #include <ctype.h>
+
+#include "logger.h"
+#include "BackplateComms.hpp"
+#include "CommandMessage.hpp"
+#include "ResponseMessage.hpp"
+#include "MessageParser.hpp"
+#include "CTick.hpp"
 
 BackplateComms::BackplateComms(ISerialPort* serialPort, IDateTimeProvider* dateTimeProvider)
     : SerialPort(serialPort), DateTimeProvider(dateTimeProvider)
@@ -31,56 +33,87 @@ BackplateComms::~BackplateComms()
         workerThread.join();
 }
 
-bool BackplateComms::Initialize() 
+void BackplateComms::Initialize()
 {
     LOG_DEBUG_STREAM("BackplateComms: Initializing...");
-    if (!InitializeSerial())
-    {
-        LOG_ERROR_STREAM("BackplateComms: Failed to initialize serial port.");
-        return false;
-    }
-    
-    LOG_DEBUG_STREAM("BackplateComms: Serial port initialized.");
 
-    if (!DoBurstStage())
-    {
-        LOG_ERROR_STREAM("BackplateComms: Burst stage failed.");
-        return false;
-    }
-
-    LOG_DEBUG_STREAM("BackplateComms: Burst stage completed.");
-    
-    if (!DoInfoGathering())
-    {
-        LOG_ERROR_STREAM("BackplateComms: Info gathering failed.");
-        return false;
-    }
-
-    // Start background worker thread to run MainTaskBody periodically
     if (!running.load())
     {
         running.store(true);
-        workerThread = std::thread([this]() {
-            while (this->running.load())
-            {
-                this->MainTaskBody();
-                std::this_thread::sleep_for(std::chrono::milliseconds(20));
-            }
-        });
+        workerThread = std::thread([this](){ this->TaskBodyRunningState(); });
     }
-
-    return true;
 }
 
+void BackplateComms::TaskBodyRunningState(void)
+{
+    CTickFuture tickRunState(10);
+    while(running.load())
+    {
+        if(runstate_ < 99)
+        {
+            if(tickRunState.IsExpired())
+            {
+                tickRunState.Reset();
+                switch(runstate_)
+                {
+                    case 0:
+                        if(!InitializeSerial())
+                        {
+                            tickRunState.ScheduleSec(30);
+                            LOG_ERROR_STREAM("BackplateComms: Failed to initialize serial port.");
+                        }
+                        else
+                        {
+                            LOG_INFO_STREAM("BackplateComms: serial port initialized.");
+                            runstate_ ++;
+                        }
+                        break;
+                    case 1:
+                        if(!DoBurstStage())
+                        {
+                            tickRunState.ScheduleSec(30);
+                            LOG_ERROR_STREAM("BackplateComms: Burst stage failed.");
+                            runstate_ = 0;
+                        }
+                        else
+                        {
+                            LOG_INFO_STREAM("BackplateComms: Burst stage success.");
+                            runstate_ ++;
+                        }
+                        break;
+                    case 2:
+                        if(!DoInfoGathering())
+                        {
+                            tickRunState.ScheduleSec(30);
+                            LOG_ERROR_STREAM("BackplateComms: Info gathering failed.");
+                            runstate_ = 0;
+                        }
+                        else
+                        {
+                            LOG_INFO_STREAM("BackplateComms: Info gathering success.");
+                            runstate_ ++;
+                        }
+                        break;
+                    default:
+                        LOG_INFO_STREAM("BackplateComms: Transition to normal comms.");
+                        runstate_ = 99;
+                }
+            }
+        }
+        else
+            TaskBodyComms();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+}
 
 bool BackplateComms::InitializeSerial()
 {
     const BaudRate baudRate = BaudRate::Baud115200;
 
+    SerialPort->Close();
     if (!SerialPort->Open(baudRate))
-    {
         return false;
-    }
 
     SerialPort->Flush();
     SerialPort->SendBreak(0);
@@ -249,7 +282,7 @@ bool BackplateComms::GetInfo(MessageType command, MessageType expectedResponse)
     return false;
 }
 
-void BackplateComms::MainTaskBody (void)
+void BackplateComms::TaskBodyComms (void)
 {
 
     if (IsTimeForKeepalive())
