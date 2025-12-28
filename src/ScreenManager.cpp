@@ -19,7 +19,7 @@ void ScreenManager::GoToNextScreen(std::string const & id)
     ScreenBase* screen = (id != "" ? GetScreenById(id) : nullptr);
     if (screen == nullptr)
     {
-        LOG_ERROR_STREAM("Unable to find screen \"" << id << "\"");
+        LOG_ERROR_STREAM("ScreenManager: Unable to find screen \"" << id << "\"");
         return;
     }
 
@@ -33,13 +33,17 @@ void ScreenManager::GoToNextScreen(std::string const & id)
 
 void ScreenManager::GoToPreviousScreen()
 {
-    if (!screen_history_.empty())
+    if(screen_history_.size() > 1)
     {
         if(current_screen_)
             current_screen_->OnChangeFocus(false);
         screen_history_.pop();
         current_screen_ = screen_history_.top();
-        current_screen_->OnChangeFocus(true);
+        if(current_screen_)
+        {
+            current_screen_->OnChangeFocus(true);
+            LOG_INFO_STREAM("ScreenManager: Navigated to screen ID \"" << current_screen_->GetId() << "\" / \"" << current_screen_->GetName() << "\"");
+        }
     }
 }
 
