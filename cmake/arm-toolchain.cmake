@@ -31,6 +31,37 @@ if(NOT EXISTS "${LINARO_BIN}/arm-linux-gnueabi-gcc")
     file(ARCHIVE_EXTRACT INPUT "${LINARO_TARBALL}" DESTINATION "${CMAKE_BINARY_DIR}")
     file(RENAME "${CMAKE_BINARY_DIR}/${LINARO_VERSION}" "${LINARO_DIR}")
     message(STATUS "Linaro toolchain extracted to ${LINARO_DIR}")
+
+    # copy files from ./toolchain/lib to linaro_toolchain/lib
+    message("Source Directory: ${CMAKE_SOURCE_DIR}")
+    message("Project Source Directory: ${PROJECT_SOURCE_DIR}")
+
+    # copy libstdc++ only once
+    set(LIBSTDCPP_SRC "${CMAKE_SOURCE_DIR}/toolchain/lib/libstdc++.so.6.0.18")
+    set(LIBSTDCPP_STAMP "${LINARO_DIR}/.libstdcpp_copied")
+    if(EXISTS "${LIBSTDCPP_SRC}" AND NOT EXISTS "${LIBSTDCPP_STAMP}")
+        file(COPY "${LIBSTDCPP_SRC}" DESTINATION "${LINARO_DIR}/arm-linux-gnueabi/libc/lib")
+        file(COPY "${LIBSTDCPP_SRC}" DESTINATION "${LINARO_DIR}/arm-linux-gnueabi/lib")
+        file(WRITE "${LIBSTDCPP_STAMP}" "copied\n")
+        message(STATUS "libstdc++ copied to Linaro sysroot")
+
+            #set symlinks
+        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink libstdc++.so.6.0.18 "${LINARO_DIR}/arm-linux-gnueabi/libc/lib/libstdc++.so.6")
+        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink libstdc++.so.6.0.18 "${LINARO_DIR}/arm-linux-gnueabi/libc/lib/libstdc++.so")
+        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink libstdc++.so.6.0.18 "${LINARO_DIR}/arm-linux-gnueabi/lib/libstdc++.so.6")
+        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink libstdc++.so.6.0.18 "${LINARO_DIR}/arm-linux-gnueabi/lib/libstdc++.so")
+
+        message(STATUS "symlinks created")
+
+    elseif(EXISTS "${LIBSTDCPP_STAMP}")
+        message(STATUS "libstdc++ already copied; skipping")
+        
+    elseif(NOT EXISTS "${LIBSTDCPP_SRC}")
+        message(WARNING "libstdc++ source not found at ${LIBSTDCPP_SRC}; skipping copy")
+    endif()
+    
+    message(STATUS "copied libstdc++ to linario")
+
 endif()
 
 # Set compilers
