@@ -9,7 +9,7 @@ permissions:
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main" , "bug/50-AttemptToFixGlibIssue" ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
