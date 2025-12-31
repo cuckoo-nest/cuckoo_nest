@@ -30,7 +30,7 @@ TEST_F(IntegrationContainerTest, CanInstantiate)
 
 TEST_F(IntegrationContainerTest, GetSwitchByIdReturnsNullForUnknownId) 
 {
-    IntegrationSwitchBase* sw = container->GetSwitchById(999);
+    IntegrationSwitchBase* sw = container->GetSwitchById("999");
     EXPECT_EQ(sw, nullptr);
 }
 
@@ -57,9 +57,9 @@ TEST_F(IntegrationContainerTest, LoadIntegrationsFromConfigLoadsHomeAssistantSwi
     config.close();
 
     container->LoadIntegrationsFromConfig("test_config.json");
-    IntegrationSwitchBase* sw = container->GetSwitchById(1);
+    IntegrationSwitchBase* sw = container->GetSwitchById("1");
     ASSERT_NE(sw, nullptr);
-    EXPECT_EQ(sw->GetId(), 1);
+    EXPECT_EQ(sw->GetId(), "1");
     EXPECT_EQ(sw->GetName(), "Test Switch 1");
     HomeAssistantSwitch *haSw = dynamic_cast<HomeAssistantSwitch*>(sw);
     EXPECT_NE(haSw, nullptr);

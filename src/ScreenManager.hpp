@@ -32,6 +32,7 @@ public:
     void ProcessInputEvent(const InputDeviceType device_type, const input_event &event);
 
     void LoadScreensFromConfig(const std::string &config_path);
+    inline size_t CountScreens() const { return screens_.size(); } // for test harness
 
     ScreenBase* GetScreenById(std::string const &id) const
     {

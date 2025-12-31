@@ -131,7 +131,7 @@ std::string HomeScreen::GetTemperatureString()
             snprintf(buffer, sizeof(buffer), "%.2f C", temperature);
             break;
         case 'f':
-            snprintf(buffer, sizeof(buffer), "%d F", (long)(temperature * 1.8) + 32);
+            snprintf(buffer, sizeof(buffer), "%d F", (int)(temperature * 1.8) + 32);
             break;
         case 'k':
             snprintf(buffer, sizeof(buffer), "%.2f K", temperature + 237.15);

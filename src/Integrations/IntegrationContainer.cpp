@@ -48,7 +48,11 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
 
         std::string name = integration["name"].string_value();
         std::string type = integration["type"].string_value();
-        std::string id = integration["id"].string_value();
+        std::string id = (
+            integration["id"].is_number()
+            ? std::to_string(integration["id"].int_value())
+            : integration["id"].string_value()
+        );
         if(id == "")
             id = name;
 

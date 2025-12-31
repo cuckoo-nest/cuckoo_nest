@@ -22,7 +22,7 @@ public:
 
     virtual ~BackplateComms();
 
-    void Initialize();
+    bool Initialize();
 
     // Multi-subscriber event subscriptions using std::function
     using TemperatureCallback = std::function<void(float temperatureC)>;
@@ -42,13 +42,13 @@ public:
     float GetCurrentTemperatureC() const { std::lock_guard<std::mutex> lk(dataMutex); return CurrentTemperatureC; }
     float GetCurrentHumidityPercent() const { std::lock_guard<std::mutex> lk(dataMutex); return CurrentHumidityPercent; }
 
-private:
+protected:
     bool InitializeSerial();
     bool DoBurstStage();
     bool DoInfoGathering();
     bool GetInfo(MessageType command, MessageType expectedResponse);
-    void TaskBodyRunningState(void);
-    void TaskBodyComms(void);
+    void TaskBodyRunningState();
+    void TaskBodyComms();
 
     bool IsTimeForKeepalive();
     bool IsTimeForHistoricalDataRequest();

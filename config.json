@@ -24,7 +24,7 @@
             "name": "Hallway",
             "type": "home",
             "id": "initial",
-            "nextScreenId": "Living Room Lights"
+            "nextScreen": "Living Room Lights"
         },
         {
             "name": "Living Room Lights",

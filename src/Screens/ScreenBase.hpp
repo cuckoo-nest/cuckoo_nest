@@ -2,6 +2,7 @@
 #include <string>
 #include <json11.hpp>
 #include "../HAL/InputDevices.hxx"
+#include <iostream>
 
 class ScreenManager;
 
@@ -17,21 +18,26 @@ enum screen_color
 class ScreenBase
 {
 public:
+    ScreenBase() {}; // for testing harness
     ScreenBase(ScreenManager* screenManager, const json11::Json &jsonConfig)
     : screenManager_(screenManager)
     {
         std::vector<std::string> attribNames =
-            { "name", "id", "nextScreenId","integrationId" };
+            { "name", "id", "nextScreen","integrationId" };
         // copy attribute value from json, and ensure there is entry in the attribs_
         for(const auto & attribName :attribNames)
-            attribs_[attribName] = (
-                ! jsonConfig[attribName].is_null()
-                ? jsonConfig[attribName].string_value()
-                : ""
-            );
+        {
+            std::string v;
+            // this might be a number, convert it to string
+            if(jsonConfig[attribName].is_number())
+                v = std::to_string(jsonConfig[attribName].int_value());
+            else if(jsonConfig[attribName].is_string())
+                v = jsonConfig[attribName].string_value();
+            attribs_[attribName] = v;
+        }
 
         // if no json "id" attribute is provided, use our "name" attribute
-        if(jsonConfig["id"].is_null())
+        if(GetId() == "")
             SetId(GetName());
     }
     virtual ~ScreenBase() { OnChangeFocus(false); };
@@ -50,8 +56,8 @@ public:
     inline const std::string &GetIntegrationId() const { return attribs_["integrationId"]; }
     inline void SetIntegrationId(std::string const &id) { attribs_["integrationId"] = id; }
 
-    inline const std::string &GetNextScreenId() const { return attribs_["nextScreenId"]; }
-    void SetNextScreenId(std::string const &id) { attribs_["nextScreenId"] = id; }
+    inline const std::string &GetNextScreenId() const { return attribs_["nextScreen"]; }
+    void SetNextScreenId(std::string const &id) { attribs_["nextScreen"] = id; }
 
 protected:
     ScreenManager* screenManager_ = nullptr;

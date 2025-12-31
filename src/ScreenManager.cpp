@@ -158,7 +158,7 @@ void ScreenManager::BuildMenuScreenFromJSON(const json11::Json &screenJson)
 
         screen->AddMenuItem(MenuItem(
             itemJson["name"].string_value()
-            , itemJson["nextScreenId"].string_value()
+            , itemJson["nextScreen"].string_value()
             , menuIconsIt != menuIcons.end() ? menuIconsIt->second : menuIcons[""]
         ));
     }

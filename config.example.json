@@ -34,7 +34,7 @@
             "name": "Home Screen",
             "type": "home",
             "id": "initial",
-            "nextScreenId": "Main Menu"
+            "nextScreen": "Main Menu"
         },
         {
             "name": "Main Menu",

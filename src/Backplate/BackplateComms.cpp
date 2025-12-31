@@ -33,18 +33,22 @@ BackplateComms::~BackplateComms()
         workerThread.join();
 }
 
-void BackplateComms::Initialize()
+bool BackplateComms::Initialize()
 {
     LOG_DEBUG_STREAM("BackplateComms: Initializing...");
 
+    bool success = false;
     if (!running.load())
     {
         running.store(true);
         workerThread = std::thread([this](){ this->TaskBodyRunningState(); });
+        success = true;
     }
+
+    return success;
 }
 
-void BackplateComms::TaskBodyRunningState(void)
+void BackplateComms::TaskBodyRunningState()
 {
     CTickFuture tickRunState(10);
     while(running.load())
@@ -282,7 +286,7 @@ bool BackplateComms::GetInfo(MessageType command, MessageType expectedResponse)
     return false;
 }
 
-void BackplateComms::TaskBodyComms (void)
+void BackplateComms::TaskBodyComms ()
 {
 
     if (IsTimeForKeepalive())
