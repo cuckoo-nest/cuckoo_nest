@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-variant="${1:=host}"
+a1="$1"
+variant="${a1:=host}"
 builddir="./build_${variant}"
 cmaketarget="../cmake/${variant}-toolchain.cmake"
 
