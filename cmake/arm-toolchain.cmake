@@ -38,13 +38,19 @@ set(CMAKE_C_COMPILER ${LINARO_BIN}/arm-linux-gnueabi-gcc)
 set(CMAKE_CXX_COMPILER ${LINARO_BIN}/arm-linux-gnueabi-g++)
 
 # Set sysroot for cross-compilation
-# Using custom sysroot extracted from target device to match library versions
-set(CUSTOM_SYSROOT "/home/alex/nest-sysroot")
-set(CMAKE_FIND_ROOT_PATH ${CUSTOM_SYSROOT})
-set(CMAKE_SYSROOT ${CUSTOM_SYSROOT})
+# Hybrid approach: Use Linaro for build-time files (crt*.o, headers)
+# but link against device libraries for runtime compatibility
+set(LINARO_SYSROOT "${LINARO_DIR}/arm-linux-gnueabi/libc")
+set(DEVICE_SYSROOT "/home/alex/nest-sysroot")
 
-# Add explicit library search paths for the custom sysroot
+# Use Linaro sysroot for build (provides crt*.o startup files)
+set(CMAKE_SYSROOT ${LINARO_SYSROOT})
+set(CMAKE_FIND_ROOT_PATH ${LINARO_SYSROOT})
+
+# Add device sysroot to library search paths (takes precedence for runtime libs)
 set(CMAKE_LIBRARY_PATH 
+    "${DEVICE_SYSROOT}/lib"
+    "${DEVICE_SYSROOT}/usr/lib"
     "${CMAKE_SYSROOT}/lib"
     "${CMAKE_SYSROOT}/usr/lib"
 )
@@ -65,9 +71,10 @@ set(CMAKE_C_DEPENDS_USE_COMPILER FALSE)
 set(CMAKE_C_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -march=armv7-a -mfloat-abi=soft")
 set(CMAKE_CXX_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -march=armv7-a -mfloat-abi=soft")
 
-# Add linker flags to search for dependencies in custom sysroot
-set(CMAKE_EXE_LINKER_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -Wl,-rpath-link,${CMAKE_SYSROOT}/lib:${CMAKE_SYSROOT}/usr/lib")
-set(CMAKE_SHARED_LINKER_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -Wl,-rpath-link,${CMAKE_SYSROOT}/lib:${CMAKE_SYSROOT}/usr/lib")
+# Add linker flags: prioritize device libraries, use Linaro for startup files
+# -L flags are searched in order, so device libs are found first
+set(CMAKE_EXE_LINKER_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -L${DEVICE_SYSROOT}/lib -L${DEVICE_SYSROOT}/usr/lib -Wl,-rpath-link,${DEVICE_SYSROOT}/lib:${DEVICE_SYSROOT}/usr/lib")
+set(CMAKE_SHARED_LINKER_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -L${DEVICE_SYSROOT}/lib -L${DEVICE_SYSROOT}/usr/lib -Wl,-rpath-link,${DEVICE_SYSROOT}/lib:${DEVICE_SYSROOT}/usr/lib")
 
 # Enable C++11 support
 set(CMAKE_CXX_STANDARD 11)
