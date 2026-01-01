@@ -4,14 +4,16 @@
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
-# =====================================================
-# Download Linaro Toolchain if not present
-# =====================================================
+# Linaro Toolchain settings
 set(LINARO_VERSION "gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabi")
 set(LINARO_URL "https://releases.linaro.org/components/toolchain/binaries/4.9-2017.01/arm-linux-gnueabi/${LINARO_VERSION}.tar.xz")
 set(LINARO_DIR "${CMAKE_BINARY_DIR}/linaro_toolchain")
 set(LINARO_BIN "${LINARO_DIR}/bin")
 set(LINARO_TARBALL "${CMAKE_BINARY_DIR}/${LINARO_VERSION}.tar.xz")
+
+# Device sysroot repository
+set(DEVICE_SYSROOT_REPO "https://github.com/cuckoo-nest/sysroot.git")
+set(DEVICE_SYSROOT "${CMAKE_BINARY_DIR}/device_sysroot")
 
 # Download and extract toolchain if not already present
 if(NOT EXISTS "${LINARO_BIN}/arm-linux-gnueabi-gcc")
@@ -33,6 +35,19 @@ if(NOT EXISTS "${LINARO_BIN}/arm-linux-gnueabi-gcc")
     message(STATUS "Linaro toolchain extracted to ${LINARO_DIR}")
 endif()
 
+# Clone device sysroot if not present
+if(NOT EXISTS "${DEVICE_SYSROOT}/.git")
+    message(STATUS "Device sysroot not found, cloning from ${DEVICE_SYSROOT_REPO}...")
+    execute_process(
+        COMMAND git clone --depth 1 ${DEVICE_SYSROOT_REPO} ${DEVICE_SYSROOT}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        RESULT_VARIABLE SYSROOT_CLONE_RESULT
+    )
+    if(NOT SYSROOT_CLONE_RESULT EQUAL 0)
+        message(FATAL_ERROR "Failed to clone device sysroot from ${DEVICE_SYSROOT_REPO}")
+    endif()
+endif()
+
 # Set compilers
 set(CMAKE_C_COMPILER ${LINARO_BIN}/arm-linux-gnueabi-gcc)
 set(CMAKE_CXX_COMPILER ${LINARO_BIN}/arm-linux-gnueabi-g++)
@@ -41,7 +56,6 @@ set(CMAKE_CXX_COMPILER ${LINARO_BIN}/arm-linux-gnueabi-g++)
 # Hybrid approach: Use Linaro for build-time files (crt*.o, headers)
 # but link against device libraries for runtime compatibility
 set(LINARO_SYSROOT "${LINARO_DIR}/arm-linux-gnueabi/libc")
-set(DEVICE_SYSROOT "/home/alex/nest-sysroot")
 
 # Use Linaro sysroot for build (provides crt*.o startup files)
 set(CMAKE_SYSROOT ${LINARO_SYSROOT})
