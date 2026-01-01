@@ -64,7 +64,7 @@ jobs:
         readelf -V ${{github.workspace}}/build/device_sysroot/usr/lib/libstdc++.so.6 | grep GLIBCXX
 
     - name: Build arm binary
-      run: cmake --build ${{github.workspace}}/build
+      run: cmake --build ${{github.workspace}}/build -- VERBOSE=1
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
