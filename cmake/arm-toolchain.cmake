@@ -31,37 +31,6 @@ if(NOT EXISTS "${LINARO_BIN}/arm-linux-gnueabi-gcc")
     file(ARCHIVE_EXTRACT INPUT "${LINARO_TARBALL}" DESTINATION "${CMAKE_BINARY_DIR}")
     file(RENAME "${CMAKE_BINARY_DIR}/${LINARO_VERSION}" "${LINARO_DIR}")
     message(STATUS "Linaro toolchain extracted to ${LINARO_DIR}")
-
-    # copy files from ./toolchain/lib to linaro_toolchain/lib
-    message("Source Directory: ${CMAKE_SOURCE_DIR}")
-    message("Project Source Directory: ${PROJECT_SOURCE_DIR}")
-
-    # copy libstdc++ only once
-    set(LIBSTDCPP_SRC "${CMAKE_SOURCE_DIR}/toolchain/lib/libstdc++.so.6.0.18")
-    set(LIBSTDCPP_STAMP "${LINARO_DIR}/.libstdcpp_copied")
-    if(EXISTS "${LIBSTDCPP_SRC}" AND NOT EXISTS "${LIBSTDCPP_STAMP}")
-        file(COPY "${LIBSTDCPP_SRC}" DESTINATION "${LINARO_DIR}/arm-linux-gnueabi/libc/lib")
-        file(COPY "${LIBSTDCPP_SRC}" DESTINATION "${LINARO_DIR}/arm-linux-gnueabi/lib")
-        file(WRITE "${LIBSTDCPP_STAMP}" "copied\n")
-        message(STATUS "libstdc++ copied to Linaro sysroot")
-
-            #set symlinks
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink libstdc++.so.6.0.18 "${LINARO_DIR}/arm-linux-gnueabi/libc/lib/libstdc++.so.6")
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink libstdc++.so.6.0.18 "${LINARO_DIR}/arm-linux-gnueabi/libc/lib/libstdc++.so")
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink libstdc++.so.6.0.18 "${LINARO_DIR}/arm-linux-gnueabi/lib/libstdc++.so.6")
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink libstdc++.so.6.0.18 "${LINARO_DIR}/arm-linux-gnueabi/lib/libstdc++.so")
-
-        message(STATUS "symlinks created")
-
-    elseif(EXISTS "${LIBSTDCPP_STAMP}")
-        message(STATUS "libstdc++ already copied; skipping")
-        
-    elseif(NOT EXISTS "${LIBSTDCPP_SRC}")
-        message(WARNING "libstdc++ source not found at ${LIBSTDCPP_SRC}; skipping copy")
-    endif()
-    
-    message(STATUS "copied libstdc++ to linario")
-
 endif()
 
 # Set compilers
@@ -69,8 +38,16 @@ set(CMAKE_C_COMPILER ${LINARO_BIN}/arm-linux-gnueabi-gcc)
 set(CMAKE_CXX_COMPILER ${LINARO_BIN}/arm-linux-gnueabi-g++)
 
 # Set sysroot for cross-compilation
-set(CMAKE_FIND_ROOT_PATH ${LINARO_DIR}/arm-linux-gnueabi/libc)
-set(CMAKE_SYSROOT ${CMAKE_FIND_ROOT_PATH})
+# Using custom sysroot extracted from target device to match library versions
+set(CUSTOM_SYSROOT "/home/alex/nest-sysroot")
+set(CMAKE_FIND_ROOT_PATH ${CUSTOM_SYSROOT})
+set(CMAKE_SYSROOT ${CUSTOM_SYSROOT})
+
+# Add explicit library search paths for the custom sysroot
+set(CMAKE_LIBRARY_PATH 
+    "${CMAKE_SYSROOT}/lib"
+    "${CMAKE_SYSROOT}/usr/lib"
+)
 
 # Search for programs in the build host directories
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
@@ -87,6 +64,10 @@ set(CMAKE_C_DEPENDS_USE_COMPILER FALSE)
 # Set common ARM flags
 set(CMAKE_C_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -march=armv7-a -mfloat-abi=soft")
 set(CMAKE_CXX_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -march=armv7-a -mfloat-abi=soft")
+
+# Add linker flags to search for dependencies in custom sysroot
+set(CMAKE_EXE_LINKER_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -Wl,-rpath-link,${CMAKE_SYSROOT}/lib:${CMAKE_SYSROOT}/usr/lib")
+set(CMAKE_SHARED_LINKER_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -Wl,-rpath-link,${CMAKE_SYSROOT}/lib:${CMAKE_SYSROOT}/usr/lib")
 
 # Enable C++11 support
 set(CMAKE_CXX_STANDARD 11)
