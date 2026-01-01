@@ -58,10 +58,10 @@ jobs:
     - name: Post configure checks
       run: |
         echo "Checking build configuration..."
-        arm-linux-gnueabi-readelf -V ${{github.workspace}}/build/device_sysroot/lib/libstdc++.so.6 | grep GLIBCXX
-        arm-linux-gnueabi-readelf -V ${{github.workspace}}/build/device_sysroot/usr/lib/libstdc++.so.6 | grep GLIBCXX
-        sha256sum ${{github.workspace}}/build/device_sysroot/lib/libstdc++.so.6
         ls -lah ${{github.workspace}}/build
+        sha256sum ${{github.workspace}}/build/device_sysroot/lib/libstdc++.so.6
+        readelf -V ${{github.workspace}}/build/device_sysroot/lib/libstdc++.so.6 | grep GLIBCXX
+        readelf -V ${{github.workspace}}/build/device_sysroot/usr/lib/libstdc++.so.6 | grep GLIBCXX
 
     - name: Build arm binary
       run: cmake --build ${{github.workspace}}/build
