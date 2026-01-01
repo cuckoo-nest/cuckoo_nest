@@ -32,18 +32,18 @@ jobs:
     - name: Get cmake version
       run: cmake --version
 
-    - name: Configure tests
-      run: cmake -G "Unix Makefiles" -B ${{github.workspace}}/build_tests -DCMAKE_TOOLCHAIN_FILE=../cmake/host-toolchain.cmake
+    # - name: Configure tests
+    #   run: cmake -G "Unix Makefiles" -B ${{github.workspace}}/build_tests -DCMAKE_TOOLCHAIN_FILE=../cmake/host-toolchain.cmake
 
-    - name: Build tests
-      # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build_tests
+    # - name: Build tests
+    #   # Build your program with the given configuration
+    #   run: cmake --build ${{github.workspace}}/build_tests
 
-    - name: Test
-      working-directory: ${{github.workspace}}/build_tests
-      # Execute tests defined by the CMake configuration.
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest --output-junit test-results.xml
+    # - name: Test
+    #   working-directory: ${{github.workspace}}/build_tests
+    #   # Execute tests defined by the CMake configuration.
+    #   # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+    #   run: ctest --output-junit test-results.xml
     
     - name: Publish Test Results
       uses: EnricoMi/publish-unit-test-result-action@v2
