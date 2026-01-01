@@ -52,6 +52,11 @@ jobs:
         files: |
           ${{github.workspace}}/build/test-results.xml
 
+    - name: Get platform info
+      run: | 
+        uname -a
+        cat /etc/os-release
+
     - name: Configure arm build
       run: cmake -G "Unix Makefiles" -B ${{github.workspace}}/build -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-toolchain.cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCUCKOO_VERSION=${{ github.sha }}
 
@@ -64,7 +69,7 @@ jobs:
         readelf -V ${{github.workspace}}/build/device_sysroot/usr/lib/libstdc++.so.6 | grep GLIBCXX
 
     - name: Build arm binary
-      run: cmake --build ${{github.workspace}}/build -- VERBOSE=1
+      run: cmake --build ${{github.workspace}}/build
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
