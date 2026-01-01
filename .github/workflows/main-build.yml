@@ -59,8 +59,8 @@ jobs:
       run: |
         echo "Checking build configuration..."
         ls -lah ${{github.workspace}}/build
-        sha256sum ${{github.workspace}}/build/device_sysroot/lib/libstdc++.so.6
-        readelf -V ${{github.workspace}}/build/device_sysroot/lib/libstdc++.so.6 | grep GLIBCXX
+        ls -lah ${{github.workspace}}/build/device_sysroot
+        sha256sum ${{github.workspace}}/build/device_sysroot/usr/lib/libstdc++.so.6
         readelf -V ${{github.workspace}}/build/device_sysroot/usr/lib/libstdc++.so.6 | grep GLIBCXX
 
     - name: Build arm binary
