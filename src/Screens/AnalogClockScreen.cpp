@@ -38,12 +38,7 @@ void AnalogClockScreen::handle_input_event(const InputDeviceType device_type, co
             beeper_->click();
 
         if (GetNextScreenId() != "")
-        {
-            lv_timer_delete(clock_timer);
-            clock_timer = nullptr;
-            initialized_ = false;
             screenManager_->GoToNextScreen(GetNextScreenId());
-        }
         else
             screenManager_->GoToPreviousScreen();
     }
