@@ -1,14 +1,12 @@
 #pragma once
 #include <string>
 
-enum class SwitchState {
-    OFF,
-    ON
-};
 
 class IntegrationSwitchBase 
 {
     public:
+        enum class SwitchState { OFF, ON };
+        IntegrationSwitchBase() = default;
         virtual ~IntegrationSwitchBase() = default;
 
         virtual SwitchState GetState() = 0;
