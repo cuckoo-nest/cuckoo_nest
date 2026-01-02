@@ -28,7 +28,9 @@ public:
 
     void Render() override;
     void handle_input_event(const InputDeviceType device_type, const struct input_event &event) override;
-private:
+    void OnChangeFocus(bool focused) override;
+
+    private:
 
     enum class SwitchState {
         OFF,

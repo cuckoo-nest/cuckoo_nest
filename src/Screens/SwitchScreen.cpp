@@ -26,6 +26,28 @@ void SwitchScreen::Render()
     display_->DrawText(60, 20, buttonText, SCREEN_COLOR_WHITE, Font::FONT_H2);
 }
 
+void SwitchScreen::OnChangeFocus(bool focused)
+{
+    LOG_INFO_STREAM("OnChangeFocus focus " << focused);
+
+    if(focused)
+    {
+        auto integrationSwitch = screenManager_->GetIntegrationContainer()->GetSwitchById(GetIntegrationId());
+
+        if (integrationSwitch != nullptr)
+        {
+            switchState = (
+                integrationSwitch->GetState() == IntegrationSwitchBase::SwitchState::ON
+                ? SwitchScreen::SwitchState::ON // fully qualified, just to make it clear
+                : SwitchScreen::SwitchState::OFF // fully qualified, just to make it clear
+            );
+            std::string str = (switchState == SwitchState::ON ? "On" : "Off");
+            LOG_INFO_STREAM("OnChangeFocus switchState " << str);
+        }
+    }
+    ScreenBase::OnChangeFocus(focused);
+}
+
 void SwitchScreen::handle_input_event(const InputDeviceType device_type, const struct input_event &event)
 {
     if (device_type == InputDeviceType::ROTARY)
@@ -64,7 +86,7 @@ void SwitchScreen::handle_input_event(const InputDeviceType device_type, const s
 
             auto sw = integrationContainer_->GetSwitchById(GetIntegrationId());
             if (sw == nullptr) {
-                LOG_ERROR_STREAM("No switch found for integration ID: " << GetIntegrationId());
+                LOG_ERROR_STREAM("No switch found for integration ID: \"" << GetIntegrationId() << "\"");
                 return;
             }
 
