@@ -7,20 +7,28 @@ class MenuItem
 {
     public:
         MenuItem(
-            const std::string& name, 
-            int nextScreenId,
-            MenuIcon icon = MenuIcon::NONE) : 
-            name(name), 
-            nextScreenId(nextScreenId),
-            icon(icon) {}
+            const std::string& name
+            , const std::string &nextScreenId
+            , MenuIcon icon = MenuIcon::NONE
+            , bool previous = false
+        )
+            : name_(name)
+            , nextScreenId_(nextScreenId)
+            , icon_(icon)
+            , previous_(previous)
+        {
+            if(nextScreenId_ == "")
+                nextScreenId_ = name_;
+        }
 
-        const int GetNextScreenId() const { return nextScreenId; }
-        const std::string &GetName() const { return name; }
-        const MenuIcon GetIcon() const { return icon; }
+        inline const std::string &GetNextScreenId() const { return nextScreenId_; }
+        inline const std::string &GetName() const { return name_; }
+        inline const MenuIcon GetIcon() const { return icon_; }
+        inline bool IsPrevious() const { return previous_; }
 
     private:
-        std::string name;
-        int nextScreenId;
-        MenuIcon icon;
-
+        std::string name_;
+        std::string nextScreenId_;
+        MenuIcon icon_;
+        bool previous_;
 };

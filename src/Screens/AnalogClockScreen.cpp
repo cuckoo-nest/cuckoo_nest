@@ -1,76 +1,46 @@
-#include "AnalogClockScreen.hpp"
 #include <iostream>
 #include <cmath>
+
+#include "AnalogClockScreen.hpp"
 #include "logger.h"
 
 #ifndef PI
 #define PI 3.14159265358979323846
 #endif
 
-AnalogClockScreen::AnalogClockScreen(HAL *hal,
-        ScreenManager* screenManager) : 
-    ScreenBase(),
-    hal_(hal),
-    display_(hal->display),
-    screenManager_(screenManager)   
+void AnalogClockScreen::OnChangeFocus(bool focused)
 {
-}
-
-AnalogClockScreen::~AnalogClockScreen()
-{
-    if (clock_timer) {
-        lv_timer_del(clock_timer);
-        clock_timer = nullptr;
+    if(focused)
+    {
+        display_->SetBackgroundColor(SCREEN_COLOR_BLACK); // Clears screen
+        CreateClockFace();
+        if (!clock_timer)
+        {
+            clock_timer = lv_timer_create(update_clock_cb, 250, this);
+            StartIntroAnimation();
+        }
     }
-}
-
-void AnalogClockScreen::Render()
-{
-    // Prevent re-initialization if already running.
-    // Note: In a full app with screen switching, this logic needs to handle "OnEnter" vs "OnUpdate".
-    // Since ScreenBase doesn't have OnEnter/Exit, and Render is called periodically,
-    // we use a flag. To support switching back, one would need to reset this flag.
-    if (initialized_) {
-        return;
+    else
+    {
+        if(clock_timer)
+        {
+            lv_timer_delete(clock_timer);
+            clock_timer = nullptr;
+        }
     }
-
-    LOG_INFO_STREAM("Initializing Analog Clock...");
-    display_->SetBackgroundColor(SCREEN_COLOR_BLACK); // Clears screen
-
-    CreateClockFace();
-    
-    // Create timer for 60fps smooth updates (approx 16ms)
-    if (!clock_timer) {
-        clock_timer = lv_timer_create(update_clock_cb, 250, this);
-    }
-
-    StartIntroAnimation();
-    initialized_ = true;
 }
 
 void AnalogClockScreen::handle_input_event(const InputDeviceType device_type, const struct input_event &event)
 {
     if (device_type == InputDeviceType::BUTTON && event.type == EV_KEY && event.code == 't' && event.value == 1)
     {
-        if (hal_ != nullptr && hal_->beeper != nullptr)
-        {
-            hal_->beeper->play(100);
-        }   
-        
-        // Move to the next color
-        //currentColorIndex = (currentColorIndex + 1) % color_count;
+        if(beeper_ != nullptr)
+            beeper_->click();
 
-        if (nextScreenId_ != -1)
-        {
-            lv_timer_delete(clock_timer);
-            clock_timer = nullptr;
-            initialized_ = false;
-            screenManager_->GoToNextScreen(nextScreenId_);
-        }
+        if (GetNextScreenId() != "")
+            screenManager_->GoToNextScreen(GetNextScreenId());
         else
-        {
-            LOG_WARN_STREAM("Next screen is null!");
-        }
+            screenManager_->GoToPreviousScreen();
     }
 }
 
@@ -104,16 +74,16 @@ void AnalogClockScreen::anim_ready_cb(lv_anim_t * a)
 void AnalogClockScreen::StartIntroAnimation()
 {
     animating_ = true;
-    
+
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     struct tm * t = localtime(&ts.tv_sec);
-    
+
     // Calculate target angles (0.1 deg units)
     // Add full rotations for effect
     // Estimate duration = 1500ms. Add 1.5s to target time to land mostly correct?
     // Or just animate to current and let it jump 1.5s (hardly noticeable).
-    
+
     float sec_angle = (t->tm_sec + ts.tv_nsec / 1000000000.0f) * 6.0f;
     float min_angle = (t->tm_min + t->tm_sec / 60.0f) * 6.0f;
     float hour_angle = (t->tm_hour % 12 + t->tm_min / 60.0f) * 30.0f;
@@ -131,13 +101,13 @@ void AnalogClockScreen::StartIntroAnimation()
     lv_anim_set_exec_cb(&a, set_hand_rotation);
     lv_anim_set_path_cb(&a, lv_anim_path_ease_out);
     lv_anim_start(&a);
-    
+
     // Minute Hand Anim
     lv_anim_set_var(&a, minute_hand);
     lv_anim_set_values(&a, 0, m_target);
     lv_anim_set_time(&a, 1200);
     lv_anim_start(&a);
-    
+
     // Second Hand Anim
     lv_anim_set_var(&a, second_hand);
     lv_anim_set_values(&a, 0, s_target);
@@ -145,7 +115,7 @@ void AnalogClockScreen::StartIntroAnimation()
     lv_anim_set_user_data(&a, this);
     lv_anim_set_completed_cb(&a, anim_ready_cb); // Only simplest/last callback needed
     lv_anim_start(&a);
-    
+
     // Fade In Animation (Container)
     lv_anim_set_var(&a, clock_container);
     lv_anim_set_values(&a, 0, LV_OPA_COVER);
@@ -153,7 +123,7 @@ void AnalogClockScreen::StartIntroAnimation()
     lv_anim_set_path_cb(&a, lv_anim_path_linear);
     lv_anim_set_exec_cb(&a, set_opacity);
     // Clear previous callbacks to act only as fade
-    lv_anim_set_completed_cb(&a, NULL); 
+    lv_anim_set_completed_cb(&a, NULL);
     lv_anim_start(&a);
 }
 
@@ -165,7 +135,7 @@ void AnalogClockScreen::CreateClockFace()
     lv_obj_set_size(clock_container, LV_PCT(100), LV_PCT(100));
     lv_obj_center(clock_container);
     lv_obj_set_style_opa(clock_container, 0, 0); // Start transparent
-    
+
     lv_obj_t * parent = clock_container;
 
     // Create face (circle)
@@ -178,18 +148,18 @@ void AnalogClockScreen::CreateClockFace()
     lv_scale_set_total_tick_count(face, 61);
     lv_scale_set_major_tick_every(face, 5);
     lv_obj_set_style_bg_color(face, lv_color_black(), 0);
-    
+
     static const char * custom_labels[] = {"12", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", NULL};
     lv_scale_set_text_src(face, custom_labels);
     lv_scale_set_range(face, 0, 12);
     lv_scale_set_angle_range(face, 360);
-    lv_scale_set_rotation(face, 270); 
+    lv_scale_set_rotation(face, 270);
     lv_obj_set_style_text_color(face, lv_color_white(), 0);
     lv_obj_center(face);
 
     // Hands (using basic objects instead of lines)
     // Use parent (screen) to avoid parenting issues with scale
-    
+
     // Hour hand
     hour_hand = lv_obj_create(parent);
     lv_obj_set_size(hour_hand, 6, 60);
@@ -199,7 +169,7 @@ void AnalogClockScreen::CreateClockFace()
     lv_obj_set_style_transform_pivot_x(hour_hand, lv_pct(50), 0);
     lv_obj_set_style_transform_pivot_y(hour_hand, lv_pct(100), 0);
     lv_obj_align(hour_hand, LV_ALIGN_CENTER, 0, -30);
-    
+
     // Minute hand
     minute_hand = lv_obj_create(parent);
     lv_obj_set_size(minute_hand, 4, 90);
@@ -209,7 +179,7 @@ void AnalogClockScreen::CreateClockFace()
     lv_obj_set_style_transform_pivot_x(minute_hand, lv_pct(50), 0);
     lv_obj_set_style_transform_pivot_y(minute_hand, lv_pct(100), 0);
     lv_obj_align(minute_hand, LV_ALIGN_CENTER, 0, -45);
-    
+
     // Second hand
     second_hand = lv_obj_create(parent);
     lv_obj_set_size(second_hand, 2, 100);
@@ -219,7 +189,7 @@ void AnalogClockScreen::CreateClockFace()
     lv_obj_set_style_transform_pivot_x(second_hand, lv_pct(50), 0);
     lv_obj_set_style_transform_pivot_y(second_hand, lv_pct(100), 0);
     lv_obj_align(second_hand, LV_ALIGN_CENTER, 0, -50);
-    
+
     // Center point
     center_point = lv_obj_create(parent);
     lv_obj_set_size(center_point, 12, 12);
@@ -237,13 +207,13 @@ void AnalogClockScreen::UpdateClock()
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     struct tm * t = localtime(&ts.tv_sec);
-    
+
     // Calculate angles (0-360 degrees)
     // 12 o'clock = 0 degrees for calculations
-    int sec_angle = t->tm_sec * 6; 
+    int sec_angle = t->tm_sec * 6;
     float min_angle = (t->tm_min + t->tm_sec / 60.0f) * 6.0f;
     float hour_angle = (t->tm_hour % 12 + t->tm_min / 60.0f) * 30.0f;
-    
+
     int32_t s_rot = (int32_t)(sec_angle * 10);
     int32_t m_rot = (int32_t)(min_angle * 10);
     int32_t h_rot = (int32_t)(hour_angle * 10);

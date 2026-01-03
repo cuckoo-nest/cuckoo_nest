@@ -2,44 +2,35 @@
 
 #include "ScreenBase.hpp"
 #include "../ScreenManager.hpp"
-#include "../HAL/HAL.hpp"
-#include "../Integrations/IntegrationActionBase.hpp"
 
 class SwitchScreen : public ScreenBase
 {
 public:
     SwitchScreen(
-        HAL* hal,
-        ScreenManager* screenManager) : 
-        ScreenBase(), 
-        screenManager_(screenManager),
-        display_(hal->display), 
-        beeper_(hal->beeper),
-        rotaryAccumulator(0),
-        switchState(SwitchState::OFF),
-        selectedOption(SelectedOption::TOGGLE)
-    {}
+        ScreenManager* screenManager
+        , const json11::Json &jsonConfig
+    )
+        : ScreenBase(screenManager, jsonConfig)
+        , switchState(SwitchState::OFF)
+        , selectedOption(SelectedOption::TOGGLE)
+	{
+        if(GetName() == "")
+            SetName("Switch");
+        // if no integration "id" attribute is provided, use our "name" attribute
+        if(GetIntegrationId() == "")
+            SetIntegrationId(GetName());
+
+        beeper_ = screenManager_->HalBeeper();
+        display_ = screenManager_->HalDisplay();
+	}
 
     virtual ~SwitchScreen() = default;
 
     void Render() override;
     void handle_input_event(const InputDeviceType device_type, const struct input_event &event) override;
-    
-    const int GetIntegrationId() const {
-        return integrationId_;
-    }
-    void SetIntegrationId(int id) {
-        integrationId_ = id;
-    }
+    void OnChangeFocus(bool focused) override;
 
-    const std::string& GetName() const {
-        return name_;
-    }
-    void SetName(const std::string& name) {
-        name_ = name;
-    }
-
-private:
+    private:
 
     enum class SwitchState {
         OFF,
@@ -51,12 +42,7 @@ private:
         BACK
     }selectedOption;
 
-    ScreenManager* screenManager_;
-    Beeper* beeper_;
-    IDisplay* display_;
-    int rotaryAccumulator;
-    int integrationId_;
-    std::string name_;
-
-
+    Beeper* beeper_ = nullptr;
+    IDisplay* display_ = nullptr;
+    int rotaryAccumulator = 0;
 };

@@ -21,7 +21,8 @@ private:
     std::string device_path_;
     int screen_buffer;
     char *fbp;
-    char *working_buffer;
+	void *working_buffer1;
+	void *working_buffer2;
     long screensize;
     
     // Screen info
