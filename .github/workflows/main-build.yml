@@ -52,7 +52,6 @@ jobs:
         files: |
           ${{github.workspace}}/build/test-results.xml
 
-
     - name: Configure arm build
       run: cmake -G "Unix Makefiles" -B ${{github.workspace}}/build -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-toolchain.cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCUCKOO_VERSION=${{ github.sha }}
 
