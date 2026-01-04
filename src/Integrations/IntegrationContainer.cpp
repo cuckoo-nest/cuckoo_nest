@@ -20,7 +20,7 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
     }
 
     std::string parse_error;
-    json11::Json parsed_json = json11::Json::parse(configContent, parse_error);
+    json11::Json parsed_json = json11::Json::parse(configContent, parse_error, json11::JsonParse::COMMENTS);
 
     if (!parse_error.empty())
     {
