@@ -283,7 +283,7 @@ static HALConfig load_hal_config(const std::string& config_file)
     }
 
     std::string parse_error;
-    json11::Json parsed_json = json11::Json::parse(configContent, parse_error);
+    json11::Json parsed_json = json11::Json::parse(configContent, parse_error, json11::JsonParse::COMMENTS);
 
     if (!parse_error.empty()) {
         LOG_ERROR_STREAM("JSON parse error: " << parse_error << ", using defaults");
