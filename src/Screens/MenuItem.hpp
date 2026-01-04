@@ -17,8 +17,8 @@ class MenuItem
             , icon_(icon)
             , previous_(previous)
         {
-            if(nextScreenId_ == "")
-                nextScreenId_ = name_;
+            if(nextScreenId == "")
+                nextScreenId_ = name;
         }
 
         inline const std::string &GetNextScreenId() const { return nextScreenId_; }

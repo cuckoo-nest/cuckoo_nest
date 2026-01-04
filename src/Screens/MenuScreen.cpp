@@ -215,7 +215,7 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
 
         MenuItem &selectedItem = menuItems[menuSelectedIndex];
 
-		LOG_DEBUG_STREAM("MenuScreen: selecting " << selectedItem.GetNextScreenId() << " / \"" << selectedItem.GetName() << "\"");
+		LOG_INFO_STREAM("MenuScreen: selecting " << selectedItem.GetNextScreenId() << " / \"" << selectedItem.GetName() << "\"");
         screenManager_->GoToNextScreen(selectedItem.GetNextScreenId()); 
     }
 }
