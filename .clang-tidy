@@ -1,0 +1,16 @@
+---
+Checks: >
+  readability-*,
+  performance-*,
+  clang-analyzer-*,
+  modernize-*,
+  -clang-analyzer-security.insecureAPI.strcpy,
+  -readability-magic-numbers,
+  -readability-function-cognitive-complexity,
+  -google-*
+
+WarningsAsErrors: '*'
+
+HeaderFilterRegex: '^(?!.*/build.*/lvgl).*(/home/alex/cuckoo_nest/src/.*\.(hpp?|cpp))$'
+
+FormatStyle: none

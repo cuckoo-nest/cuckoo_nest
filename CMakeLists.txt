@@ -15,6 +15,22 @@ include(FetchContent)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Enable clang-tidy for host builds only
+if(IS_HOST_BUILD AND NOT SKIP_CLANG_TIDY)
+    find_program(CLANG_TIDY_EXE clang-tidy)
+    if(CLANG_TIDY_EXE)
+        message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+        set(CMAKE_CXX_CLANG_TIDY 
+            "${CLANG_TIDY_EXE}"
+            "--header-filter=.*src/.*"
+            "-checks=-*,readability-*,performance-*,clang-analyzer-*,modernize-use-auto,modernize-use-bool-literals,modernize-loop-convert,modernize-make-unique,modernize-make-shared,modernize-use-noexcept,modernize-use-override,modernize-use-nullptr,-readability-function-cognitive-complexity,-readability-magic-numbers,-readability-identifier-length,-modernize-use-trailing-return-type,-clang-analyzer-security.insecureAPI.strcpy,-google-*"
+            "--warnings-as-errors=*"
+        )
+    else()
+        message(WARNING "clang-tidy not found. Static analysis will be skipped.")
+    endif()
+endif()
+
 add_subdirectory("lvgl")
 add_subdirectory("src")
 

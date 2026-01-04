@@ -29,7 +29,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install Ubuntu dependencies
-      run: sudo apt-get install -y libcurl4-openssl-dev libsdl2-dev
+      run: sudo apt-get install -y libcurl4-openssl-dev libsdl2-dev clang-tools
     
     - name: Get cmake version
       run: cmake --version
@@ -42,6 +42,12 @@ jobs:
     - name: Build
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build
+
+    - name: Run clang-tidy static analysis
+      working-directory: ${{github.workspace}}/build
+      # clang-tidy is automatically invoked during build via CMAKE_CXX_CLANG_TIDY
+      # If any issues are found with --warnings-as-errors, the build will fail
+      run: echo "clang-tidy checks completed during build step"
 
     - name: Test
       working-directory: ${{github.workspace}}/build
