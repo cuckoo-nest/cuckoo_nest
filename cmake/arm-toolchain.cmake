@@ -6,13 +6,47 @@ set(CMAKE_SYSTEM_PROCESSOR arm)
 
 # ARM Toolchain settings
 # Using Linaro arm-linux-gnueabihf 4.8-2014.04 toolchain
-set(LINARO_DIR "/home/alex/gcc-linaro-arm-linux-gnueabihf-4.8-2014.04_linux")
+set(LINARO_DIR "${CMAKE_SOURCE_DIR}/linaro_toolchain/gcc-linaro-arm-linux-gnueabihf-4.8-2014.04_linux")
 set(LINARO_BIN "${LINARO_DIR}/bin")
 set(LINARO_SYSROOT "${LINARO_DIR}/arm-linux-gnueabihf/libc")
 
-# Device sysroot repository
-set(DEVICE_SYSROOT_REPO "https://github.com/cuckoo-nest/sysroot.git")
-set(DEVICE_SYSROOT "/home/alex/nest-sysroot")
+# Download and extract the toolchain if not present
+if(NOT EXISTS "${LINARO_DIR}")
+    message(STATUS "Linaro toolchain not found. Downloading...")
+    
+    set(TOOLCHAIN_URL "https://releases.linaro.org/archive/14.04/components/toolchain/binaries/gcc-linaro-arm-linux-gnueabihf-4.8-2014.04_linux.tar.xz")
+    set(TOOLCHAIN_ARCHIVE "${CMAKE_SOURCE_DIR}/linaro_toolchain/gcc-linaro-arm-linux-gnueabihf-4.8-2014.04_linux.tar.xz")
+    set(TOOLCHAIN_DIR "${CMAKE_SOURCE_DIR}/linaro_toolchain")
+    
+    # Create toolchain directory if it doesn't exist
+    file(MAKE_DIRECTORY "${TOOLCHAIN_DIR}")
+    
+    # Download the toolchain
+    if(NOT EXISTS "${TOOLCHAIN_ARCHIVE}")
+        message(STATUS "Downloading toolchain from ${TOOLCHAIN_URL}")
+        file(DOWNLOAD "${TOOLCHAIN_URL}" "${TOOLCHAIN_ARCHIVE}"
+            SHOW_PROGRESS
+            TIMEOUT 300
+        )
+    endif()
+    
+    # Extract the toolchain
+    message(STATUS "Extracting toolchain to ${TOOLCHAIN_DIR}")
+    execute_process(
+        COMMAND tar -xf "${TOOLCHAIN_ARCHIVE}" -C "${TOOLCHAIN_DIR}"
+        RESULT_VARIABLE extract_result
+    )
+    
+    if(NOT extract_result EQUAL 0)
+        message(FATAL_ERROR "Failed to extract toolchain archive")
+    endif()
+    
+    if(NOT EXISTS "${LINARO_DIR}")
+        message(FATAL_ERROR "Toolchain extraction failed: ${LINARO_DIR} not found")
+    endif()
+    
+    message(STATUS "Toolchain successfully downloaded and extracted to ${LINARO_DIR}")
+endif()
 
 
 # Set compilers
@@ -27,8 +61,6 @@ set(CMAKE_FIND_ROOT_PATH ${LINARO_SYSROOT};)
 set(CMAKE_LIBRARY_PATH 
     "${LINARO_SYSROOT}/lib"
     "${LINARO_SYSROOT}/usr/lib"
-    "${DEVICE_SYSROOT}/lib"
-    "${DEVICE_SYSROOT}/usr/lib"
 )
 
 # Search for programs in the build host directories

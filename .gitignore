@@ -45,6 +45,7 @@ bin*
 Testing
 upload.sh
 icons/*
+linaro_toolchain
 
 # CodeQL
 _codeql_detected_source_root
