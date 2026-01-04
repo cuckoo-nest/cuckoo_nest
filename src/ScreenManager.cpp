@@ -14,21 +14,66 @@
 #include "Screens/DimmerScreen.hpp"
 #include "Screens/AnalogClockScreen.hpp"
 
+void ScreenManager::GoToScreenPtr(ScreenBase *screen)
+{
+    if(screen != nullptr)
+    {
+        if(current_screen_)
+            current_screen_->OnChangeFocus(false);
+        current_screen_ = screen;
+        screen_history_.push(current_screen_);
+        current_screen_->OnChangeFocus(true);
+        LOG_INFO_STREAM("ScreenManager: Navigated to screen ID \"" << current_screen_->GetId() << "\" / \"" << current_screen_->GetName() << "\"");
+    }
+    else
+        LOG_ERROR_STREAM("ScreenManager::GoToScreenPtr NULL screen ptr");
+}
+
+void ScreenManager::GoToFirstScreen(std::string id)
+{
+    if(id == "")
+        id = firstScreenId_;
+    ScreenBase* screen = (id != "" ? GetScreenById(id) : nullptr);
+    if(screen == nullptr)
+    {
+        LOG_INFO_STREAM("ScreenManager::GoToFirstScreen Unable to find screen ID \"" << id << "\"");
+        if(id != "1")
+        {
+            screen = GetScreenById("1");
+            if(screen == nullptr)
+                LOG_INFO_STREAM("ScreenManager::GoToFirstScreen Unable to find screen ID \"1\"");
+        }
+    }
+    // no screen found, try to find a HomeScreen class instance
+    if(screen == nullptr)
+    {
+        for(auto &pair: screens_)
+            if((screen = dynamic_cast<HomeScreen *>(pair.second.get())))
+                break;
+
+        // no HomeScreen class instance found, build one
+        if(screen == nullptr)
+        {
+            LOG_INFO_STREAM("ScreenManager::GoToFirstScreen - Creating HomeScreen");
+            std::map<std::string, std::string> attribs = { {"name","Home"}, {"id","Home"} };
+            screen = new HomeScreen(this, json11::Json(attribs));
+            AddScreen(std::unique_ptr<ScreenBase>(screen));
+        }
+    }
+
+    if (screen == nullptr)
+        LOG_ERROR_STREAM("ScreenManager::GoToFirstScreen Unable to find a home screen.");
+    else
+        GoToScreenPtr(screen);
+}
+
 void ScreenManager::GoToNextScreen(std::string const & id)
 {
     ScreenBase* screen = (id != "" ? GetScreenById(id) : nullptr);
     if (screen == nullptr)
-    {
         LOG_ERROR_STREAM("ScreenManager: Unable to find screen \"" << id << "\"");
-        return;
-    }
-
-    if(current_screen_)
-        current_screen_->OnChangeFocus(false);
-    current_screen_ = screen;
-    screen_history_.push(current_screen_);
-    current_screen_->OnChangeFocus(true);
-    LOG_INFO_STREAM("ScreenManager: Navigated to screen ID \"" << id << "\" / \"" << current_screen_->GetName() << "\"");
+    else
+        GoToScreenPtr(screen);
 }
 
 void ScreenManager::GoToPreviousScreen()
@@ -73,6 +118,20 @@ void ScreenManager::LoadScreensFromConfig(const std::string& config_path)
     {
         LOG_ERROR_STREAM("ScreenManager: Root JSON element must be an object");
         return;
+    }
+
+    if(!parsed_json["firstScreen"].is_null())
+    {
+        firstScreenId_ = (
+            parsed_json["firstScreen"].is_number()
+            ? std::to_string(parsed_json["firstScreen"].int_value())
+            : 
+                (
+                    parsed_json["firstScreen"].is_string()
+                    ? parsed_json["firstScreen"].string_value()
+                    : ""
+                )
+            );
     }
 
     for (const auto& screen : parsed_json["screens"].array_items())

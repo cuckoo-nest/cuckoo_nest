@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
         
     integration_container->LoadIntegrationsFromConfig(config_file);
     screen_manager->LoadScreensFromConfig(config_file);
-    screen_manager->GoToNextScreen("initial");
+    screen_manager->GoToFirstScreen();
 
     // Set up input event callback
     inputs->set_callback(handle_input_event);

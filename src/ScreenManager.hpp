@@ -27,6 +27,7 @@ public:
 
     virtual ~ScreenManager() {};
     
+    void GoToFirstScreen(std::string id = "");
     void GoToNextScreen(std::string const &id);
     void GoToPreviousScreen();
     void ProcessInputEvent(const InputDeviceType device_type, const input_event &event);
@@ -51,6 +52,7 @@ public:
     inline BackplateComms *GetBackplaceComms() const { return backplateComms_; }
 
 private:
+    void GoToScreenPtr(ScreenBase *screen);
     std::string ReadFileContents(const std::string &filepath) const;
 
     void BuildMenuScreenFromJSON(const json11::Json &screenJson);
@@ -58,6 +60,7 @@ private:
     std::stack<ScreenBase*> screen_history_;
     ScreenBase* current_screen_ = nullptr;
     std::map<std::string, std::unique_ptr<ScreenBase>> screens_;
+    std::string firstScreenId_;
 
     HAL *hal_ = nullptr;
     IntegrationContainer* integrationContainer_ = nullptr;
