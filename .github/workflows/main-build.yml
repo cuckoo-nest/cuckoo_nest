@@ -52,18 +52,12 @@ jobs:
         files: |
           ${{github.workspace}}/build/test-results.xml
 
-    - name: Get platform info
-      run: | 
-        uname -a
-        cat /etc/os-release
 
     - name: Configure arm build
       run: cmake -G "Unix Makefiles" -B ${{github.workspace}}/build -DCMAKE_TOOLCHAIN_FILE=./cmake/arm-toolchain.cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCUCKOO_VERSION=${{ github.sha }}
 
     - name: Build arm binary
-      run: |
-        cmake --build ${{github.workspace}}/build -- VERBOSE=1
-        cat build/src/CMakeFiles/cuckoo.dir/link.txt
+      run: cmake --build ${{github.workspace}}/build -- VERBOSE=1
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
