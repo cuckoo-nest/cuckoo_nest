@@ -8,5 +8,8 @@ void DimmerScreen::handle_input_event(const InputDeviceType device_type, const s
 {
 }
 
+void DimmerScreen::OnChangeFocus(bool focused)
+{
 
+}
 

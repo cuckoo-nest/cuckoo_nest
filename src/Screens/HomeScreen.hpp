@@ -2,23 +2,13 @@
 
 #include "ScreenBase.hpp"
 #include "../ScreenManager.hpp"
-#include "../HAL/HAL.hpp"
-#include "../Backplate/BackplateComms.hpp"
+
+#include "lvgl/lvgl.h"
 
 class HomeScreen : public ScreenBase
 {
 public:
-    HomeScreen(
-        HAL *hal, 
-        ScreenManager *screenManager,
-        BackplateComms *backplateComms) : 
-        ScreenBase(), 
-        screenManager_(screenManager),
-        display_(hal->display),
-        beeper_(hal->beeper),
-        nextScreen_(nullptr),
-        backplateComms_(backplateComms) {}
-
+    HomeScreen(ScreenManager *screenManager, const json11::Json &jsonConfig);
     virtual ~HomeScreen() = default;
 
     void Render() override;
@@ -26,25 +16,16 @@ public:
     std::string GetTemperatureString();
     std::string GetHumidityString();
     void handle_input_event(const InputDeviceType device_type, const struct input_event &event) override;
-    void SetNextScreen(ScreenBase* screen) {
-        nextScreen_ = screen;
-    }
-    int GetNextScreenId() const {
-        return nextScreenId_;
-    }
-    void SetNextScreenId(int id) {
-        nextScreenId_ = id;
-    }
+    void OnChangeFocus(bool focused) override;
 
 private:
     int currentColorIndex = 0;
-    IDisplay *display_;
-    Beeper *beeper_;
-    ScreenManager *screenManager_;
-    BackplateComms *backplateComms_;
+    Beeper* beeper_ = nullptr;
+    IDisplay* display_ = nullptr;
+    BackplateComms *backplateComms_ = nullptr;
+    char temperatureUnits_ = 'c';
+    int timeFormat_ = 24;
 
-    int nextScreenId_;
-    
-    //TODO: Remove this 
-    ScreenBase* nextScreen_;
+    static void timer_cb(lv_timer_t * timer);
+    lv_timer_t * lvObjTimerCb = nullptr;
 };

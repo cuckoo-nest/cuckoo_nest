@@ -9,8 +9,8 @@ public:
         token_(token) 
         {}
 
-    const std::string& GetUrl() const { return url_; }
-    const std::string& GetToken() const { return token_; }
+    inline const std::string& GetUrl() const { return url_; };
+    inline const std::string& GetToken() const { return token_; };
 
 private:
     std::string url_;

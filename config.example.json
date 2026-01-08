@@ -2,11 +2,10 @@
     "app_name": "CuckooNest",
     "version": "1.0.0",
     "debug_mode": true,
-    "max_screens": 10,
     "refresh_rate": 60.0,
     "display": {
         "width": 320,
-        "height": 240,
+        "height": 320,
         "brightness": 0.8
     },
     "homeAssistant": {
@@ -15,69 +14,55 @@
     },
     "integrations": [
         {
-            "id": 1,
             "name": "Garage Lights",
             "entityId": "switch.garage_lights",
             "type": "HomeAssistant"
         },
         {
-            "id": 2,
-            "name": "Office External Lights",
+            "name": "Office External",
             "entityId": "switch.office_external_lights",
             "type": "HomeAssistant"
         },
         {
-            "id": 3,
-            "name": "Office Internal Lights",
+            "name": "Office Internal",
             "entityId": "switch.office_internal_lights",
             "type": "HomeAssistant"
         }
     ],
-    "screens": [
+    "firstScreen": "Home Screen",
+    "screens":[
         {
             "name": "Home Screen",
             "type": "home",
-            "id": 1,
-            "nextScreen": 2
+            "nextScreen": "Main Menu"
         },
         {
             "name": "Main Menu",
-            "parent": "home",
             "type": "menu",
-            "id": 2,
             "menuItems": [
                 {
-                    "name": "Garage",
-                    "nextScreen": 3
+                    "name": "Garage Lights",
+                    "icon": "light"
                 },{
-                    "name": "Office Ex",
-                    "nextScreen": 4
+                    "name": "Office External",
+                    "icon": "fan"
                 },{
-                    "name": "Office in",
-                    "nextScreen": 5
+                    "name": "Office Internal",
+                    "icon": "breifcase"
                 }
             ]
         },
         {
             "name": "Garage Lights",
-            "parent": "menu",
-            "type": "switch",
-            "id": 3,
-            "integrationId": 1
+            "type": "switch"
         },
         {
-            "name": "External Lights",
-            "parent": "menu",
-            "type": "switch",
-            "id": 4,
-            "integrationId": 2
+            "name": "Office External",
+            "type": "switch"
         },
         {
-            "name": "Internal Lights",
-            "parent": "menu",
-            "type": "switch",
-            "id": 5,
-            "integrationId": 3
+            "name": "Office Internal",
+            "type": "switch"
         }
     ]
 }

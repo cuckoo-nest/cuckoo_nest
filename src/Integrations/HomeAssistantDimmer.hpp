@@ -1,15 +1,20 @@
 #pragma once
 
+#include <cmath>
+
 #include "IntegrationDimmerBase.hpp"
 #include "HomeAssistantCreds.hpp"
-#include "CurlWrapper.hpp"
 #include "logger.h"
 
-class HomeAssistantDimmer : public IntegrationDimmerBase
+class HomeAssistantDimmer : public HomeAssistantBase, public IntegrationDimmerBase
 {
 public:
-    HomeAssistantDimmer(const HomeAssistantCreds &creds, const std::string &entity_id) : creds_(creds),
-                                                                                         entityId_(entity_id), brightness_(-1)
+    HomeAssistantDimmer(const HomeAssistantCreds &creds, const std::string &entity_id)
+        : IntegrationDimmerBase()
+        , HomeAssistantBase()
+        , creds_(creds)
+        , entityId_(entity_id)
+        , brightness_(-1)
     {
     }
 
@@ -20,7 +25,18 @@ public:
     SwitchState GetState() override
     {
         // Implementation to get state from Home Assistant
-        return brightness_ > 0 ? SwitchState::ON : SwitchState::OFF; // Placeholder
+        json11::Json status = queryStatus(GetEntityId(), creds_);
+        SwitchState ss =
+            (
+                status.is_object()
+                    && !status["state"].is_null()
+                    && status["state"].is_string()
+                    && status["state"].string_value() == "on"
+                    && brightness_ > 0
+                ? SwitchState::ON
+                : SwitchState::OFF
+            );
+        return ss;
     }
 
     void TurnOn() override
@@ -34,23 +50,54 @@ public:
         // Implementation to turn off the Dimmer via Home Assistant
         SetBrightness(-1);
     }
-    int GetBrightness() override {  // <-- THIS IS REQUIRED
-        return brightness_;
-    }
-void SetBrightness(int brightness) override
-{
-    if (brightness <= 0)
+    int GetBrightness() override
     {
-        brightness_ = -1;                  
-        ExecuteBrightness("light/turn_off");
-    }
-    else
-    {
+        json11::Json status = queryStatus(GetEntityId(), creds_);
+        int brightness = 128;
+        if(status.is_object() && !status["attributes"].is_null())
+        {
+            json11::Json attribs = status["attributes"];
+            brightness = (
+                !attribs["brightness"].is_null()
+                && attribs["brightness"].is_number()
+                ? attribs["brightness"].int_value()
+                : 0
+                );
+        }
+        LOG_INFO_STREAM("Dimmer::GetBrightness brightness value = " << brightness);
+        if(brightness > 0)
+        {
+            #ifdef BUILD_TARGET_NEST
+            // Because float/double is broken.
+            // TODO - remove special case when -mfloat-abi=soft is removed/fixed
+            brightness *= 100;
+            brightness /= 255;
+            brightness += 1; // all the integer math forces round-down, so we... bump it by one
+            #else
+            double b = brightness / 2.55;
+            brightness = static_cast<int>(std::round(b));
+            #endif
+        }
+        LOG_INFO_STREAM("Dimmer::GetBrightness brightness = " << brightness << "%");
         if (brightness > 100) brightness = 100;
-        brightness_ = brightness;
-        ExecuteBrightness("light/turn_on", brightness_);
+
+        return brightness;
     }
-}
+
+    void SetBrightness(int brightness) override
+    {
+        if (brightness <= 0)
+        {
+            brightness_ = -1;                  
+            ExecuteBrightness("light/turn_off");
+        }
+        else
+        {
+            if (brightness > 100) brightness = 100;
+            brightness_ = brightness;
+            ExecuteBrightness("light/turn_on", brightness_);
+        }
+    }
 
 private:
     HomeAssistantCreds creds_;
@@ -62,19 +109,6 @@ private:
         // Implementation to call Home Assistant service
         LOG_INFO_STREAM("Calling Home Assistant service: " << creds_.GetUrl());
 
-        static CurlWrapper curl_wrapper;
-        static bool curl_initialized = false;
-
-            if (!curl_initialized)
-            {
-                curl_initialized = curl_wrapper.initialize();
-                if (!curl_initialized)
-                {
-                    LOG_ERROR_STREAM("Failed to initialize libcurl - functionality disabled");
-                    return;
-                }
-            }
-
         // Prepare JSON data
         std::string jsonData = "{\"entity_id\": \"" + entityId_ + "\"}";
         if (brightness >= 0)
@@ -82,31 +116,6 @@ private:
             int ha_brightness = (brightness * 255) / 100;
             jsonData = "{\"entity_id\": \"" + entityId_ + "\", \"brightness\": " + std::to_string(ha_brightness) + "}";
         }
-
-        // Prepare headers
-        struct curl_slist *headers = nullptr;
-        std::string authHeader = "Authorization: Bearer " + creds_.GetToken();
-        headers = curl_wrapper.slist_append(headers, authHeader.c_str());
-        headers = curl_wrapper.slist_append(headers, "Content-Type: application/json");
-
-        CURL *curl = curl_wrapper.easy_init();
-        if (curl)
-        {
-            std::string url = creds_.GetUrl() + "/api/services/" + action;
-            LOG_INFO_STREAM("HomeAssistantDimmer: URL: " << url);
-            curl_wrapper.easy_setopt(curl, CURLOPT_URL, url.c_str());
-            curl_wrapper.easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-            curl_wrapper.easy_setopt(curl, CURLOPT_POSTFIELDS, jsonData.c_str());
-
-            CURLcode res = curl_wrapper.easy_perform(curl);
-            if (res != CURLE_OK)
-            {
-                LOG_ERROR_STREAM("curl_easy_perform() failed: " << curl_wrapper.easy_strerror(res));
-            }
-
-            curl_wrapper.easy_cleanup(curl);
-            curl_wrapper.slist_free_all(headers);
-            LOG_INFO_STREAM("HomeAssistantDimmer: Service call completed");
-        }
+        queryExecute(action, jsonData, creds_);
     }
 };

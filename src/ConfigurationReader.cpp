@@ -41,7 +41,7 @@ bool ConfigurationReader::load()
 
     // Parse JSON using json11
     std::string parse_error;
-    json11::Json parsed_json = json11::Json::parse(content, parse_error);
+    json11::Json parsed_json = json11::Json::parse(content, parse_error, json11::JsonParse::COMMENTS);
     
     if (!parse_error.empty()) {
         LOG_ERROR_STREAM("ConfigurationReader: JSON parse error: " << parse_error);

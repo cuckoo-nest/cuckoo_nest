@@ -27,6 +27,7 @@ set (
     Screens/SwitchScreen.cpp
     Screens/AnalogClockScreen.cpp
     Integrations/IntegrationContainer.cpp
+    Integrations/CurlWrapperJson.cpp
     Screens/CuckooLogoNest.cpp
     Backplate/Message.cpp
     Backplate/CommandMessage.cpp

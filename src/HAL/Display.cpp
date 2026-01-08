@@ -12,8 +12,11 @@
 #include <cstring>
 
 
-Display::Display(std::string device_path) : device_path_(device_path)
+Display::Display(std::string device_path)
+    : device_path_(device_path)
 {
+	res_w_ = 320;
+	res_h_ = 320;
 }
 
 Display::~Display()
@@ -35,7 +38,7 @@ bool Display::Initialize(bool emulate)
     if (emulate)
     {
 #ifdef HOST_TOOLCHAIN
-        disp = lv_sdl_window_create(320, 320);
+        disp = lv_sdl_window_create(res_w_, res_h_);
 #else
         std::cerr << "Emulation mode requested but not compiled with SDL support" << std::endl;
         return false;
@@ -51,10 +54,15 @@ bool Display::Initialize(bool emulate)
             return false;
         }
 
+        uint bufsize = (res_w_ * res_h_ * 4); //res_w_ * res_h_ * BYTES_PER_PIXEL;
+        working_buffer1 = malloc(bufsize);
+        working_buffer2 = malloc(bufsize);
+        lv_display_set_buffers(disp, working_buffer1, working_buffer2, bufsize, LV_DISPLAY_RENDER_MODE_PARTIAL);
+
         lv_linux_fbdev_set_file(disp, "/dev/fb0");
 #endif
     }
-	lv_display_set_resolution(disp, 320, 320);
+	lv_display_set_resolution(disp, res_w_, res_h_);
 
     // Setup fonts
     fontH1 = new lv_style_t;
