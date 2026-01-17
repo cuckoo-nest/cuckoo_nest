@@ -1,15 +1,6 @@
 #include "AnalogClockScreen.hpp"
 
-AnalogClockScreen::AnalogClockScreen(HAL *hal,
-        ScreenManager* screenManager)  
-{
-}
-
-AnalogClockScreen::~AnalogClockScreen()
-{
-}
-
-void AnalogClockScreen::Render()
+void AnalogClockScreen::OnChangeFocus(bool focused)
 {
 }
 

@@ -11,19 +11,19 @@
 class IntegrationContainer 
 {
     public:
-        IntegrationContainer();
+        IntegrationContainer() {};
         virtual ~IntegrationContainer() = default;
         void LoadIntegrationsFromConfig(const std::string& configPath);
 
         
-        IntegrationSwitchBase* GetSwitchById(int id);
-        IntegrationDimmerBase* GetDimmerById(int id);
+        IntegrationSwitchBase* GetSwitchById(std::string const  &id);
+        IntegrationDimmerBase* GetDimmerById(std::string const  &id);
         
-        private:
+    private:
         std::string ReadFileContents(const std::string &filepath) const;
         
-        std::map<int, std::unique_ptr<IntegrationSwitchBase>> switchMap_;
-        std::map<int, std::unique_ptr<IntegrationDimmerBase>> dimmerMap_;
+        std::map<std::string, std::unique_ptr<IntegrationSwitchBase>> switchMap_;
+        std::map<std::string, std::unique_ptr<IntegrationDimmerBase>> dimmerMap_;
 
     private:
         HomeAssistantCreds homeAssistantCreds_;

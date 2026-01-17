@@ -9,10 +9,6 @@
 #include "HomeAssistantSwitch.hpp"
 #include "HomeAssistantDimmer.hpp"
 
-IntegrationContainer::IntegrationContainer()
-{
-}
-
 void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configPath)
 {
     auto configContent = ReadFileContents(configPath);
@@ -24,14 +20,16 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
     }
 
     std::string parse_error;
-    json11::Json parsed_json = json11::Json::parse(configContent, parse_error);
+    json11::Json parsed_json = json11::Json::parse(configContent, parse_error, json11::JsonParse::COMMENTS);
 
-    if (!parse_error.empty()) {
+    if (!parse_error.empty())
+    {
         LOG_ERROR_STREAM("ConfigurationReader: JSON parse error: " << parse_error);
         return;
     }
     
-    if (!parsed_json.is_object()) {
+    if (!parsed_json.is_object())
+    {
         LOG_ERROR_STREAM("ConfigurationReader: Root JSON element must be an object");
         return;
     }
@@ -45,14 +43,19 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
 
     for (const auto& integration : parsed_json["integrations"].array_items()) 
     {
-        if (!integration.is_object()) {
+        if (!integration.is_object())
             continue; // skip invalid entries
-        }
 
-        int id = integration["id"].int_value();
         std::string name = integration["name"].string_value();
         std::string type = integration["type"].string_value();
-        
+        std::string id = (
+            integration["id"].is_number()
+            ? std::to_string(integration["id"].int_value())
+            : integration["id"].string_value()
+        );
+        if(id == "")
+            id = name;
+
         if (type == "HomeAssistant") 
         {
             std::string entityId = integration["entityId"].string_value();
@@ -77,15 +80,13 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
             }
         }
     }
-
 }
 
 std::string IntegrationContainer::ReadFileContents(const std::string& filepath) const
 {
     std::ifstream file(filepath);
-    if (!file.is_open()) {
+    if (!file.is_open())
         return "";
-    }
     
     std::stringstream buffer;
     buffer << file.rdbuf();
@@ -93,22 +94,20 @@ std::string IntegrationContainer::ReadFileContents(const std::string& filepath) 
     return buffer.str();
 }
 
-IntegrationSwitchBase* IntegrationContainer::GetSwitchById(int id)
+IntegrationSwitchBase* IntegrationContainer::GetSwitchById(std::string const  &id)
 {
     auto it = switchMap_.find(id);
     if (it != switchMap_.end())
-    {
         return it->second.get();
-    }
+
     return nullptr;
 }
 
-IntegrationDimmerBase* IntegrationContainer::GetDimmerById(int id)
+IntegrationDimmerBase* IntegrationContainer::GetDimmerById(std::string const  &id)
 {
     auto it = dimmerMap_.find(id);
     if (it != dimmerMap_.end())
-    {
         return it->second.get();
-    }
+
     return nullptr;
 }

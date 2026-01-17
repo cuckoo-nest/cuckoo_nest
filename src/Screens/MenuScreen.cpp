@@ -11,35 +11,26 @@ extern "C" {
 void MenuScreen::Render()
 {
     if (display_ == nullptr)
-    {
         return;
-    }
 
-    
     display_->SetBackgroundColor(SCREEN_COLOR_BLACK);
-
-    //display_->DrawText(60, -100, "MenuName", SCREEN_COLOR_WHITE, Font::FONT_H1);
     
     std::string selectdMenu = "No ITems";
     if (!menuItems.empty())
-    {
         selectdMenu = menuItems[menuSelectedIndex].GetName();
-    } 
     display_->DrawText(0, 0, selectdMenu, SCREEN_COLOR_WHITE, Font::FONT_H2);
         
     // Draw circular icons representing each menu item using LVGL directly.
     // Icons are placed around a circle; the selected item is rotated to the top.
-    const int screenW = 320;
-    const int screenH = 320;
+    const int screenW = display_->width();
+    const int screenH = display_->height();
     const int centerX = screenW / 2;
     const int centerY = screenH / 2;
     const int radius = 120;
 
     int count = static_cast<int>(menuItems.size());
     if (count <= 0)
-    {
         return;
-    }
 
     const double angleStep = 360.0 / count;
     // rotate so the selected index is at -90 degrees (top)
@@ -55,13 +46,9 @@ void MenuScreen::Render()
     // Prevent rotation beyond list bounds: when at first or last item, disallow
     // fractional movement that would visually spin icons past the ends.
     if (menuSelectedIndex <= 0 && frac < 0.0)
-    {
         frac = 0.0;
-    }
     if (menuSelectedIndex >= count - 1 && frac > 0.0)
-    {
         frac = 0.0;
-    }   
     
     const double baseAngle = -90.0 - ((double)menuSelectedIndex + frac) * angleStep;
 
@@ -98,9 +85,8 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
     // pick a color per-item (simple hash)
     int nameSum = 0;
     for (size_t k = 0; k < menuItems[index].GetName().size(); ++k)
-    {
         nameSum += static_cast<unsigned char>(menuItems[index].GetName()[k]);
-    }
+
     uint8_t r = static_cast<uint8_t>((nameSum * 37) % 256);
     uint8_t g = static_cast<uint8_t>((nameSum * 73) % 256);
     uint8_t b = static_cast<uint8_t>((nameSum * 21) % 256);
@@ -113,63 +99,39 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
     // place centered at computed position
     lv_obj_set_pos(icon, ix - iconSize / 2, iy - iconSize / 2);
 
+    // if no icon specified/found, we will use first letter of name instead
     const char* symbol = nullptr;
-    switch (menuItems[index].GetIcon())
+    MenuIcon menuIcon = menuItems[index].GetIcon();
+    std::map<MenuIcon, const char *> mapMenuIconSymbol =
     {
-        case MenuIcon::OK:
-            symbol = CUCKOO_SYMBOL_OK;
-            break;
-        case MenuIcon::CLOSE:
-            symbol = CUCKOO_SYMBOL_CLOSE;
-            break;
-        case MenuIcon::HOME:
-            symbol = CUCKOO_SYMBOL_HOME;
-            break;
-        case MenuIcon::POWER:
-            symbol = CUCKOO_SYMBOL_POWER;
-            break;
-        case MenuIcon::SETTINGS:
-            symbol = CUCKOO_SYMBOL_SETTINGS;
-            break;
-        case MenuIcon::GPS:
-            symbol = CUCKOO_SYMBOL_GPS;
-            break; 
-        case MenuIcon::BLUETOOTH:
-            symbol = CUCKOO_SYMBOL_BLUETOOTH;
-            break;
-        case MenuIcon::WIFI:
-            symbol = CUCKOO_SYMBOL_WIFI;
-            break;
-        case MenuIcon::USB:
-            symbol = CUCKOO_SYMBOL_USB;
-            break;
-        case MenuIcon::BELL:
-            symbol = CUCKOO_SYMBOL_BELL;
-            break;
-        case MenuIcon::WARNING:
-            symbol = CUCKOO_SYMBOL_WARNING;
-            break;  
-        case MenuIcon::TRASH:
-            symbol = CUCKOO_SYMBOL_TRASH;
-            break;
-        case MenuIcon::BREIFCASE:
-            symbol = CUCKOO_SYMBOL_BREIFCASE;
-            break;
-        case MenuIcon::LIGHT:
-            symbol = CUCKOO_SYMBOL_LIGHT;
-            break;
-        case MenuIcon::FAN:
-            symbol = CUCKOO_SYMBOL_FAN;
-            break;
-        case MenuIcon::TEMPERATURE:
-            symbol = CUCKOO_SYMBOL_TEMPERATURE;
-            break;
-
-        case MenuIcon::NONE:
-        default:
-            // No icon specified, we will use first letter of name instead
-            break;
-    }
+        {MenuIcon::NONE, nullptr},
+        {MenuIcon::OK, CUCKOO_SYMBOL_OK},
+        {MenuIcon::CLOSE, CUCKOO_SYMBOL_CLOSE},
+        {MenuIcon::HOME, CUCKOO_SYMBOL_HOME},
+        {MenuIcon::POWER, CUCKOO_SYMBOL_POWER},
+        {MenuIcon::SETTINGS, CUCKOO_SYMBOL_SETTINGS},
+        {MenuIcon::GPS, CUCKOO_SYMBOL_GPS},
+        {MenuIcon::BLUETOOTH, CUCKOO_SYMBOL_BLUETOOTH},
+        {MenuIcon::WIFI, CUCKOO_SYMBOL_WIFI},
+        {MenuIcon::USB, CUCKOO_SYMBOL_USB},
+        {MenuIcon::BELL, CUCKOO_SYMBOL_BELL},
+        {MenuIcon::WARNING, CUCKOO_SYMBOL_WARNING},
+        {MenuIcon::TRASH, CUCKOO_SYMBOL_TRASH},
+        {MenuIcon::BREIFCASE, CUCKOO_SYMBOL_BREIFCASE},
+        {MenuIcon::LIGHT, CUCKOO_SYMBOL_LIGHT},
+        {MenuIcon::FAN, CUCKOO_SYMBOL_FAN},
+        {MenuIcon::TEMPERATURE, CUCKOO_SYMBOL_TEMPERATURE},
+        {MenuIcon::STOP, CUCKOO_SYMBOL_STOP},
+        {MenuIcon::LEFT, CUCKOO_SYMBOL_LEFT},
+        {MenuIcon::RIGHT, CUCKOO_SYMBOL_RIGHT},
+        {MenuIcon::PLUS, CUCKOO_SYMBOL_PLUS},
+        {MenuIcon::UP, CUCKOO_SYMBOL_UP},
+        {MenuIcon::DOWN, CUCKOO_SYMBOL_DOWN},
+        // {MenuIcon::, CUCKOO_SYMBOL_},
+    };
+    auto mapMenuIconSymbolIt = mapMenuIconSymbol.find(menuIcon);
+    if(mapMenuIconSymbolIt != mapMenuIconSymbol.end())
+        symbol = mapMenuIconSymbolIt->second;
 
     // add a small label for the symbol or fallback to first letter
     lv_obj_t * lbl = lv_label_create(icon);
@@ -188,9 +150,7 @@ lv_obj_t* MenuScreen::CreateIcon(int index, int ix, int iy, bool selected, int i
         }
     }
     else
-    {
         lv_label_set_text(lbl, "?");
-    }
     
     lv_obj_center(lbl);
     lv_obj_set_style_text_color(lbl, lv_color_white(), 0);
@@ -207,49 +167,46 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
     if (device_type == InputDeviceType::ROTARY)
     {
         rotaryAccumulator -= event.value;
+        // rotaryAccumulator -= (-1 * event.value);
         // When at the first item allow only positive accumulator (forward rotation),
         // and when at the last item allow only negative accumulator (backward rotation).
         if (menuSelectedIndex <= 0 && rotaryAccumulator < 0)
-        {
             rotaryAccumulator = 0;
-        }
         if (menuSelectedIndex >= static_cast<int>(menuItems.size()) - 1 && rotaryAccumulator > 0)
-        {
             rotaryAccumulator = 0;
-        }
         if (rotaryAccumulator >= RotaryAccumulatorThreshold)
         {
             menuSelectedIndex++;
             if (menuSelectedIndex >= static_cast<int>(menuItems.size()))
-            {
                 menuSelectedIndex = menuItems.size() - 1;
-            }
             rotaryAccumulator = 0;
         }
         else if (rotaryAccumulator <= -RotaryAccumulatorThreshold)
         {   
             menuSelectedIndex--;
             if (menuSelectedIndex < 0)
-            {
                 menuSelectedIndex = 0;
-            }
             rotaryAccumulator = 0;
         }
+
+        Render();
     }
 
     if (device_type == InputDeviceType::BUTTON && event.type == EV_KEY && event.code == 't' && event.value == 1)
     {
         if (beeper_ != nullptr)
-        {
-            beeper_->play(100);
-        }
+            beeper_->click();
 
         if (menuSelectedIndex < 0 || menuSelectedIndex >= static_cast<int>(menuItems.size()))
-        {
             return; // Invalid index
+
+        if (screenManager_ == nullptr)
+        {
+            LOG_ERROR_STREAM("MenuScreen: screenManager is null!");
+            return;
         }
 
-        if (menuItems[menuSelectedIndex].GetName() == "Back")
+        if (menuItems[menuSelectedIndex].IsPrevious())
         {
             screenManager_->GoToPreviousScreen();
             menuSelectedIndex = 0; // Reset selection
@@ -258,12 +215,7 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
 
         MenuItem &selectedItem = menuItems[menuSelectedIndex];
 
-        if (screenManager_ == nullptr)
-        {
-            LOG_ERROR_STREAM("MenuScreen: screenManager_ is null!");
-            return;
-        }
-
+		LOG_INFO_STREAM("MenuScreen: selecting " << selectedItem.GetNextScreenId() << " / \"" << selectedItem.GetName() << "\"");
         screenManager_->GoToNextScreen(selectedItem.GetNextScreenId()); 
     }
 }

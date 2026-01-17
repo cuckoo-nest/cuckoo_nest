@@ -4,42 +4,64 @@
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
-# =====================================================
-# Download Linaro Toolchain if not present
-# =====================================================
-set(LINARO_VERSION "gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabi")
-set(LINARO_URL "https://releases.linaro.org/components/toolchain/binaries/4.9-2017.01/arm-linux-gnueabi/${LINARO_VERSION}.tar.xz")
-set(LINARO_DIR "${CMAKE_BINARY_DIR}/linaro_toolchain")
+# ARM Toolchain settings
+# Using Linaro arm-linux-gnueabihf 4.8-2014.04 toolchain
+set(LINARO_DIR "${CMAKE_SOURCE_DIR}/linaro_toolchain/gcc-linaro-arm-linux-gnueabihf-4.8-2014.04_linux")
 set(LINARO_BIN "${LINARO_DIR}/bin")
-set(LINARO_TARBALL "${CMAKE_BINARY_DIR}/${LINARO_VERSION}.tar.xz")
+set(LINARO_SYSROOT "${LINARO_DIR}/arm-linux-gnueabihf/libc")
 
-# Download and extract toolchain if not already present
-if(NOT EXISTS "${LINARO_BIN}/arm-linux-gnueabi-gcc")
-    message(STATUS "Linaro toolchain not found, downloading...")
+# Download and extract the toolchain if not present
+if(NOT EXISTS "${LINARO_DIR}")
+    message(STATUS "Linaro toolchain not found. Downloading...")
     
-    if(NOT EXISTS "${LINARO_TARBALL}")
-        file(DOWNLOAD "${LINARO_URL}" "${LINARO_TARBALL}"
-             SHOW_PROGRESS
-             STATUS DOWNLOAD_STATUS)
-        list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
-        if(NOT STATUS_CODE EQUAL 0)
-            message(FATAL_ERROR "Failed to download Linaro toolchain from ${LINARO_URL}")
-        endif()
+    set(TOOLCHAIN_URL "https://releases.linaro.org/archive/14.04/components/toolchain/binaries/gcc-linaro-arm-linux-gnueabihf-4.8-2014.04_linux.tar.xz")
+    set(TOOLCHAIN_ARCHIVE "${CMAKE_SOURCE_DIR}/linaro_toolchain/gcc-linaro-arm-linux-gnueabihf-4.8-2014.04_linux.tar.xz")
+    set(TOOLCHAIN_DIR "${CMAKE_SOURCE_DIR}/linaro_toolchain")
+    
+    # Create toolchain directory if it doesn't exist
+    file(MAKE_DIRECTORY "${TOOLCHAIN_DIR}")
+    
+    # Download the toolchain
+    if(NOT EXISTS "${TOOLCHAIN_ARCHIVE}")
+        message(STATUS "Downloading toolchain from ${TOOLCHAIN_URL}")
+        file(DOWNLOAD "${TOOLCHAIN_URL}" "${TOOLCHAIN_ARCHIVE}"
+            SHOW_PROGRESS
+            TIMEOUT 300
+        )
     endif()
     
-    message(STATUS "Extracting Linaro toolchain...")
-    file(ARCHIVE_EXTRACT INPUT "${LINARO_TARBALL}" DESTINATION "${CMAKE_BINARY_DIR}")
-    file(RENAME "${CMAKE_BINARY_DIR}/${LINARO_VERSION}" "${LINARO_DIR}")
-    message(STATUS "Linaro toolchain extracted to ${LINARO_DIR}")
+    # Extract the toolchain
+    message(STATUS "Extracting toolchain to ${TOOLCHAIN_DIR}")
+    execute_process(
+        COMMAND tar -xf "${TOOLCHAIN_ARCHIVE}" -C "${TOOLCHAIN_DIR}"
+        RESULT_VARIABLE extract_result
+    )
+    
+    if(NOT extract_result EQUAL 0)
+        message(FATAL_ERROR "Failed to extract toolchain archive")
+    endif()
+    
+    if(NOT EXISTS "${LINARO_DIR}")
+        message(FATAL_ERROR "Toolchain extraction failed: ${LINARO_DIR} not found")
+    endif()
+    
+    message(STATUS "Toolchain successfully downloaded and extracted to ${LINARO_DIR}")
 endif()
 
-# Set compilers
-set(CMAKE_C_COMPILER ${LINARO_BIN}/arm-linux-gnueabi-gcc)
-set(CMAKE_CXX_COMPILER ${LINARO_BIN}/arm-linux-gnueabi-g++)
 
-# Set sysroot for cross-compilation
-set(CMAKE_FIND_ROOT_PATH ${LINARO_DIR}/arm-linux-gnueabi/libc)
-set(CMAKE_SYSROOT ${CMAKE_FIND_ROOT_PATH})
+# Set compilers
+set(CMAKE_C_COMPILER ${LINARO_BIN}/arm-linux-gnueabihf-gcc)
+set(CMAKE_CXX_COMPILER ${LINARO_BIN}/arm-linux-gnueabihf-g++)
+
+# Use Linaro sysroot for build (provides crt*.o startup files)
+set(CMAKE_SYSROOT ${LINARO_SYSROOT})
+set(CMAKE_FIND_ROOT_PATH ${LINARO_SYSROOT};)
+
+# Add device sysroot to library search paths (takes precedence for runtime libs)
+set(CMAKE_LIBRARY_PATH 
+    "${LINARO_SYSROOT}/lib"
+    "${LINARO_SYSROOT}/usr/lib"
+)
 
 # Search for programs in the build host directories
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
@@ -54,8 +76,8 @@ set(CMAKE_CXX_DEPENDS_USE_COMPILER FALSE)
 set(CMAKE_C_DEPENDS_USE_COMPILER FALSE)
 
 # Set common ARM flags
-set(CMAKE_C_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -march=armv7-a -mfloat-abi=soft")
-set(CMAKE_CXX_FLAGS_INIT "--sysroot=${CMAKE_SYSROOT} -march=armv7-a -mfloat-abi=soft")
+set(CMAKE_C_FLAGS_INIT "-march=armv7-a -mfloat-abi=hard")
+set(CMAKE_CXX_FLAGS_INIT "-march=armv7-a -mfloat-abi=hard")
 
 # Enable C++11 support
 set(CMAKE_CXX_STANDARD 11)
