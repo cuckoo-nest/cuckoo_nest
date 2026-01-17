@@ -78,7 +78,7 @@ TEST_F(ScreenManagerConfigLoadTest, HomeScreenLinksToMenuScreen) {
     ASSERT_NE(nullptr, home_screen);
 
     // Check that HomeScreen's next screen is MenuScreen
-    HomeScreen* hs = dynamic_cast<HomeScreen*>(home_screen);
+    auto *hs = dynamic_cast<HomeScreen*>(home_screen);
     ASSERT_NE(hs, nullptr);
 
     EXPECT_EQ("2", hs->GetNextScreenId());
@@ -181,7 +181,7 @@ TEST_F(ScreenManagerConfigLoadTest, MenuScreenItemsLoaded) {
 
     ScreenBase* menu_screen = screen_manager->GetScreenById("1");
     ASSERT_NE(nullptr, menu_screen);
-    MenuScreen* ms = dynamic_cast<MenuScreen*>(menu_screen);
+    auto *ms = dynamic_cast<MenuScreen*>(menu_screen);
     ASSERT_NE(ms, nullptr);
     EXPECT_EQ(3, ms->CountMenuItems());
 
@@ -206,7 +206,7 @@ TEST_F(ScreenManagerConfigLoadTest, SwitchScreenIntegrationLoaded) {
 
     ScreenBase* switch_screen = screen_manager->GetScreenById("1");
     ASSERT_NE(nullptr, switch_screen);
-    SwitchScreen* ss = dynamic_cast<SwitchScreen*>(switch_screen);
+    auto *ss = dynamic_cast<SwitchScreen*>(switch_screen);
     ASSERT_NE(ss, nullptr);
     EXPECT_EQ("42", ss->GetIntegrationId());
 }
@@ -230,7 +230,7 @@ TEST_F(ScreenManagerConfigLoadTest, DimmerScreenIntegrationLoaded) {
 
     ScreenBase* dimmer_screen = screen_manager->GetScreenById("1");
     ASSERT_NE(nullptr, dimmer_screen);
-    DimmerScreen* ds = dynamic_cast<DimmerScreen*>(dimmer_screen);
+    auto *ds = dynamic_cast<DimmerScreen*>(dimmer_screen);
     ASSERT_NE(ds, nullptr);
     EXPECT_EQ("55", ds->GetIntegrationId());
 }

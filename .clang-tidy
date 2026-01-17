@@ -11,6 +11,6 @@ Checks: >
 
 WarningsAsErrors: '*'
 
-HeaderFilterRegex: '^(?!.*/build.*/lvgl).*(/home/alex/cuckoo_nest/src/.*\.(hpp?|cpp))$'
+HeaderFilterRegex: '^(?!.*/build.*/lvgl|.*/json11).*(.*\.(hpp?|cpp))$'
 
 FormatStyle: none

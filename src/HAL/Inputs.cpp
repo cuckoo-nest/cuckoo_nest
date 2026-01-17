@@ -62,7 +62,7 @@ void Inputs::polling_loop()
 {
     while (!should_stop_) 
     {
-        bool button_event = poll_device(InputDeviceType::BUTTON, button_fd_);
+        poll_device(InputDeviceType::BUTTON, button_fd_);
         bool rotary_event = poll_device(InputDeviceType::ROTARY, rotary_fd_);
 
         if (rotary_event) {

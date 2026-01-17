@@ -30,7 +30,9 @@ BackplateComms::~BackplateComms()
     // Stop background thread and join
     running.store(false);
     if (workerThread.joinable())
+    {
         workerThread.join();
+    }
 }
 
 bool BackplateComms::Initialize()
@@ -105,7 +107,9 @@ void BackplateComms::TaskBodyRunningState()
             }
         }
         else
+        {
             TaskBodyComms();
+        }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -117,7 +121,9 @@ bool BackplateComms::InitializeSerial()
 
     SerialPort->Close();
     if (!SerialPort->Open(baudRate))
+    {
         return false;
+    }
 
     SerialPort->Flush();
     SerialPort->SendBreak(0);
@@ -178,13 +184,17 @@ bool BackplateComms::DoBurstStage()
             }
 
             const std::vector<uint8_t> brk = {'B', 'R', 'K'};
-            if (responseMsg.GetMessageCommand() == MessageType::ResponseAscii && responseMsg.GetPayload() == brk)
+            if (responseMsg.GetMessageCommand() == MessageType::ResponseAscii 
+            && responseMsg.GetPayload() == brk)
             {
                 burstDone = true;
                 break;
             }
         }
-        if (burstDone) break;
+        if (burstDone)
+        {
+            break;
+        }
     }
 
     if (!burstDone)
@@ -213,11 +223,8 @@ bool BackplateComms::IsTimeout(timeval &startTime, int timeoutUs)
     long elapsedUs = (currentTime.tv_sec - startTime.tv_sec) * 1000000 +
                      (currentTime.tv_usec - startTime.tv_usec);
 
-    if (elapsedUs >= timeoutUs)
-    {
-        return true;
-    }
-    return false;
+    
+    return (elapsedUs >= timeoutUs);
 }
 
 bool BackplateComms::DoInfoGathering()
@@ -254,7 +261,9 @@ bool BackplateComms::GetInfo(MessageType command, MessageType expectedResponse)
     while (true)
     {
         if (IsTimeout(startTime, GetInfoTimeoutUs))
+        {
             break;
+        }
 
         uint8_t readBuffer[256];
         int bytesRead = SerialPort->Read(
@@ -334,7 +343,9 @@ void BackplateComms::TaskBodyComms ()
                     for (auto &cb : this->tempCallbacks)
                     {
                         if (cb)
+                        {
                             cb(CurrentTemperatureC);
+                        }
                     }
                 }
                 break;
@@ -360,9 +371,13 @@ void BackplateComms::TaskBodyComms ()
                     int16_t val1 = (resp.GetPayload()[1] << 8) | resp.GetPayload()[0];
                     int16_t val2 = (resp.GetPayload()[3] << 8) | resp.GetPayload()[2];
                     if (val1 == 0 && val2 == 0)
+                    {
                         LOG_INFO("PIR Event: Cleared");
+                    }
                     else 
+                    {
                         LOG_INFO("PIR Event: Motion Detected (vals: %d, %d)", val1, val2);
+                    }
                 }
                 break;
 
@@ -389,7 +404,9 @@ void BackplateComms::TaskBodyComms ()
                     for (auto &cb : this->pirCallbacks)
                     {
                         if (cb)
+                        {
                             cb(val1);
+                        }
                     }
                     
                 }
@@ -411,11 +428,14 @@ void BackplateComms::TaskBodyComms ()
 
         // Invoke any subscribed callbacks (multi-subscriber std::function lists)
         const std::vector<uint8_t> &payload = resp.GetPayload();
-        const uint8_t* payloadPtr = payload.size() ? payload.data() : nullptr;
+        const uint8_t* payloadPtr = payload.empty() ? nullptr : payload.data();
 
         for (auto &cb : this->genericCallbacks)
         {
-            if (cb) cb(static_cast<uint16_t>(cmd), payloadPtr, payload.size());
+            if (cb)
+            {
+                cb(static_cast<uint16_t>(cmd), payloadPtr, payload.size());
+            }
         }
     }
 

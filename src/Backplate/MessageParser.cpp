@@ -70,13 +70,10 @@ std::vector<ResponseMessage> MessageParser::Feed(const uint8_t* data, size_t len
             parsed.push_back(msg);
             // Erase the consumed bytes
             buffer_.erase(buffer_.begin(), buffer_.begin() + totalMsgLen);
-            // Continue to parse next messages
-            continue;
         } else {
             // Parsing failed (likely CRC or malformed). Reset parser to initial
             // behaviour by discarding the first byte and continue searching
             buffer_.erase(buffer_.begin());
-            continue;
         }
     }
 

@@ -6,11 +6,11 @@
 // Mock screen class for testing
 class MockScreen : public ScreenBase {
 public:
-    MockScreen() : ScreenBase() {};
+    MockScreen() {};
     MockScreen(ScreenManager *sm, const json11::Json &js) : ScreenBase(sm, js) {};
-    virtual ~MockScreen() {};
+    ~MockScreen() override {};
 
-    void Render() {
+    void Render() override {
         renderCallCount++;
     }
 
@@ -18,7 +18,7 @@ public:
         return renderCallCount;
     }
 
-    void handle_input_event(const InputDeviceType device_type, const struct input_event& event) {
+    void handle_input_event(const InputDeviceType device_type, const struct input_event& event) override {
         // Mock implementation - do nothing for tests
     }
 
@@ -29,7 +29,7 @@ private:
 // Test fixture for ScreenManager tests
 class ScreenManagerTest : public ::testing::Test {
 protected:
-    void SetUp() {
+    void SetUp() override {
         screenManager = new ScreenManager(nullptr, nullptr, nullptr);
         auto json = json11::Json();
         mockScreen1 = new MockScreen(screenManager, json);
@@ -41,7 +41,7 @@ protected:
         screenManager->AddScreen(std::unique_ptr<ScreenBase>(mockScreen2));
     }
     
-    void TearDown() {
+    void TearDown() override {
         delete screenManager;
         screenManager = nullptr;
     }
@@ -96,7 +96,7 @@ TEST_F(ScreenManagerTest, Destructor)
     screenManager->GoToNextScreen(mockScreen2->GetId());
     
     // Create a new ScreenManager and delete it to test destructor
-    ScreenManager* test_manager = new ScreenManager(nullptr, nullptr, nullptr);
+    auto *test_manager = new ScreenManager(nullptr, nullptr, nullptr);
     delete test_manager;
     
     SUCCEED();
@@ -104,7 +104,7 @@ TEST_F(ScreenManagerTest, Destructor)
 
 TEST_F(ScreenManagerTest, ThreeLevelScreenHistory) 
 {
-    MockScreen* mock_screen3 = new MockScreen();
+    auto *mock_screen3 = new MockScreen();
     mock_screen3->SetId("3");
     screenManager->AddScreen(std::unique_ptr<ScreenBase>(mock_screen3));
 

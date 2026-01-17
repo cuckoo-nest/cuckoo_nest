@@ -40,7 +40,9 @@ public:
         if(GetId() == "")
             SetId(GetName());
     }
-    virtual ~ScreenBase() { OnChangeFocus(false); };
+    
+    //virtual ~ScreenBase() { OnChangeFocus(false); };
+    virtual ~ScreenBase() {};
 
     virtual void Render() {};
     virtual void handle_input_event(const InputDeviceType device_type, const struct input_event& event) = 0;

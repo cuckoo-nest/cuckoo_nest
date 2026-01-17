@@ -42,14 +42,14 @@ protected:
         // before the destructor).
     }
 
-    testing::Action<int(char*, int)> mockReadResponse(const std::vector<uint8_t>& responseBuffer) {
+    static testing::Action<int(char*, int)> mockReadResponse(const std::vector<uint8_t>& responseBuffer) {
         return testing::Invoke([responseBuffer](char* buffer, int bufferSize) {
             std::memcpy(buffer, responseBuffer.data(), responseBuffer.size());
             return static_cast<int>(responseBuffer.size());
         });
     }
 
-    testing::Action<int(timeval&)> mockGetTimeval(int sec, int usec) {
+    static testing::Action<int(timeval&)> mockGetTimeval(int sec, int usec) {
         return testing::Invoke([sec, usec](timeval& tv) {
             tv.tv_sec = sec;
             tv.tv_usec = usec;
@@ -57,7 +57,7 @@ protected:
         });
     }
 
-    testing::Action<int(timeval&)> mockGetTimevalSecs() {
+    static testing::Action<int(timeval&)> mockGetTimevalSecs() {
         return testing::Invoke([&](timeval& tv) {
             
             tv.tv_sec = mockCurrentTimeSec;
@@ -68,7 +68,7 @@ protected:
 
     MockSerialPort mockSerialPort;
     MockDateTimeProvider mockDateTimeProvider;
-    int mockCurrentTimeSec;
+    static int mockCurrentTimeSec;
 };
 
 class BackplateCommsExposed : public BackplateComms
