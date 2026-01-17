@@ -2,11 +2,10 @@
     "app_name": "CuckooNest",
     "version": "1.0.0",
     "debug_mode": true,
-    "max_screens": 10,
     "refresh_rate": 60.0,
     "display": {
         "width": 320,
-        "height": 240,
+        "height": 320,
         "brightness": 0.8
     },
     "hal": {
@@ -34,17 +33,18 @@
         },
         {
             "id": 2,
-            "name": "Office External Lights",
+            "name": "Office External",
             "entityId": "switch.office_external_lights",
             "type": "HomeAssistant"
         },
         {
             "id": 3,
-            "name": "Office Internal Lights",
+            "name": "Office Internal",
             "entityId": "switch.office_internal_lights",
             "type": "HomeAssistant"
         }
     ],
+    "firstScreen": 1,
     "screens":[
         {
             "name": "Home Screen",
@@ -54,53 +54,54 @@
         },
         {
             "name": "Main Menu",
-            "parent": "home",
             "type": "menu",
             "id": 2,
             "menuItems": [
                 {
-                    "name": "Garage",
+                    "name": "Garage Lights",
                     "nextScreen": 3,
                     "icon": "light"
                 },{
-                    "name": "Office Ex",
+                    "name": "Office External",
                     "nextScreen": 4,
                     "icon": "fan"
                 },{
-                    "name": "Office in",
+                    "name": "Office Internal",
                     "nextScreen": 5,
                     "icon": "breifcase"
                 },{
                     "name": "Temperature",
-                    "nextScreen": 5,
+                    "nextScreen": 6,
                     "icon": "temperature"
                 },
                 {
                     "name": "no icon",
-                    "nextScreen": 5
+                    "nextScreen": 7
                 }
             ]
         },
         {
             "name": "Garage Lights",
-            "parent": "menu",
             "type": "switch",
             "id": 3,
             "integrationId": 1
         },
         {
             "name": "External Lights",
-            "parent": "menu",
             "type": "switch",
             "id": 4,
             "integrationId": 2
         },
         {
             "name": "Internal Lights",
-            "parent": "menu",
             "type": "switch",
             "id": 5,
             "integrationId": 3
+        },
+		{
+            "name": "Temperature",
+            "type": "home",
+            "id": 6
         }
     ]
 }

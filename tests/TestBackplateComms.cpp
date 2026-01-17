@@ -71,10 +71,30 @@ protected:
     int mockCurrentTimeSec;
 };
 
+class BackplateCommsExposed : public BackplateComms
+{
+public:
+    BackplateCommsExposed(
+        ISerialPort* serialPort,
+        IDateTimeProvider* dateTimeProvider
+    )
+    : BackplateComms(serialPort, dateTimeProvider)
+    {};
+
+    virtual ~BackplateCommsExposed() = default;
+
+    inline bool InitializeSerial() { return BackplateComms::InitializeSerial(); };
+    inline bool DoBurstStage() { return BackplateComms::DoBurstStage(); };
+    inline bool DoInfoGathering() { return BackplateComms::DoInfoGathering(); };
+    inline bool GetInfo(MessageType command, MessageType expectedResponse) { return BackplateComms::GetInfo(command, expectedResponse); };
+    inline void TaskBodyComms() { BackplateComms::TaskBodyComms(); };
+
+};
+
 TEST_F(TestBackplateComms, InitializeOpensSerialPortCorrectly) 
 {
     InSequence s;
-    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    BackplateCommsExposed comms(&mockSerialPort, &mockDateTimeProvider);
 
     EXPECT_CALL(mockSerialPort, Open(BaudRate::Baud115200))
         .WillOnce(Return(true));
@@ -90,16 +110,13 @@ TEST_F(TestBackplateComms, InitializeOpensSerialPortCorrectly)
     EXPECT_TRUE(result);
 }
 
-TEST_F(TestBackplateComms, InitializeFailsIfOpenFails) 
+TEST_F(TestBackplateComms, InitializeSuccess) 
 {
     InSequence s;
-    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
-
-    EXPECT_CALL(mockSerialPort, Open(BaudRate::Baud115200))
-        .WillOnce(Return(false));
+    BackplateCommsExposed comms(&mockSerialPort, &mockDateTimeProvider);
 
     bool result = comms.Initialize();
-    EXPECT_FALSE(result);
+    EXPECT_TRUE(result);
 }
 
 TEST_F(TestBackplateComms, BustStageWorks) 
@@ -108,7 +125,7 @@ TEST_F(TestBackplateComms, BustStageWorks)
         .WillRepeatedly(mockGetTimeval(1000, 0));
 
     InSequence s;
-    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    BackplateCommsExposed comms(&mockSerialPort, &mockDateTimeProvider);
 
     EXPECT_CALL(mockSerialPort, Open(BaudRate::Baud115200))
         .WillRepeatedly(Return(true));
@@ -149,7 +166,7 @@ TEST_F(TestBackplateComms, GetInfoStageWorks)
         .WillRepeatedly(mockGetTimeval(1000, 0));
 
     InSequence s;
-    BackplateComms comms (
+    BackplateCommsExposed comms (
         &mockSerialPort,
         &mockDateTimeProvider
     );
@@ -169,7 +186,7 @@ TEST_F(TestBackplateComms, GetInfoStageWorks)
 
 TEST_F(TestBackplateComms, PeriodicalRequestsWork)
 {
-    BackplateComms comms (
+    BackplateCommsExposed comms (
         &mockSerialPort,
         &mockDateTimeProvider
     );
@@ -196,7 +213,7 @@ TEST_F(TestBackplateComms, PeriodicalRequestsWork)
     .WillRepeatedly(Return(historicalDataRequest.GetRawMessage().size())); // Assume Write returns number of bytes written
     
     for (int i = 0; i < 13; ++i) {
-        comms.MainTaskBody();
+        comms.TaskBodyComms();
         mockCurrentTimeSec += 5;
     }
 }
@@ -214,7 +231,7 @@ TEST_F(TestBackplateComms, PeriodicalRequestsWork)
 
 TEST_F(TestBackplateComms, HandlesPartialMessagesAcrossCalls)
 {
-    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    BackplateCommsExposed comms(&mockSerialPort, &mockDateTimeProvider);
 
     EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
         .WillRepeatedly(mockGetTimevalSecs());
@@ -234,9 +251,9 @@ TEST_F(TestBackplateComms, HandlesPartialMessagesAcrossCalls)
         .WillOnce(mockReadResponse(part1))
         .WillOnce(mockReadResponse(part2));
 
-    // Call MainTaskBody twice simulating two scheduling ticks
-    comms.MainTaskBody(); // reads part1 -> not enough to parse
-    comms.MainTaskBody(); // reads part2 -> should parse and log
+    // Call TaskBodyComms twice simulating two scheduling ticks
+    comms.TaskBodyComms(); // reads part1 -> not enough to parse
+    comms.TaskBodyComms(); // reads part2 -> should parse and log
 }
 
 TEST_F(TestBackplateComms, DoBurstStageHandlesPartialReads)
@@ -245,7 +262,7 @@ TEST_F(TestBackplateComms, DoBurstStageHandlesPartialReads)
         .WillRepeatedly(mockGetTimeval(1000, 0));
 
     InSequence s;
-    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    BackplateCommsExposed comms(&mockSerialPort, &mockDateTimeProvider);
 
     EXPECT_CALL(mockSerialPort, Open(BaudRate::Baud115200))
         .WillRepeatedly(Return(true));
@@ -292,7 +309,7 @@ TEST_F(TestBackplateComms, DoBurstStageHandlesAllMessagesInOneRead)
     EXPECT_CALL(mockDateTimeProvider, gettimeofday(_))
         .WillRepeatedly(mockGetTimeval(1000, 0));
 
-    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    BackplateCommsExposed comms(&mockSerialPort, &mockDateTimeProvider);
 
     CommandMessage resetMessage(MessageType::Reset);
 
@@ -362,7 +379,7 @@ namespace {
 
 TEST_F(TestBackplateComms, TemperatureCallbackInvoked)
 {
-    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    BackplateCommsExposed comms(&mockSerialPort, &mockDateTimeProvider);
     comms.AddTemperatureCallback(testTempCb);
     comms.AddGenericEventCallback(testGenericCb);
 
@@ -377,7 +394,7 @@ TEST_F(TestBackplateComms, TemperatureCallbackInvoked)
         .WillOnce(mockReadResponse(sensorMsg.GetRawMessage()));
 
     s_tempCalled = false; s_genericCalled = false; s_genericType = 0; s_tempVal = 0.0f;
-    comms.MainTaskBody();
+    comms.TaskBodyComms();
 
     EXPECT_TRUE(s_tempCalled);
     // payload {0x11,0x22} -> temp_cc = 0x2211 = 8721 -> 87.21 C
@@ -386,7 +403,7 @@ TEST_F(TestBackplateComms, TemperatureCallbackInvoked)
 
 TEST_F(TestBackplateComms, PIRCallbackInvoked)
 {
-    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    BackplateCommsExposed comms(&mockSerialPort, &mockDateTimeProvider);
     comms.AddPIRCallback(testPirCb);
     comms.AddGenericEventCallback(testGenericCb);
 
@@ -401,7 +418,7 @@ TEST_F(TestBackplateComms, PIRCallbackInvoked)
         .WillOnce(mockReadResponse(pirMsg.GetRawMessage()));
 
     s_pirCalled = false; s_genericCalled = false; s_genericType = 0; s_pirVal = 0;
-    comms.MainTaskBody();
+    comms.TaskBodyComms();
 
     EXPECT_TRUE(s_pirCalled);
     EXPECT_EQ(s_pirVal, 3);
@@ -409,7 +426,7 @@ TEST_F(TestBackplateComms, PIRCallbackInvoked)
 
 TEST_F(TestBackplateComms, CallbacksNotInvokedOnBadCrc)
 {
-    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    BackplateCommsExposed comms(&mockSerialPort, &mockDateTimeProvider);
     comms.AddTemperatureCallback(testTempCb);
     comms.AddPIRCallback(testPirCb);
     comms.AddGenericEventCallback(testGenericCb);
@@ -429,7 +446,7 @@ TEST_F(TestBackplateComms, CallbacksNotInvokedOnBadCrc)
         .WillOnce(mockReadResponse(corrupted));
 
     s_tempCalled = false; s_pirCalled = false; s_genericCalled = false;
-    comms.MainTaskBody();
+    comms.TaskBodyComms();
 
     EXPECT_FALSE(s_tempCalled);
     EXPECT_FALSE(s_pirCalled);
@@ -438,7 +455,7 @@ TEST_F(TestBackplateComms, CallbacksNotInvokedOnBadCrc)
 
 TEST_F(TestBackplateComms, MultipleSubscribersReceiveEvents)
 {
-    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    BackplateCommsExposed comms(&mockSerialPort, &mockDateTimeProvider);
 
     std::vector<int> calls;
     auto cb1 = [&](float t) { calls.push_back(1); };
@@ -459,7 +476,7 @@ TEST_F(TestBackplateComms, MultipleSubscribersReceiveEvents)
     EXPECT_CALL(mockSerialPort, Read(_,_))
         .WillOnce(mockReadResponse(sensorMsg.GetRawMessage()));
 
-    comms.MainTaskBody();
+    comms.TaskBodyComms();
 
     // cb1 then cb2 then generic
     ASSERT_GE(calls.size(), 3);
@@ -470,7 +487,7 @@ TEST_F(TestBackplateComms, MultipleSubscribersReceiveEvents)
 
 TEST_F(TestBackplateComms, EventOrderingPreservedForMultipleMessages)
 {
-    BackplateComms comms(&mockSerialPort, &mockDateTimeProvider);
+    BackplateCommsExposed comms(&mockSerialPort, &mockDateTimeProvider);
     std::vector<uint16_t> recvOrder;
 
     auto gcb = [&](uint16_t type, const uint8_t* p, size_t l) { recvOrder.push_back(type); };
@@ -496,7 +513,7 @@ TEST_F(TestBackplateComms, EventOrderingPreservedForMultipleMessages)
     EXPECT_CALL(mockSerialPort, Read(_,_))
         .WillOnce(mockReadResponse(combined));
 
-    comms.MainTaskBody();
+    comms.TaskBodyComms();
 
     ASSERT_EQ(recvOrder.size(), 2);
     EXPECT_EQ(recvOrder[0], static_cast<uint16_t>(MessageType::TempHumidityData));

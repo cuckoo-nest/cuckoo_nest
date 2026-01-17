@@ -19,4 +19,10 @@ enum class MenuIcon
     LIGHT,
     FAN,
     TEMPERATURE,
+    STOP,
+    LEFT,
+    RIGHT,
+    PLUS,
+    UP,
+    DOWN,
 };

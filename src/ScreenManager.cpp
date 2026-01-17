@@ -1,11 +1,11 @@
-#include "ScreenManager.hpp"
 #include <fstream>
 #include <sstream>
 #include <json11.hpp>
-#include "logger.h"
 #include <algorithm>
 #include <stdio.h>
 
+#include "logger.h"
+#include "ScreenManager.hpp"
 #include "HAL/HAL.hpp"
 
 #include "Screens/HomeScreen.hpp"
@@ -14,134 +14,156 @@
 #include "Screens/DimmerScreen.hpp"
 #include "Screens/AnalogClockScreen.hpp"
 
-ScreenManager::ScreenManager(
-    HAL *hal, 
-    IntegrationContainer* integrationContainer,
-    BackplateComms *backplateComms) : 
-    screen_history_(),
-    current_screen_(nullptr),
-    hal_(hal),
-    integrationContainer_(integrationContainer),
-    backplateComms_(backplateComms)
+void ScreenManager::GoToScreenPtr(ScreenBase *screen)
 {
-}
-
-ScreenManager::~ScreenManager()
-{
-}
-
-void ScreenManager::GoToNextScreen(int id)
-{
-    ScreenBase* screen = GetScreenById(id);
-    if (screen == nullptr)
+    if(screen != nullptr)
     {
-        return;
+        if(current_screen_)
+            current_screen_->OnChangeFocus(false);
+        current_screen_ = screen;
+        screen_history_.push(current_screen_);
+        current_screen_->OnChangeFocus(true);
+        LOG_INFO_STREAM("ScreenManager: Navigated to screen ID \"" << current_screen_->GetId() << "\" / \"" << current_screen_->GetName() << "\"");
     }
-    current_screen_ = screen;
-    screen_history_.push(current_screen_);
-    current_screen_->Render();
-    LOG_INFO_STREAM("ScreenManager: Navigated to screen ID " << id);
+    else
+        LOG_ERROR_STREAM("ScreenManager::GoToScreenPtr NULL screen ptr");
+}
+
+void ScreenManager::GoToFirstScreen(std::string id)
+{
+    if(id == "")
+        id = firstScreenId_;
+    ScreenBase* screen = (id != "" ? GetScreenById(id) : nullptr);
+    if(screen == nullptr)
+    {
+        LOG_INFO_STREAM("ScreenManager::GoToFirstScreen Unable to find screen ID \"" << id << "\"");
+        if(id != "1")
+        {
+            screen = GetScreenById("1");
+            if(screen == nullptr)
+                LOG_INFO_STREAM("ScreenManager::GoToFirstScreen Unable to find screen ID \"1\"");
+        }
+    }
+    // no screen found, try to find a HomeScreen class instance
+    if(screen == nullptr)
+    {
+        for(auto &pair: screens_)
+            if((screen = dynamic_cast<HomeScreen *>(pair.second.get())))
+                break;
+
+        // no HomeScreen class instance found, build one
+        if(screen == nullptr)
+        {
+            LOG_INFO_STREAM("ScreenManager::GoToFirstScreen - Creating HomeScreen");
+            std::map<std::string, std::string> attribs = { {"name","Home"}, {"id","Home"} };
+            screen = new HomeScreen(this, json11::Json(attribs));
+            AddScreen(std::unique_ptr<ScreenBase>(screen));
+        }
+    }
+
+    if (screen == nullptr)
+        LOG_ERROR_STREAM("ScreenManager::GoToFirstScreen Unable to find a home screen.");
+    else
+        GoToScreenPtr(screen);
+}
+
+void ScreenManager::GoToNextScreen(std::string const & id)
+{
+    ScreenBase* screen = (id != "" ? GetScreenById(id) : nullptr);
+    if (screen == nullptr)
+        LOG_ERROR_STREAM("ScreenManager: Unable to find screen \"" << id << "\"");
+    else
+        GoToScreenPtr(screen);
 }
 
 void ScreenManager::GoToPreviousScreen()
 {
-    if (!screen_history_.empty()) {
+    if(screen_history_.size() > 1)
+    {
+        if(current_screen_)
+            current_screen_->OnChangeFocus(false);
         screen_history_.pop();
         current_screen_ = screen_history_.top();
-        current_screen_->Render();
-    }
-}
-
-void ScreenManager::RenderCurrentScreen()
-{
-    if (current_screen_ != nullptr)
-    {
-        current_screen_->Render();
-    }
-    else
-    {
-        LOG_ERROR_STREAM("ScreenManager: No current screen to render");
+        if(current_screen_)
+        {
+            current_screen_->OnChangeFocus(true);
+            LOG_INFO_STREAM("ScreenManager: Navigated to screen ID \"" << current_screen_->GetId() << "\" / \"" << current_screen_->GetName() << "\"");
+        }
     }
 }
 
 void ScreenManager::ProcessInputEvent(const InputDeviceType device_type, const struct input_event &event)
 {
     if (current_screen_ != nullptr)
-    {
         current_screen_->handle_input_event(device_type, event);
-    }
 }
 
 void ScreenManager::LoadScreensFromConfig(const std::string& config_path)
 {
     auto configContent = ReadFileContents(config_path);
     if (configContent.empty())
-    {
         // Handle error: could not read config file
         return;
-    }
 
     std::string parse_error;
-    json11::Json parsed_json = json11::Json::parse(configContent, parse_error);
+    json11::Json parsed_json = json11::Json::parse(configContent, parse_error, json11::JsonParse::COMMENTS);
 
-    if (!parse_error.empty()) {
+    if (!parse_error.empty())
+    {
         LOG_ERROR_STREAM("ScreenManager: JSON parse error: " << parse_error);
         return;
     }
     
-    if (!parsed_json.is_object()) {
+    if (!parsed_json.is_object())
+    {
         LOG_ERROR_STREAM("ScreenManager: Root JSON element must be an object");
         return;
     }
 
-    for (const auto& screen : parsed_json["screens"].array_items()) 
+    if(!parsed_json["firstScreen"].is_null())
     {
-        if (!screen.is_object()) {
-            continue; // skip invalid entries
-        }
+        firstScreenId_ = (
+            parsed_json["firstScreen"].is_number()
+            ? std::to_string(parsed_json["firstScreen"].int_value())
+            : 
+                (
+                    parsed_json["firstScreen"].is_string()
+                    ? parsed_json["firstScreen"].string_value()
+                    : ""
+                )
+            );
+    }
 
-        int id = screen["id"].int_value();
-        if (id == 0) {
-            continue; // skip invalid or missing IDs
-        }
-
-        std::string name = screen["name"].string_value();
-        std::string type = screen["type"].string_value();
+    for (const auto& screen : parsed_json["screens"].array_items())
+    {
+        std::string name = (!screen["name"].is_null() ? screen["name"].string_value() : "");
+        std::string id = (!screen["id"].is_null() ? screen["id"].string_value() : name);
+        std::string type = (!screen["type"].is_null() ? screen["type"].string_value() : "");
         transform(type.begin(), type.end(), type.begin(), ::tolower);
 
         if (type == "home") 
-        {
-            BuildHomeScreenFromJSON(screen, id);
-        }
+            AddScreen(std::unique_ptr<ScreenBase>(new HomeScreen(this, screen)));
         else if (type == "menu") 
-        {
-            BuildMenuScreenFromJSON(screen, id);
-        }
+            BuildMenuScreenFromJSON(screen);
         else if (type == "switch") 
-        {
-            BuildSwitchScreenFromJSON(screen, id);
-        }
+            AddScreen(std::unique_ptr<ScreenBase>(new SwitchScreen(this, screen)));
         else if (type == "dimmer") 
-        {
-            BuildDimmerScreenFromJSON(screen, id);
-        }
+            AddScreen(std::unique_ptr<ScreenBase>(new DimmerScreen(this, screen)));
         else if (type == "analogclock") 
-        {
-            BuildAnalogClockScreenFromJson(screen, id);
-        }
+            AddScreen(std::unique_ptr<ScreenBase>(new AnalogClockScreen(this, screen)));
         else 
-        {
-            LOG_ERROR_STREAM("ScreenManager: Unknown screen type '" << type << "' for screen ID " << id);
-        }
+            LOG_ERROR_STREAM(
+                "ScreenManager: Unknown screen type '" << type
+                << "' for screen \"" << id << "\" / " << "\"" << name << "\""
+            );
     }
 }
 
 std::string ScreenManager::ReadFileContents(const std::string& filepath) const
 {
     std::ifstream file(filepath);
-    if (!file.is_open()) {
+    if (!file.is_open())
         return "";
-    }
     
     std::stringstream buffer;
     buffer << file.rdbuf();
@@ -149,106 +171,74 @@ std::string ScreenManager::ReadFileContents(const std::string& filepath) const
     return buffer.str();
 }
 
-void ScreenManager::BuildHomeScreenFromJSON(const json11::Json &screenJson, int id)
+void ScreenManager::BuildMenuScreenFromJSON(const json11::Json &screenJson)
 {
-    int nextScreenId = screenJson["nextScreen"].int_value();
-    auto homeScreen = new HomeScreen(
-        hal_, 
-        this,
-        backplateComms_);
-    homeScreen->SetNextScreenId(nextScreenId);
-    screens_[id] = std::unique_ptr<ScreenBase>(homeScreen);
-}
+    std::map<std::string, MenuIcon> menuIcons =
+    {
+        {"", MenuIcon::NONE},
+        {"none", MenuIcon::NONE},
+        {"ok", MenuIcon::OK},
+        {"close", MenuIcon::CLOSE},
+        {"home", MenuIcon::HOME},
+        {"power", MenuIcon::POWER},
+        {"settings", MenuIcon::SETTINGS},
+        {"gps", MenuIcon::GPS},
+        {"wifi", MenuIcon::WIFI},
+        {"usb", MenuIcon::USB},
+        {"bell", MenuIcon::BELL},
+        {"trash", MenuIcon::TRASH},
+        {"breifcase", MenuIcon::BREIFCASE},
+        {"light", MenuIcon::LIGHT},
+        {"fan", MenuIcon::FAN},
+        {"temperature", MenuIcon::TEMPERATURE},
+        // {"", MenuIcon::},
+        {"stop", MenuIcon::STOP},
+        {"left", MenuIcon::LEFT},
+        {"right", MenuIcon::RIGHT},
+        {"plus", MenuIcon::PLUS},
+        {"warning", MenuIcon::WARNING},
+        {"up", MenuIcon::UP},
+        {"down", MenuIcon::DOWN},
+    };
 
-void ScreenManager::BuildMenuScreenFromJSON(const json11::Json &screenJson, int id)
-{
-    auto menuScreen = new MenuScreen(hal_, this);
-    
+    auto screen = new MenuScreen(this, screenJson);
+
+    // if there is a "nextScreen", add a "Previous"
+    std::string screenNext = screen->GetNextScreenId();
+    if(screenNext != "")
+        screen->AddMenuItem(MenuItem("Previous", "", menuIcons["left"], true));
+
+    // add menu entries as configured
     for (const auto& itemJson : screenJson["menuItems"].array_items()) 
     {
-        std::string itemName = itemJson["name"].string_value();
-        int nextScreenId = itemJson["nextScreen"].int_value();
-        std::string iconStr = itemJson["icon"].string_value();
+        std::string itemIconStr = itemJson["icon"].string_value();
+        transform(itemIconStr.begin(), itemIconStr.end(), itemIconStr.begin(), ::tolower);
+        auto menuIconsIt = menuIcons.find(itemIconStr);
 
-        auto menuIcon = DetermineMenuIcon(iconStr);
+        std::string nextScreen = (
+            itemJson["nextScreen"].is_number()
+            ? std::to_string(itemJson["nextScreen"].int_value())
+            : 
+                (
+                    itemJson["nextScreen"].is_string()
+                    ? itemJson["nextScreen"].string_value()
+                    : ""
+                )
+            );
 
-        menuScreen->AddMenuItem(
-            MenuItem(
-                itemName, 
-                nextScreenId, 
-                menuIcon
-            )
-        );
+        screen->AddMenuItem(MenuItem(
+            itemJson["name"].string_value()
+            , nextScreen
+            , menuIconsIt != menuIcons.end() ? menuIconsIt->second : menuIcons[""]
+        ));
     }
 
-    menuScreen->AddMenuItem(MenuItem("Back", -1, MenuIcon::CLOSE)); // Add Back option
-    
-    screens_[id] = std::unique_ptr<ScreenBase>(menuScreen);
-}
+    // configure a "Next" or "Back" final menu item
+    MenuIcon menuLastIcon = (screenNext == "" ? menuIcons["close"] : menuIcons["right"]);
+    std::string menuLastName= (screenNext == "" ? "Back" : "Next");
+    bool isPrevious = (screenNext == "");
+    screen->AddMenuItem(MenuItem(menuLastName, screenNext, menuLastIcon, isPrevious));
 
-MenuIcon ScreenManager::DetermineMenuIcon(std::string &iconStr)
-{
-    transform(iconStr.begin(), iconStr.end(), iconStr.begin(), ::toupper);
-    MenuIcon icon = MenuIcon::NONE;
-    if (iconStr == "OK")
-        icon = MenuIcon::OK;
-    else if (iconStr == "CLOSE")
-        icon = MenuIcon::CLOSE;
-    else if (iconStr == "HOME")
-        icon = MenuIcon::HOME;
-    else if (iconStr == "POWER")
-        icon = MenuIcon::POWER;
-    else if (iconStr == "SETTINGS")
-        icon = MenuIcon::SETTINGS;
-    else if (iconStr == "GPS")
-        icon = MenuIcon::GPS;
-    else if (iconStr == "BLUETOOTH")
-        icon = MenuIcon::BLUETOOTH;
-    else if (iconStr == "WIFI")
-        icon = MenuIcon::WIFI;
-    else if (iconStr == "USB")
-        icon = MenuIcon::USB;
-    else if (iconStr == "BELL")
-        icon = MenuIcon::BELL;
-    else if (iconStr == "WARNING")
-        icon = MenuIcon::WARNING;
-    else if (iconStr == "TRASH")
-        icon = MenuIcon::TRASH;
-    else if (iconStr == "BREIFCASE")
-        icon = MenuIcon::BREIFCASE;
-    else if (iconStr == "LIGHT")
-        icon = MenuIcon::LIGHT;
-    else if (iconStr == "FAN")
-        icon = MenuIcon::FAN;
-    else if (iconStr == "TEMPERATURE")
-        icon = MenuIcon::TEMPERATURE;
-
-    return icon;
-}
-
-void ScreenManager::BuildSwitchScreenFromJSON(const json11::Json &screenJson, int id)
-{
-    int integrationId = screenJson["integrationId"].int_value();
-    std::string name = screenJson["name"].string_value();
-    auto switchScreen = new SwitchScreen(hal_, this);
-    switchScreen->SetIntegrationId(integrationId);
-    switchScreen->SetName(name);
-    screens_[id] = std::unique_ptr<ScreenBase>(switchScreen);
-}
-
-void ScreenManager::BuildDimmerScreenFromJSON(const json11::Json &screenJson, int id)
-{
-    int integrationId = screenJson["integrationId"].int_value();
-    auto dimmerScreen = new DimmerScreen(hal_, this);
-    dimmerScreen->SetIntegrationId(integrationId);
-    screens_[id] = std::unique_ptr<ScreenBase>(dimmerScreen);
-}
-
-void ScreenManager::BuildAnalogClockScreenFromJson(const json11::Json &screenJson, int id)
-{
-    int nextScreenId = screenJson["nextScreen"].int_value();
-    auto analogClockScreen = new AnalogClockScreen(hal_, this);
-    analogClockScreen->SetId(id);
-    analogClockScreen->SetNextScreenId(nextScreenId);
-    screens_[id] = std::unique_ptr<ScreenBase>(analogClockScreen);
+    // in conclusion
+    AddScreen(std::unique_ptr<ScreenBase>(screen));
 }

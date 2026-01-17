@@ -58,11 +58,6 @@ void Inputs::stop_polling()
     }
 }
 
-void Inputs::set_callback(InputCallback callback)
-{
-    callback_ = callback;
-}
-
 void Inputs::polling_loop()
 {
     while (!should_stop_) 

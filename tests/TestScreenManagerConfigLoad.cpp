@@ -74,14 +74,14 @@ TEST_F(ScreenManagerConfigLoadTest, HomeScreenLinksToMenuScreen) {
     EXPECT_EQ(2, screen_manager->CountScreens());
 
     // Navigate to HomeScreen
-    ScreenBase* home_screen = screen_manager->GetScreenById(1);
+    ScreenBase* home_screen = screen_manager->GetScreenById("1");
     ASSERT_NE(nullptr, home_screen);
 
     // Check that HomeScreen's next screen is MenuScreen
     HomeScreen* hs = dynamic_cast<HomeScreen*>(home_screen);
     ASSERT_NE(hs, nullptr);
 
-    EXPECT_EQ(2, hs->GetNextScreenId());
+    EXPECT_EQ("2", hs->GetNextScreenId());
 }
 
 TEST_F(ScreenManagerConfigLoadTest, ScreenTypeCaseInsensitive) {
@@ -106,11 +106,11 @@ TEST_F(ScreenManagerConfigLoadTest, ScreenTypeCaseInsensitive) {
     screen_manager->LoadScreensFromConfig("test_config.json");
     EXPECT_EQ(2, screen_manager->CountScreens());
 
-    ScreenBase* home_screen = screen_manager->GetScreenById(1);
+    ScreenBase* home_screen = screen_manager->GetScreenById("1");
     ASSERT_NE(nullptr, home_screen);
     EXPECT_NE(dynamic_cast<HomeScreen*>(home_screen), nullptr);
 
-    ScreenBase* menu_screen = screen_manager->GetScreenById(2);
+    ScreenBase* menu_screen = screen_manager->GetScreenById("2");
     ASSERT_NE(nullptr, menu_screen);
     EXPECT_NE(dynamic_cast<MenuScreen*>(menu_screen), nullptr);
 }
@@ -135,9 +135,9 @@ TEST_F(ScreenManagerConfigLoadTest, InvalidScreenIdSkipped) {
     config.close();
 
     screen_manager->LoadScreensFromConfig("test_config.json");
-    EXPECT_EQ(1, screen_manager->CountScreens());
+    EXPECT_EQ(2, screen_manager->CountScreens());
 
-    ScreenBase* menu_screen = screen_manager->GetScreenById(2);
+    ScreenBase* menu_screen = screen_manager->GetScreenById("2");
     ASSERT_NE(nullptr, menu_screen);
     EXPECT_NE(dynamic_cast<MenuScreen*>(menu_screen), nullptr);
 }
@@ -179,7 +179,7 @@ TEST_F(ScreenManagerConfigLoadTest, MenuScreenItemsLoaded) {
     screen_manager->LoadScreensFromConfig("test_config.json");
     EXPECT_EQ(3, screen_manager->CountScreens());
 
-    ScreenBase* menu_screen = screen_manager->GetScreenById(1);
+    ScreenBase* menu_screen = screen_manager->GetScreenById("1");
     ASSERT_NE(nullptr, menu_screen);
     MenuScreen* ms = dynamic_cast<MenuScreen*>(menu_screen);
     ASSERT_NE(ms, nullptr);
@@ -204,11 +204,11 @@ TEST_F(ScreenManagerConfigLoadTest, SwitchScreenIntegrationLoaded) {
     screen_manager->LoadScreensFromConfig("test_config.json");
     EXPECT_EQ(1, screen_manager->CountScreens());
 
-    ScreenBase* switch_screen = screen_manager->GetScreenById(1);
+    ScreenBase* switch_screen = screen_manager->GetScreenById("1");
     ASSERT_NE(nullptr, switch_screen);
     SwitchScreen* ss = dynamic_cast<SwitchScreen*>(switch_screen);
     ASSERT_NE(ss, nullptr);
-    EXPECT_EQ(42, ss->GetIntegrationId());
+    EXPECT_EQ("42", ss->GetIntegrationId());
 }
 
 TEST_F(ScreenManagerConfigLoadTest, DimmerScreenIntegrationLoaded) {
@@ -228,9 +228,9 @@ TEST_F(ScreenManagerConfigLoadTest, DimmerScreenIntegrationLoaded) {
     screen_manager->LoadScreensFromConfig("test_config.json");
     EXPECT_EQ(1, screen_manager->CountScreens());
 
-    ScreenBase* dimmer_screen = screen_manager->GetScreenById(1);
+    ScreenBase* dimmer_screen = screen_manager->GetScreenById("1");
     ASSERT_NE(nullptr, dimmer_screen);
     DimmerScreen* ds = dynamic_cast<DimmerScreen*>(dimmer_screen);
     ASSERT_NE(ds, nullptr);
-    EXPECT_EQ(55, ds->GetIntegrationId());
+    EXPECT_EQ("55", ds->GetIntegrationId());
 }

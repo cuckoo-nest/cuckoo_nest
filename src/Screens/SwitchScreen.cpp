@@ -4,32 +4,49 @@
 void SwitchScreen::Render()
 {
     if (display_ == nullptr)
-    {
         return;
-    }
 
     display_->SetBackgroundColor(SCREEN_COLOR_BLACK);
     display_->DrawText(40, -100, GetName().substr(0,10), SCREEN_COLOR_WHITE, Font::FONT_H1);
 
     std::string buttonText;
     if (selectedOption == SelectedOption::TOGGLE)
-    {
         buttonText = "> ";
-    }
+    else
+        buttonText = "  ";
 
     if (switchState == SwitchState::OFF)
-    {
-        buttonText += "Turn on";
-    }
+        buttonText += "On";
     else
-    {
-        buttonText += "Turn off";
-    }
+        buttonText += "Off";
 
     display_->DrawText(60, 0, buttonText, SCREEN_COLOR_WHITE, Font::FONT_H2);
-    
-    buttonText = (selectedOption == SelectedOption::BACK) ? "> Back" : "  Back";
+
+    std::string navText = (GetNextScreenId() != "" ? "Done" : "Back");
+    buttonText = (selectedOption == SelectedOption::BACK) ? "> " + navText : "  " + navText;
     display_->DrawText(60, 20, buttonText, SCREEN_COLOR_WHITE, Font::FONT_H2);
+}
+
+void SwitchScreen::OnChangeFocus(bool focused)
+{
+    LOG_INFO_STREAM("OnChangeFocus focus " << focused);
+
+    if(focused)
+    {
+        auto integrationSwitch = screenManager_->GetIntegrationContainer()->GetSwitchById(GetIntegrationId());
+
+        if (integrationSwitch != nullptr)
+        {
+            switchState = (
+                integrationSwitch->GetState() == IntegrationSwitchBase::SwitchState::ON
+                ? SwitchScreen::SwitchState::ON // fully qualified, just to make it clear
+                : SwitchScreen::SwitchState::OFF // fully qualified, just to make it clear
+            );
+            std::string str = (switchState == SwitchState::ON ? "On" : "Off");
+            LOG_INFO_STREAM("OnChangeFocus switchState " << str);
+        }
+    }
+    ScreenBase::OnChangeFocus(focused);
 }
 
 void SwitchScreen::handle_input_event(const InputDeviceType device_type, const struct input_event &event)
@@ -47,18 +64,17 @@ void SwitchScreen::handle_input_event(const InputDeviceType device_type, const s
             selectedOption = SelectedOption::TOGGLE;
             rotaryAccumulator = 0;
         }
+        Render();
     }
 
     if (device_type == InputDeviceType::BUTTON && event.type == EV_KEY && event.code == 't' && event.value == 1)
     {
         if (beeper_ != nullptr)
-        {
-            beeper_->play(100);
-        }
+            beeper_->click();
 
         if (selectedOption == SelectedOption::TOGGLE)
         {
-            if (integrationId_ == 0) {
+            if (GetIntegrationId() == "") {
                 LOG_WARN_STREAM("No integration ID set for this SwitchScreen");
                 return;
             }
@@ -69,9 +85,9 @@ void SwitchScreen::handle_input_event(const InputDeviceType device_type, const s
                 return;
             }
 
-            auto sw = integrationContainer_->GetSwitchById(integrationId_);
+            auto sw = integrationContainer_->GetSwitchById(GetIntegrationId());
             if (sw == nullptr) {
-                LOG_ERROR_STREAM("No switch found for integration ID: " << integrationId_);
+                LOG_ERROR_STREAM("No switch found for integration ID: \"" << GetIntegrationId() << "\"");
                 return;
             }
 
@@ -79,21 +95,25 @@ void SwitchScreen::handle_input_event(const InputDeviceType device_type, const s
             if (switchState == SwitchState::OFF)
             {
                 switchState = SwitchState::ON;
-                LOG_INFO_STREAM("Switch turned ON");
+                LOG_INFO_STREAM("Switch \"" << GetName() << "\" turned ON");
                 sw->TurnOn();
             }
             else
             {
                 switchState = SwitchState::OFF;
-                LOG_INFO_STREAM("Switch turned OFF");
+                LOG_INFO_STREAM("Switch \"" << GetName() << "\" turned OFF");
                 sw->TurnOff();
             }
-
+            Render();
         }
         else if (selectedOption == SelectedOption::BACK)
         {
             // Navigate back to the previous screen
-            screenManager_->GoToPreviousScreen();
+
+            if (GetNextScreenId() != "")
+                screenManager_->GoToNextScreen(GetNextScreenId());
+            else
+                screenManager_->GoToPreviousScreen();
             selectedOption = SelectedOption::TOGGLE; // Reset selection
         }
     }

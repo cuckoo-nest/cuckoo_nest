@@ -42,6 +42,7 @@ set(
     ../src/HAL/BitmapFont.cpp
     ../src/HAL/Inputs.cpp
     ../src/Integrations/IntegrationContainer.cpp
+    ../src/Integrations/CurlWrapperJson.cpp
     ../src/Backplate/Message.cpp
     ../src/Backplate/CommandMessage.cpp
     ../src/Backplate/ResponseMessage.cpp

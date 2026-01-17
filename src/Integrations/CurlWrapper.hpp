@@ -16,6 +16,10 @@ struct curl_slist;
 #define CURLOPT_URL 10002
 #define CURLOPT_HTTPHEADER 10023
 #define CURLOPT_POSTFIELDS 10015
+#define CURLOPT_WRITEFUNCTION 20011
+#define CURLOPT_WRITEDATA 10001
+#define CURLOPT_HEADERFUNCTION 20079
+#define CURLOPT_HEADERDATA 10029
 
 class CurlWrapper {
 private:
@@ -78,6 +82,19 @@ public:
     }
 
     CURLcode easy_setopt(CURL* curl, CURLoption option, const char* parameter) {
+        return curl_easy_setopt_ptr ? curl_easy_setopt_ptr(curl, option, parameter) : CURLE_FAILED_INIT;
+    }
+
+    CURLcode easy_setopt(
+        CURL* curl, CURLoption option
+        , std::size_t parameter(const char *, std::size_t, std::size_t, std::string *)
+    ) 
+    {
+        return curl_easy_setopt_ptr ? curl_easy_setopt_ptr(curl, option, parameter) : CURLE_FAILED_INIT;
+    }
+
+    CURLcode easy_setopt(CURL* curl, CURLoption option, std::string *parameter) 
+    {
         return curl_easy_setopt_ptr ? curl_easy_setopt_ptr(curl, option, parameter) : CURLE_FAILED_INIT;
     }
 

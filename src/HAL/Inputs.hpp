@@ -23,7 +23,7 @@ public:
     void stop_polling();
     
     // Set callback for input events
-    void set_callback(InputCallback callback);
+    inline void set_callback(InputCallback callback) { callback_ = callback; };
 
 private:
     std::string button_path_;

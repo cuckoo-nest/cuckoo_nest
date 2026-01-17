@@ -23,14 +23,6 @@ public:
     virtual ~BackplateComms();
 
     bool Initialize();
-    bool InitializeSerial();
-    bool DoBurstStage();
-    bool DoInfoGathering();
-    bool GetInfo(MessageType command, MessageType expectedResponse);
-    void MainTaskBody(void);
-
-    bool IsTimeForKeepalive();
-    bool IsTimeForHistoricalDataRequest();
 
     // Multi-subscriber event subscriptions using std::function
     using TemperatureCallback = std::function<void(float temperatureC)>;
@@ -50,10 +42,20 @@ public:
     float GetCurrentTemperatureC() const { std::lock_guard<std::mutex> lk(dataMutex); return CurrentTemperatureC; }
     float GetCurrentHumidityPercent() const { std::lock_guard<std::mutex> lk(dataMutex); return CurrentHumidityPercent; }
 
-private:
+protected:
+    bool InitializeSerial();
+    bool DoBurstStage();
+    bool DoInfoGathering();
+    bool GetInfo(MessageType command, MessageType expectedResponse);
+    void TaskBodyRunningState();
+    void TaskBodyComms();
+
+    bool IsTimeForKeepalive();
+    bool IsTimeForHistoricalDataRequest();
+
     bool IsTimeout(timeval &startTime, int timeoutUs);
 
-    // Background worker thread that runs MainTaskBody periodically
+    // Background worker thread that runs TaskBodyComms periodically
     std::thread workerThread;
     std::atomic<bool> running;
 
@@ -77,4 +79,6 @@ private:
     std::vector<GenericEventCallback> genericCallbacks;
     // Parser for incoming serial bytes
     MessageParser parser;
+
+    int runstate_ = 0;
 };
