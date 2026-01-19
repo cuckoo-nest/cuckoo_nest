@@ -36,7 +36,6 @@ std::vector<ResponseMessage> MessageParser::Feed(const uint8_t* data, size_t len
             buffer_.erase(buffer_.begin(), buffer_.begin() + idx);
             // reset iterator to start
             it = buffer_.begin();
-            idx = 0;
         }
 
         // Need minimum bytes for header: preamble(4) + cmd(2) + len(2) + crc(2)

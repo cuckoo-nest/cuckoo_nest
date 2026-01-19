@@ -66,7 +66,7 @@ bool CurlWrapperJson::Startup()
 
 void CurlWrapperJson::Shutdown()
 {
-    if(curl_)
+    if(curl_ != nullptr)
     {
         curlWrapper_.easy_cleanup(curl_);
         curl_ = nullptr;
@@ -79,13 +79,13 @@ json11::Json CurlWrapperJson::jsonGetOrPost(std::string url, std::string const &
 
     Startup();
 
-    if(curl_)
+    if(curl_ != nullptr)
     {
         std::string responseBody;
         std::string responseHeaders;
         struct curl_slist *headers = nullptr;
 
-        if(headerAuthBearer_ != "")
+        if(!headerAuthBearer_.empty())
         {
             headers = curlWrapper_.slist_append(headers, headerAuthBearer_.c_str());
         }
@@ -98,7 +98,8 @@ json11::Json CurlWrapperJson::jsonGetOrPost(std::string url, std::string const &
         curlWrapper_.easy_setopt(curl_, CURLOPT_WRITEDATA, &responseBody);
         curlWrapper_.easy_setopt(curl_, CURLOPT_HEADERFUNCTION, callbackString);
         curlWrapper_.easy_setopt(curl_, CURLOPT_HEADERDATA, &responseHeaders);
-        if(postData.empty() == false)
+        
+        if(!postData.empty())
         {
             // LOG_INFO_STREAM("CurlWrapperJson request post: " << postData);
             curlWrapper_.easy_setopt(curl_, CURLOPT_POSTFIELDS, postData.c_str());
@@ -138,7 +139,7 @@ json11::Json CurlWrapperJson::jsonGetOrPost(std::string url, std::string const &
             LOG_ERROR_STREAM("CurlWrapperJson request failed: " << curlWrapper_.easy_strerror(res));
         }
 
-        if(headers)
+        if(headers != nullptr)
         {
             curlWrapper_.slist_free_all(headers);
         }

@@ -37,7 +37,6 @@ set(
     TEST_SOURCE_FILES
     ../src/ScreenManager.cpp
     ../src/ConfigurationReader.cpp
-    ../third-party/json11/json11.cpp
     ../src/HAL/Beeper.cpp
     ../src/HAL/BitmapFont.cpp
     ../src/HAL/Inputs.cpp
@@ -82,15 +81,14 @@ pkg_check_modules(CURL REQUIRED libcurl)
 # Add libcurl include directories for host compilation
 target_include_directories(cuckoo_tests PRIVATE ${CURL_INCLUDE_DIRS})
 
-# Add json11 include directory for tests
-target_include_directories(cuckoo_tests PRIVATE ../third-party/json11)
 target_include_directories(cuckoo_tests PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
 
 target_link_directories(cuckoo_tests PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src/lvgl-build/lib)
 
-# Link against GoogleTest libraries (including GMock) and system libcurl
+# Link against GoogleTest libraries (including GMock), json11, and system libcurl
 target_link_libraries(
     cuckoo_tests
+    json11
     gtest_main
     gtest
     gmock

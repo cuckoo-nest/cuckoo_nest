@@ -8,6 +8,14 @@ include(FetchContent)
 # (removed spdlog FetchContent — using in-tree lightweight logger)
 
 # =====================================================
+# 2. Create json11 library without clang-tidy
+# =====================================================
+add_library(json11 STATIC ../third-party/json11/json11.cpp)
+target_include_directories(json11 PUBLIC ${CMAKE_SOURCE_DIR}/third-party/json11)
+# Disable clang-tidy for json11 library
+set_target_properties(json11 PROPERTIES CXX_CLANG_TIDY "")
+
+# =====================================================
 # 3. Define your actual build target
 # =====================================================
 set (
@@ -15,7 +23,6 @@ set (
     main.cpp
     ScreenManager.cpp
     ConfigurationReader.cpp
-    ../third-party/json11/json11.cpp
     HAL/Beeper.cpp
     HAL/Display.cpp
     HAL/BitmapFont.cpp
@@ -60,8 +67,6 @@ else()
     message(FATAL_ERROR "Could not find libcurl headers in ${CURL_INCLUDE_DIR}")
 endif()
 
-# Add json11 include directory
-target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR}/third-party/json11)
 target_include_directories(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
 
 # Add project include directory (in-tree lightweight logger)
@@ -75,6 +80,7 @@ target_link_directories(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src/lvgl-build/l
 # We use dlopen/dlsym to load it at runtime on the target device
 target_link_libraries(
     cuckoo PRIVATE 
+    json11
     liblvgl.a 
     pthread 
     dl

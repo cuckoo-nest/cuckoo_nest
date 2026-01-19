@@ -362,7 +362,7 @@ void BackplateComms::TaskBodyComms ()
                     lux = (resp.GetPayload()[1] << 8) | resp.GetPayload()[0];
                 }
 
-                //LOG_INFO_STREAM("BackplateComms: Ambient Light Sensor Value = " << lux);
+                LOG_DEBUG_STREAM("BackplateComms: Ambient Light Sensor Value = " << lux);
                 break;
             }
 

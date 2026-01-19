@@ -246,7 +246,7 @@ void ScreenManager::BuildMenuScreenFromJSON(const json11::Json &screenJson)
 
     // if there is a "nextScreen", add a "Previous"
     std::string screenNext = screen->GetNextScreenId();
-    if(screenNext.empty())
+    if(!screenNext.empty())
     {
         screen->AddMenuItem(MenuItem("Previous", "", menuIcons["left"], true));
     }
