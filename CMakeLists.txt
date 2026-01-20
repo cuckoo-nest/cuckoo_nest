@@ -23,6 +23,16 @@ if(CCACHE_FOUND)
     message(STATUS "ccache found and enabled for faster rebuilds")
 endif()
 
+# =====================================================
+# Fetch json11 from public repository
+# =====================================================
+FetchContent_Declare(
+    json11
+    GIT_REPOSITORY https://github.com/dropbox/json11.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(json11)
+
 # Clang-tidy configuration
 # Enabled by default for code quality, can be disabled with -DENABLE_CLANG_TIDY=OFF
 option(ENABLE_CLANG_TIDY "Enable clang-tidy static analysis during compilation" ON)

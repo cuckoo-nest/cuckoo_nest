@@ -8,12 +8,11 @@ include(FetchContent)
 # (removed spdlog FetchContent — using in-tree lightweight logger)
 
 # =====================================================
-# 2. Create json11 library without clang-tidy
+# 2. json11 library (fetched from external repository)
 # =====================================================
-add_library(json11 STATIC ../third-party/json11/json11.cpp)
-target_include_directories(json11 PUBLIC ${CMAKE_SOURCE_DIR}/third-party/json11)
-# Disable clang-tidy for json11 library
-set_target_properties(json11 PROPERTIES CXX_CLANG_TIDY "")
+# json11 is now fetched from GitHub by FetchContent in main CMakeLists.txt
+# The json11 target is automatically created by the external project
+message(STATUS "json11 external project available at: ${json11_SOURCE_DIR}")
 
 # =====================================================
 # 3. Define your actual build target
@@ -67,7 +66,12 @@ else()
     message(FATAL_ERROR "Could not find libcurl headers in ${CURL_INCLUDE_DIR}")
 endif()
 
+# Add LVGL include directories - need both the main include and parent for lv_conf.h relative path
 target_include_directories(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
+target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR})
+
+# Add LV_CONF_PATH definition to match LVGL library build
+target_compile_definitions(cuckoo PRIVATE LV_CONF_PATH="${CMAKE_SOURCE_DIR}/lv_conf.h")
 
 # Add project include directory (in-tree lightweight logger)
 target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR}/include)

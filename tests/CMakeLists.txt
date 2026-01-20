@@ -81,7 +81,12 @@ pkg_check_modules(CURL REQUIRED libcurl)
 # Add libcurl include directories for host compilation
 target_include_directories(cuckoo_tests PRIVATE ${CURL_INCLUDE_DIRS})
 
+# Add LVGL include directories - need both the main include and parent for lv_conf.h relative path
 target_include_directories(cuckoo_tests PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
+target_include_directories(cuckoo_tests PRIVATE ${CMAKE_SOURCE_DIR})
+
+# Add LV_CONF_PATH definition to match LVGL library build
+target_compile_definitions(cuckoo_tests PRIVATE LV_CONF_PATH="${CMAKE_SOURCE_DIR}/lv_conf.h")
 
 target_link_directories(cuckoo_tests PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src/lvgl-build/lib)
 
