@@ -41,7 +41,6 @@ public:
             SetId(GetName());
     }
     
-    //virtual ~ScreenBase() { OnChangeFocus(false); };
     virtual ~ScreenBase() {};
 
     virtual void Render() {};
