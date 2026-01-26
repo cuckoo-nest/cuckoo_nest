@@ -30,7 +30,7 @@ FetchContent_Declare(
     json11
     GIT_REPOSITORY https://github.com/dropbox/json11.git
     GIT_TAG master
-    PATCH_COMMAND patch -p0 < ${CMAKE_SOURCE_DIR}/cmake/json11.patch
+    PATCH_COMMAND patch -N -r - -p0 < ${CMAKE_SOURCE_DIR}/cmake/json11.patch || true
 )
 FetchContent_MakeAvailable(json11)
 
