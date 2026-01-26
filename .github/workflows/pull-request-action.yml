@@ -38,7 +38,12 @@ jobs:
       run: |
         brew install curl sdl2
         # Set environment variables for SDL2 on macOS
-        echo "SDL2_DIR=$(brew --prefix sdl2)" >> $GITHUB_ENV
+        SDL2_PREFIX=$(brew --prefix sdl2)
+        echo "SDL2_DIR=$SDL2_PREFIX" >> $GITHUB_ENV
+        echo "SDL2_CFLAGS=-I$SDL2_PREFIX/include" >> $GITHUB_ENV
+        echo "CFLAGS=-I$SDL2_PREFIX/include" >> $GITHUB_ENV
+        echo "CXXFLAGS=-I$SDL2_PREFIX/include" >> $GITHUB_ENV
+        echo "C_INCLUDE_PATH=$SDL2_PREFIX/include:$C_INCLUDE_PATH" >> $GITHUB_ENV
         echo "PKG_CONFIG_PATH=$(brew --prefix sdl2)/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
     - name: Debug SDL2 installation (macOS)
@@ -72,8 +77,6 @@ jobs:
           echo "Using SDL2_PREFIX: $SDL2_PREFIX"
           # Set include dir to parent of SDL2 so #include <SDL2/SDL.h> works
           CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_PREFIX_PATH=$SDL2_PREFIX -DSDL2_INCLUDE_DIR=$SDL2_PREFIX/include -DSDL2_LIBRARY=$SDL2_PREFIX/lib/libSDL2.dylib"
-          # Also pass SDL2 flags to C compiler for external projects like LVGL
-          CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_C_FLAGS='-I$SDL2_PREFIX/include'"
         fi
         echo "CMAKE_ARGS: $CMAKE_ARGS"
         cmake -G "Unix Makefiles" -B ${{github.workspace}}/build $CMAKE_ARGS
