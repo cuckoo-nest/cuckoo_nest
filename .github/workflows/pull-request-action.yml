@@ -39,7 +39,25 @@ jobs:
         brew install curl sdl2
         # Set environment variables for SDL2 on macOS
         echo "SDL2_DIR=$(brew --prefix sdl2)" >> $GITHUB_ENV
-        echo "PKG_CONFIG_PATH=$(brew --prefix sdl2)/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV 
+        echo "PKG_CONFIG_PATH=$(brew --prefix sdl2)/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+
+    - name: Debug SDL2 installation (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        echo "SDL2 installation directory:"
+        brew --prefix sdl2
+        echo ""
+        echo "SDL2 include files:"
+        ls -la $(brew --prefix sdl2)/include/
+        echo ""
+        echo "SDL2 lib files:"
+        ls -la $(brew --prefix sdl2)/lib/
+        echo ""
+        echo "PKG_CONFIG_PATH:"
+        echo $PKG_CONFIG_PATH
+        echo ""
+        echo "pkg-config SDL2:"
+        pkg-config --cflags --libs sdl2 || echo "pkg-config SDL2 not found" 
     
     - name: Get cmake version
       run: cmake --version
@@ -51,9 +69,11 @@ jobs:
         CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/host-toolchain.cmake -DENABLE_CLANG_TIDY=${{ runner.os == 'Linux' && 'ON' || 'OFF' }}"
         if [ "${{ runner.os }}" = "macOS" ]; then
           SDL2_PREFIX=$(brew --prefix sdl2)
+          echo "Using SDL2_PREFIX: $SDL2_PREFIX"
           CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_PREFIX_PATH=$SDL2_PREFIX -DSDL2_INCLUDE_DIR=$SDL2_PREFIX/include/SDL2 -DSDL2_LIBRARY=$SDL2_PREFIX/lib/libSDL2.dylib"
         fi
-        cmake -G "Unix Makefiles" -B ${{github.workspace}}/build $CMAKE_ARGS
+        echo "CMAKE_ARGS: $CMAKE_ARGS"
+        cmake -G "Unix Makefiles" -B ${{github.workspace}}/build $CMAKE_ARGS --debug-output
 
     - name: Build
       # Build your program with the given configuration
