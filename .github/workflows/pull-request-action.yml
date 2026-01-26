@@ -36,7 +36,7 @@ jobs:
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
       run: |
-        brew install curl sdl2
+        brew install curl sdl2 llvm
         # Set environment variables for SDL2 on macOS
         SDL2_PREFIX=$(brew --prefix sdl2)
         echo "SDL2_DIR=$SDL2_PREFIX" >> $GITHUB_ENV
@@ -45,6 +45,8 @@ jobs:
         echo "CXXFLAGS=-I$SDL2_PREFIX/include" >> $GITHUB_ENV
         echo "C_INCLUDE_PATH=$SDL2_PREFIX/include:$C_INCLUDE_PATH" >> $GITHUB_ENV
         echo "PKG_CONFIG_PATH=$(brew --prefix sdl2)/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+        # Add LLVM to PATH for clang-tidy
+        echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
 
     - name: Debug SDL2 installation (macOS)
       if: runner.os == 'macOS'
@@ -71,7 +73,7 @@ jobs:
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
-        CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/host-toolchain.cmake -DENABLE_CLANG_TIDY=${{ runner.os == 'Linux' && 'ON' || 'OFF' }}"
+        CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/host-toolchain.cmake -DENABLE_CLANG_TIDY=ON"
         if [ "${{ runner.os }}" = "macOS" ]; then
           SDL2_PREFIX=$(brew --prefix sdl2)
           echo "Using SDL2_PREFIX: $SDL2_PREFIX"
@@ -86,7 +88,6 @@ jobs:
       run: cmake --build ${{github.workspace}}/build
 
     - name: Run clang-tidy static analysis
-      if: runner.os == 'Linux'
       working-directory: ${{github.workspace}}/build
       # clang-tidy is automatically invoked during build via CMAKE_CXX_CLANG_TIDY
       # If any issues are found with --warnings-as-errors, the build will fail
