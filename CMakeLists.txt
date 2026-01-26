@@ -30,6 +30,7 @@ FetchContent_Declare(
     json11
     GIT_REPOSITORY https://github.com/dropbox/json11.git
     GIT_TAG master
+    PATCH_COMMAND ${CMAKE_COMMAND} -E sed -i "s/cmake_minimum_required(VERSION 2.8)/cmake_minimum_required(VERSION 3.5)/" CMakeLists.txt
 )
 FetchContent_MakeAvailable(json11)
 
