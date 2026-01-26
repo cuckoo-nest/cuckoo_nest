@@ -99,8 +99,10 @@ jobs:
       run: ctest --output-junit test-results.xml
     
     - name: Publish Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v2
+      uses: dorny/test-reporter@v1
       if: (!cancelled())
       with:
-        files: |
-          ${{github.workspace}}/build/test-results.xml
+        name: Test Results (${{ matrix.os }})
+        path: ${{github.workspace}}/build/test-results.xml
+        reporter: java-junit
+        fail-on-error: true
