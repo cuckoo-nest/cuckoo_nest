@@ -5,6 +5,14 @@ project(CuckooTests CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Enable ccache for faster test rebuilds
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+    set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
+    set(CMAKE_C_COMPILER_LAUNCHER ccache)
+    message(STATUS "ccache found and enabled for test builds")
+endif()
+
 # Include FetchContent for downloading GoogleTest
 include(FetchContent)
 
