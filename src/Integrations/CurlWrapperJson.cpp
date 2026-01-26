@@ -19,7 +19,7 @@ static std::size_t callbackString( const char* in, std::size_t size, std::size_t
 static std::string &rtrim(std::string &s)
 {
     s.erase(
-        std::find_if( s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace)) ).base()
+        std::find_if( s.rbegin(), s.rend(), [](int ch) { return std::isspace(ch) == 0; } ).base()
         , s.end()
         );
     return s;
