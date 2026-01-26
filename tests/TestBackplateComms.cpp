@@ -106,11 +106,11 @@ public:
 
     ~BackplateCommsExposed() override = default;
 
-    inline bool InitializeSerial() { return BackplateComms::InitializeSerial(); };
-    inline bool DoBurstStage() { return BackplateComms::DoBurstStage(); };
-    inline bool DoInfoGathering() { return BackplateComms::DoInfoGathering(); };
-    inline bool GetInfo(MessageType command, MessageType expectedResponse) { return BackplateComms::GetInfo(command, expectedResponse); };
-    inline void TaskBodyComms() { BackplateComms::TaskBodyComms(); };
+    bool InitializeSerial() { return BackplateComms::InitializeSerial(); };
+    bool DoBurstStage() { return BackplateComms::DoBurstStage(); };
+    bool DoInfoGathering() { return BackplateComms::DoInfoGathering(); };
+    bool GetInfo(MessageType command, MessageType expectedResponse) { return BackplateComms::GetInfo(command, expectedResponse); };
+    void TaskBodyComms() { BackplateComms::TaskBodyComms(); };
 
 };
 
