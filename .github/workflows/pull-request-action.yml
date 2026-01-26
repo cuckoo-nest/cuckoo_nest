@@ -70,10 +70,13 @@ jobs:
         if [ "${{ runner.os }}" = "macOS" ]; then
           SDL2_PREFIX=$(brew --prefix sdl2)
           echo "Using SDL2_PREFIX: $SDL2_PREFIX"
-          CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_PREFIX_PATH=$SDL2_PREFIX -DSDL2_INCLUDE_DIR=$SDL2_PREFIX/include/SDL2 -DSDL2_LIBRARY=$SDL2_PREFIX/lib/libSDL2.dylib"
+          # Set include dir to parent of SDL2 so #include <SDL2/SDL.h> works
+          CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_PREFIX_PATH=$SDL2_PREFIX -DSDL2_INCLUDE_DIR=$SDL2_PREFIX/include -DSDL2_LIBRARY=$SDL2_PREFIX/lib/libSDL2.dylib"
+          # Also pass SDL2 flags to C compiler for external projects like LVGL
+          CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_C_FLAGS='-I$SDL2_PREFIX/include'"
         fi
         echo "CMAKE_ARGS: $CMAKE_ARGS"
-        cmake -G "Unix Makefiles" -B ${{github.workspace}}/build $CMAKE_ARGS --debug-output
+        cmake -G "Unix Makefiles" -B ${{github.workspace}}/build $CMAKE_ARGS
 
     - name: Build
       # Build your program with the given configuration
