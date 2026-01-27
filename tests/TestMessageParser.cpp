@@ -81,7 +81,10 @@ TEST(TestMessageParser, BadCrcDoesNotProduceMessageButRecovers)
 
     // Create corrupted copy
     vector<uint8_t> bad(goodRaw.begin(), goodRaw.end());
-    if (!bad.empty()) bad[bad.size()-1] ^= 0xFF; // flip final CRC byte
+    if (!bad.empty()) 
+    {
+        bad[bad.size()-1] ^= 0xFF; // flip final CRC byte
+    }
 
     MessageParser parser;
     auto outBad = parser.Feed(bad.data(), bad.size());

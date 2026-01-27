@@ -3,9 +3,10 @@
 #include <fcntl.h>
 #include <cstring>
 #include <stdio.h>
+#include <utility>
 
 Inputs::Inputs(std::string button_path, std::string rotary_path) : 
-    button_path_(button_path), rotary_path_(rotary_path), button_fd_(-1), rotary_fd_(-1), should_stop_(false)
+    button_path_(std::move(button_path)), rotary_path_(std::move(rotary_path)), button_fd_(-1), rotary_fd_(-1), should_stop_(false)
 {
 }
 
@@ -62,7 +63,7 @@ void Inputs::polling_loop()
 {
     while (!should_stop_) 
     {
-        bool button_event = poll_device(InputDeviceType::BUTTON, button_fd_);
+        poll_device(InputDeviceType::BUTTON, button_fd_);
         bool rotary_event = poll_device(InputDeviceType::ROTARY, rotary_fd_);
 
         if (rotary_event) {

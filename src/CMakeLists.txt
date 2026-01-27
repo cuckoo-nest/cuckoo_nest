@@ -8,6 +8,13 @@ include(FetchContent)
 # (removed spdlog FetchContent — using in-tree lightweight logger)
 
 # =====================================================
+# 2. json11 library (fetched from external repository)
+# =====================================================
+# json11 is now fetched from GitHub by FetchContent in main CMakeLists.txt
+# The json11 target is automatically created by the external project
+message(STATUS "json11 external project available at: ${json11_SOURCE_DIR}")
+
+# =====================================================
 # 3. Define your actual build target
 # =====================================================
 set (
@@ -15,7 +22,6 @@ set (
     main.cpp
     ScreenManager.cpp
     ConfigurationReader.cpp
-    ../third-party/json11/json11.cpp
     HAL/Beeper.cpp
     HAL/Display.cpp
     HAL/BitmapFont.cpp
@@ -60,9 +66,12 @@ else()
     message(FATAL_ERROR "Could not find libcurl headers in ${CURL_INCLUDE_DIR}")
 endif()
 
-# Add json11 include directory
-target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR}/third-party/json11)
+# Add LVGL include directories - need both the main include and parent for lv_conf.h relative path
 target_include_directories(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
+target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR})
+
+# Add LV_CONF_PATH definition to match LVGL library build
+target_compile_definitions(cuckoo PRIVATE LV_CONF_PATH="${CMAKE_SOURCE_DIR}/lv_conf.h")
 
 # Add project include directory (in-tree lightweight logger)
 target_include_directories(cuckoo PRIVATE ${CMAKE_SOURCE_DIR}/include)
@@ -75,6 +84,7 @@ target_link_directories(cuckoo PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src/lvgl-build/l
 # We use dlopen/dlsym to load it at runtime on the target device
 target_link_libraries(
     cuckoo PRIVATE 
+    json11
     liblvgl.a 
     pthread 
     dl
@@ -101,6 +111,7 @@ set_target_properties(cuckoo PROPERTIES
     RUNTIME_OUTPUT_NAME cuckoo
 )
 endif()
+
 
 # =====================================================
 # Copy emulation config for host builds
