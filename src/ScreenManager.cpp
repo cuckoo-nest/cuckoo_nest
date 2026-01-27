@@ -150,16 +150,18 @@ void ScreenManager::LoadScreensFromConfig(const std::string& config_path)
 
     if(!parsed_json["firstScreen"].is_null())
     {
-        firstScreenId_ = (
-            parsed_json["firstScreen"].is_number()
-            ? std::to_string(parsed_json["firstScreen"].int_value())
-            : 
-                (
-                    parsed_json["firstScreen"].is_string()
-                    ? parsed_json["firstScreen"].string_value()
-                    : ""
-                )
-            );
+        if (parsed_json["firstScreen"].is_number())
+        {
+            firstScreenId_ = std::to_string(parsed_json["firstScreen"].int_value());
+        }
+        else if (parsed_json["firstScreen"].is_string())
+        {
+            firstScreenId_ = parsed_json["firstScreen"].string_value();
+        }
+        else
+        {
+            firstScreenId_.clear();
+        }
     }
 
     for (const auto& screen : parsed_json["screens"].array_items())
@@ -258,16 +260,19 @@ void ScreenManager::BuildMenuScreenFromJSON(const json11::Json &screenJson)
         transform(itemIconStr.begin(), itemIconStr.end(), itemIconStr.begin(), ::tolower);
         auto menuIconsIt = menuIcons.find(itemIconStr);
 
-        std::string nextScreen = (
-            itemJson["nextScreen"].is_number()
-            ? std::to_string(itemJson["nextScreen"].int_value())
-            : 
-                (
-                    itemJson["nextScreen"].is_string()
-                    ? itemJson["nextScreen"].string_value()
-                    : ""
-                )
-            );
+        std::string nextScreen;
+        if (itemJson["nextScreen"].is_number())
+        {
+            nextScreen = std::to_string(itemJson["nextScreen"].int_value());
+        }
+        else if (itemJson["nextScreen"].is_string())
+        {
+            nextScreen = itemJson["nextScreen"].string_value();
+        }
+        else
+        {
+            nextScreen.clear();
+        }
 
         screen->AddMenuItem(MenuItem(
             itemJson["name"].string_value()
