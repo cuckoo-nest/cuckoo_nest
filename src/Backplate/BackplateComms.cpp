@@ -220,7 +220,7 @@ bool BackplateComms::IsTimeout(timeval &startTime, int timeoutUs)
 {
     timeval currentTime;
     DateTimeProvider->gettimeofday(currentTime);
-    long elapsedUs = (currentTime.tv_sec - startTime.tv_sec) * 1000000 +
+    long elapsedUs = ((currentTime.tv_sec - startTime.tv_sec) * 1000000) +
                      (currentTime.tv_usec - startTime.tv_usec);
 
     
@@ -285,7 +285,7 @@ bool BackplateComms::GetInfo(MessageType command, MessageType expectedResponse)
             if (responseMsg.GetMessageCommand() == expectedResponse)
             {
                 std::cout << "GetInfo: Received expected response for command "
-                          << static_cast<uint16_t>(command) << std::endl;
+                          << static_cast<uint16_t>(command) << '\n';
                 return true;
             }
         }
