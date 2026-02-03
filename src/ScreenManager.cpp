@@ -246,11 +246,18 @@ void ScreenManager::BuildMenuScreenFromJSON(const json11::Json &screenJson)
 
     auto *screen = new MenuScreen(this, screenJson);
 
-    // if there is a "nextScreen", add a "Previous"
     std::string screenNext = screen->GetNextScreenId();
+    
+    // Always add back/previous button as the FIRST menu item
     if(!screenNext.empty())
     {
+        // Has a next screen configured - add "Previous" to go back
         screen->AddMenuItem(MenuItem("Previous", "", menuIcons["left"], true));
+    }
+    else
+    {
+        // No next screen - add "Back" to go to previous screen
+        screen->AddMenuItem(MenuItem("Back", "", menuIcons["close"], true));
     }
 
     // add menu entries as configured
@@ -281,11 +288,11 @@ void ScreenManager::BuildMenuScreenFromJSON(const json11::Json &screenJson)
         ));
     }
 
-    // configure a "Next" or "Back" final menu item
-    MenuIcon menuLastIcon = (screenNext.empty() ? menuIcons["close"] : menuIcons["right"]);
-    std::string menuLastName= (screenNext.empty() ? "Back" : "Next");
-    bool isPrevious = (screenNext.empty());
-    screen->AddMenuItem(MenuItem(menuLastName, screenNext, menuLastIcon, isPrevious));
+    // If there's a next screen configured, add "Next" button at the end
+    if(!screenNext.empty())
+    {
+        screen->AddMenuItem(MenuItem("Next", screenNext, menuIcons["right"], false));
+    }
 
     // in conclusion
     AddScreen(std::unique_ptr<ScreenBase>(screen));
