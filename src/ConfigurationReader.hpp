@@ -141,7 +141,7 @@ private:
      * 
      * @return std::string The executable directory path
      */
-    std::string get_executable_directory() const;
+    static std::string get_executable_directory();
 
     /**
      * @brief Read the entire file content into a string
@@ -149,7 +149,7 @@ private:
      * @param filepath The path to the file to read
      * @return std::string The file content, empty string on error
      */
-    std::string read_file_content(const std::string& filepath) const;
+    static std::string read_file_content(const std::string& filepath);
 };
 
 #endif // CONFIGURATION_READER_HPP

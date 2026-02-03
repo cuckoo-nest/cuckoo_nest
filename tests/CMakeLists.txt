@@ -5,6 +5,14 @@ project(CuckooTests CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Enable ccache for faster test rebuilds
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+    set(CMAKE_CXX_COMPILER_LAUNCHER ccache)
+    set(CMAKE_C_COMPILER_LAUNCHER ccache)
+    message(STATUS "ccache found and enabled for test builds")
+endif()
+
 # Include FetchContent for downloading GoogleTest
 include(FetchContent)
 
@@ -37,7 +45,6 @@ set(
     TEST_SOURCE_FILES
     ../src/ScreenManager.cpp
     ../src/ConfigurationReader.cpp
-    ../third-party/json11/json11.cpp
     ../src/HAL/Beeper.cpp
     ../src/HAL/BitmapFont.cpp
     ../src/HAL/Inputs.cpp
@@ -82,15 +89,19 @@ pkg_check_modules(CURL REQUIRED libcurl)
 # Add libcurl include directories for host compilation
 target_include_directories(cuckoo_tests PRIVATE ${CURL_INCLUDE_DIRS})
 
-# Add json11 include directory for tests
-target_include_directories(cuckoo_tests PRIVATE ../third-party/json11)
+# Add LVGL include directories - need both the main include and parent for lv_conf.h relative path
 target_include_directories(cuckoo_tests PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src)
+target_include_directories(cuckoo_tests PRIVATE ${CMAKE_SOURCE_DIR})
+
+# Add LV_CONF_PATH definition to match LVGL library build
+target_compile_definitions(cuckoo_tests PRIVATE LV_CONF_PATH="${CMAKE_SOURCE_DIR}/lv_conf.h")
 
 target_link_directories(cuckoo_tests PRIVATE ${CMAKE_BINARY_DIR}/lvgl/src/lvgl-build/lib)
 
-# Link against GoogleTest libraries (including GMock) and system libcurl
+# Link against GoogleTest libraries (including GMock), json11, and system libcurl
 target_link_libraries(
     cuckoo_tests
+    json11
     gtest_main
     gtest
     gmock

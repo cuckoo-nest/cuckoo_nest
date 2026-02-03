@@ -20,7 +20,7 @@ class IntegrationContainer
         IntegrationDimmerBase* GetDimmerById(std::string const  &id);
         
     private:
-        std::string ReadFileContents(const std::string &filepath) const;
+        static std::string ReadFileContents(const std::string &filepath);
         
         std::map<std::string, std::unique_ptr<IntegrationSwitchBase>> switchMap_;
         std::map<std::string, std::unique_ptr<IntegrationDimmerBase>> dimmerMap_;

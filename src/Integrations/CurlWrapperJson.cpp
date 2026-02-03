@@ -19,7 +19,7 @@ static std::size_t callbackString( const char* in, std::size_t size, std::size_t
 static std::string &rtrim(std::string &s)
 {
     s.erase(
-        std::find_if( s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace)) ).base()
+        std::find_if( s.rbegin(), s.rend(), [](int ch) { return std::isspace(ch) == 0; } ).base()
         , s.end()
         );
     return s;
@@ -31,7 +31,9 @@ static std::vector<std::string> splitLlines(const std::string& input)
     std::stringstream ss(input);
     std::string line;
     while (std::getline(ss, line))
+    {
         lines.push_back(rtrim(line));
+    }
     return lines;
 }
 
@@ -39,22 +41,32 @@ static std::vector<std::string> splitLlines(const std::string& input)
 bool CurlWrapperJson::Startup()
 {
     if(!curlInitialized_)
+    {
         curlInitialized_ = curlWrapper_.initialize();
+    }
+
     if(curlInitialized_)
     {
         if(curl_ == nullptr)
+        {
             curl_ = curlWrapper_.easy_init();
+        }
         if(curl_ == nullptr)
+        {
             LOG_ERROR_STREAM("Failed to initialize curlWrapper_");
+        }
     }
     else
+    {
         LOG_ERROR_STREAM("Failed to initialize libcurl");
+    }
+
     return curlInitialized_ && curl_ != nullptr;
 }
 
 void CurlWrapperJson::Shutdown()
 {
-    if(curl_)
+    if(curl_ != nullptr)
     {
         curlWrapper_.easy_cleanup(curl_);
         curl_ = nullptr;
@@ -67,14 +79,16 @@ json11::Json CurlWrapperJson::jsonGetOrPost(std::string url, std::string const &
 
     Startup();
 
-    if(curl_)
+    if(curl_ != nullptr)
     {
         std::string responseBody;
         std::string responseHeaders;
         struct curl_slist *headers = nullptr;
 
-        if(headerAuthBearer_ != "")
+        if(!headerAuthBearer_.empty())
+        {
             headers = curlWrapper_.slist_append(headers, headerAuthBearer_.c_str());
+        }
         headers = curlWrapper_.slist_append(headers, "Content-Type: application/json");
 
         LOG_INFO_STREAM("CurlWrapperJson: URL: " << url);
@@ -84,7 +98,8 @@ json11::Json CurlWrapperJson::jsonGetOrPost(std::string url, std::string const &
         curlWrapper_.easy_setopt(curl_, CURLOPT_WRITEDATA, &responseBody);
         curlWrapper_.easy_setopt(curl_, CURLOPT_HEADERFUNCTION, callbackString);
         curlWrapper_.easy_setopt(curl_, CURLOPT_HEADERDATA, &responseHeaders);
-        if(postData != "")
+        
+        if(!postData.empty())
         {
             // LOG_INFO_STREAM("CurlWrapperJson request post: " << postData);
             curlWrapper_.easy_setopt(curl_, CURLOPT_POSTFIELDS, postData.c_str());
@@ -110,17 +125,24 @@ json11::Json CurlWrapperJson::jsonGetOrPost(std::string url, std::string const &
                 std::string parse_error;
                 js = json11::Json::parse(responseBody, parse_error);
                 if (!parse_error.empty())
+                {
                     LOG_ERROR_STREAM("CurlWrapperJson request JSON parse error: " << parse_error);
+                }
             }
             else
+            {
                 LOG_INFO_STREAM("CurlWrapperJson request completed body is not JSON = " << responseBody);
-
+            }
         }
         else
+        {
             LOG_ERROR_STREAM("CurlWrapperJson request failed: " << curlWrapper_.easy_strerror(res));
+        }
 
-        if(headers)
+        if(headers != nullptr)
+        {
             curlWrapper_.slist_free_all(headers);
+        }
     }
 
     Shutdown();

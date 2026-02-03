@@ -6,30 +6,40 @@
 // Mock screen class for testing
 class MockScreen : public ScreenBase {
 public:
-    MockScreen() : ScreenBase() {};
+    MockScreen() {};
     MockScreen(ScreenManager *sm, const json11::Json &js) : ScreenBase(sm, js) {};
-    virtual ~MockScreen() {};
+    ~MockScreen() override {};
 
-    void Render() {
-        renderCallCount++;
+    void OnChangeFocus(bool focused) override {
+        if (focused) {
+            onChangeFocusTrueCount++;
+        } else {
+            onChangeFocusFalseCount++;
+        }
+        ScreenBase::OnChangeFocus(focused);
     }
 
-    int GetRenderCallCount() const {
-        return renderCallCount;
+    int GetOnChangeFocusTrueCount() const {
+        return onChangeFocusTrueCount;
     }
 
-    void handle_input_event(const InputDeviceType device_type, const struct input_event& event) {
+    int GetOnChangeFocusFalseCount() const {
+        return onChangeFocusFalseCount;
+    }
+
+    void handle_input_event(const InputDeviceType device_type, const struct input_event& event) override {
         // Mock implementation - do nothing for tests
     }
 
 private:
-    int renderCallCount = 0;
+    int onChangeFocusTrueCount = 0;
+    int onChangeFocusFalseCount = 0;
 };
 
 // Test fixture for ScreenManager tests
 class ScreenManagerTest : public ::testing::Test {
 protected:
-    void SetUp() {
+    void SetUp() override {
         screenManager = new ScreenManager(nullptr, nullptr, nullptr);
         auto json = json11::Json();
         mockScreen1 = new MockScreen(screenManager, json);
@@ -41,7 +51,7 @@ protected:
         screenManager->AddScreen(std::unique_ptr<ScreenBase>(mockScreen2));
     }
     
-    void TearDown() {
+    void TearDown() override {
         delete screenManager;
         screenManager = nullptr;
     }
@@ -56,17 +66,25 @@ TEST_F(ScreenManagerTest, CanInstantiate)
     EXPECT_NE(screenManager, nullptr);
 }
 
-TEST_F(ScreenManagerTest, FirstScreenRenderCalled) 
+TEST_F(ScreenManagerTest, FirstScreenOnChangeFocusCalled) 
 {
     screenManager->GoToNextScreen(mockScreen1->GetId());
-    EXPECT_EQ(mockScreen1->GetRenderCallCount(), 1);
+    EXPECT_EQ(mockScreen1->GetOnChangeFocusTrueCount(), 1);
+    EXPECT_EQ(mockScreen1->GetOnChangeFocusFalseCount(), 0);
 }
 
 TEST_F(ScreenManagerTest, GoToNextScreen) 
 {   
     screenManager->GoToNextScreen(mockScreen1->GetId());
     screenManager->GoToNextScreen(mockScreen2->GetId());
-    EXPECT_EQ(mockScreen2->GetRenderCallCount(),1);
+    
+    // Screen1 should have gained focus once, then lost it once
+    EXPECT_EQ(mockScreen1->GetOnChangeFocusTrueCount(), 1);
+    EXPECT_EQ(mockScreen1->GetOnChangeFocusFalseCount(), 1);
+    
+    // Screen2 should have gained focus once
+    EXPECT_EQ(mockScreen2->GetOnChangeFocusTrueCount(), 1);
+    EXPECT_EQ(mockScreen2->GetOnChangeFocusFalseCount(), 0);
 }
 
 TEST_F(ScreenManagerTest, GoToPreviousScreen) 
@@ -75,7 +93,13 @@ TEST_F(ScreenManagerTest, GoToPreviousScreen)
     screenManager->GoToNextScreen(mockScreen2->GetId());
     screenManager->GoToPreviousScreen();
     
-    EXPECT_EQ(mockScreen1->GetRenderCallCount(), 2);
+    // Screen1: gained focus, lost focus, gained focus again
+    EXPECT_EQ(mockScreen1->GetOnChangeFocusTrueCount(), 2);
+    EXPECT_EQ(mockScreen1->GetOnChangeFocusFalseCount(), 1);
+    
+    // Screen2: gained focus, lost focus
+    EXPECT_EQ(mockScreen2->GetOnChangeFocusTrueCount(), 1);
+    EXPECT_EQ(mockScreen2->GetOnChangeFocusFalseCount(), 1);
 }
 
 TEST_F(ScreenManagerTest, MultipleScreenTransitions) 
@@ -86,7 +110,10 @@ TEST_F(ScreenManagerTest, MultipleScreenTransitions)
     screenManager->GoToPreviousScreen();
     screenManager->GoToNextScreen(mockScreen1->GetId());
 
-    EXPECT_EQ(mockScreen1->GetRenderCallCount(), 3);
+    // Screen1: gained focus 3 times (initial, after going back, navigating to it again)
+    //          lost focus 2 times (when going to screen2, when navigating to it again after going back)
+    EXPECT_EQ(mockScreen1->GetOnChangeFocusTrueCount(), 3);
+    EXPECT_EQ(mockScreen1->GetOnChangeFocusFalseCount(), 2);
 }
 
 TEST_F(ScreenManagerTest, Destructor) 
@@ -96,7 +123,7 @@ TEST_F(ScreenManagerTest, Destructor)
     screenManager->GoToNextScreen(mockScreen2->GetId());
     
     // Create a new ScreenManager and delete it to test destructor
-    ScreenManager* test_manager = new ScreenManager(nullptr, nullptr, nullptr);
+    auto *test_manager = new ScreenManager(nullptr, nullptr, nullptr);
     delete test_manager;
     
     SUCCEED();
@@ -104,7 +131,7 @@ TEST_F(ScreenManagerTest, Destructor)
 
 TEST_F(ScreenManagerTest, ThreeLevelScreenHistory) 
 {
-    MockScreen* mock_screen3 = new MockScreen();
+    auto *mock_screen3 = new MockScreen();
     mock_screen3->SetId("3");
     screenManager->AddScreen(std::unique_ptr<ScreenBase>(mock_screen3));
 
@@ -116,5 +143,15 @@ TEST_F(ScreenManagerTest, ThreeLevelScreenHistory)
     screenManager->GoToPreviousScreen(); // should go to screen2
     screenManager->GoToPreviousScreen(); // should go to screen1
     
-    EXPECT_EQ(mockScreen1->GetRenderCallCount(), 2);
+    // Screen1: gained focus initially, lost when going to screen2, gained again when going back
+    EXPECT_EQ(mockScreen1->GetOnChangeFocusTrueCount(), 2);
+    EXPECT_EQ(mockScreen1->GetOnChangeFocusFalseCount(), 1);
+    
+    // Screen2: gained focus, lost when going to screen3, gained again when going back from screen3
+    EXPECT_EQ(mockScreen2->GetOnChangeFocusTrueCount(), 2);
+    EXPECT_EQ(mockScreen2->GetOnChangeFocusFalseCount(), 2);
+    
+    // Screen3: gained focus, lost when going back
+    EXPECT_EQ(mock_screen3->GetOnChangeFocusTrueCount(), 1);
+    EXPECT_EQ(mock_screen3->GetOnChangeFocusFalseCount(), 1);
 }

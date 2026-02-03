@@ -144,7 +144,7 @@ TEST_F(ConfigurationReaderTest, CompleteWorkflow) {
     ConfigurationReader config(test_config_filename_);
     
     // Load the configuration
-    bool loaded = config.load();
+    ASSERT_TRUE(config.load());
     
     // Test various getter methods
     std::string str_val = config.get_string("test_key", "default_string");
@@ -162,20 +162,19 @@ TEST_F(ConfigurationReaderTest, CompleteWorkflow) {
 // Test Home Assistant configuration methods
 TEST_F(ConfigurationReaderTest, HomeAssistantConfigWithValidData) {
     ConfigurationReader config(test_config_filename_);
-    config.load();
+    ASSERT_TRUE(config.load());
     
     // Test getting Home Assistant configuration
     std::string base_url = config.get_home_assistant_base_url("default_url");
     std::string token = config.get_home_assistant_token("default_token");
     std::string entity_id = config.get_home_assistant_entity_id("default_entity");
-    bool has_config = config.has_home_assistant_config();
+    ASSERT_TRUE(config.has_home_assistant_config());
     
     // With json11 working, these should return the actual values
     // If json11 isn't working, they'll return defaults
     EXPECT_TRUE(base_url == "http://test.local:8123" || base_url == "default_url");
     EXPECT_TRUE(token == "test_token_123" || token == "default_token");
     EXPECT_TRUE(entity_id == "switch.test_light" || entity_id == "default_entity");
-    // has_config might be true if json11 works, false otherwise
 }
 
 TEST_F(ConfigurationReaderTest, HomeAssistantConfigWithDefaults) {

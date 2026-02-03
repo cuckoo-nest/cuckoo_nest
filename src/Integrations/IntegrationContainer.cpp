@@ -44,7 +44,9 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
     for (const auto& integration : parsed_json["integrations"].array_items()) 
     {
         if (!integration.is_object())
+        {
             continue; // skip invalid entries
+        }
 
         std::string name = integration["name"].string_value();
         std::string type = integration["type"].string_value();
@@ -53,8 +55,10 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
             ? std::to_string(integration["id"].int_value())
             : integration["id"].string_value()
         );
-        if(id == "")
+        if(id.empty())
+        {
             id = name;
+        }
 
         if (type == "HomeAssistant") 
         {
@@ -82,11 +86,13 @@ void IntegrationContainer::LoadIntegrationsFromConfig(const std::string& configP
     }
 }
 
-std::string IntegrationContainer::ReadFileContents(const std::string& filepath) const
+std::string IntegrationContainer::ReadFileContents(const std::string& filepath)
 {
     std::ifstream file(filepath);
     if (!file.is_open())
+    {
         return "";
+    }
     
     std::stringstream buffer;
     buffer << file.rdbuf();
@@ -98,7 +104,9 @@ IntegrationSwitchBase* IntegrationContainer::GetSwitchById(std::string const  &i
 {
     auto it = switchMap_.find(id);
     if (it != switchMap_.end())
+    {
         return it->second.get();
+    }
 
     return nullptr;
 }
@@ -107,7 +115,9 @@ IntegrationDimmerBase* IntegrationContainer::GetDimmerById(std::string const  &i
 {
     auto it = dimmerMap_.find(id);
     if (it != dimmerMap_.end())
+    {
         return it->second.get();
+    }
 
     return nullptr;
 }

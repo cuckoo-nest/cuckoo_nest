@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.16)
 
 set(LVGL_VERSION "v9.4.0")
 
-set(LV_CONF_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../lv_conf.h")
+# Use absolute path for lv_conf.h so it works with ExternalProject
+set(LV_CONF_PATH "${CMAKE_SOURCE_DIR}/lv_conf.h")
 
 include(ExternalProject)
 

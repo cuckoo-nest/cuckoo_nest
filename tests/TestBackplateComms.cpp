@@ -42,14 +42,14 @@ protected:
         // before the destructor).
     }
 
-    testing::Action<int(char*, int)> mockReadResponse(const std::vector<uint8_t>& responseBuffer) {
+    static testing::Action<int(char*, int)> mockReadResponse(const std::vector<uint8_t>& responseBuffer) {
         return testing::Invoke([responseBuffer](char* buffer, int bufferSize) {
             std::memcpy(buffer, responseBuffer.data(), responseBuffer.size());
             return static_cast<int>(responseBuffer.size());
         });
     }
 
-    testing::Action<int(timeval&)> mockGetTimeval(int sec, int usec) {
+    static testing::Action<int(timeval&)> mockGetTimeval(int sec, int usec) {
         return testing::Invoke([sec, usec](timeval& tv) {
             tv.tv_sec = sec;
             tv.tv_usec = usec;
@@ -58,17 +58,40 @@ protected:
     }
 
     testing::Action<int(timeval&)> mockGetTimevalSecs() {
-        return testing::Invoke([&](timeval& tv) {
-            
+        return testing::Invoke([this](timeval& tv) {
             tv.tv_sec = mockCurrentTimeSec;
             tv.tv_usec = 0;
             return 0;
         });
     }
 
+    std::function<void(float)> testTempCb = [this](float temp) {
+        s_tempCalled = true;
+        s_tempVal = temp;
+    };
+
+    std::function<void(int)> testPirCb = [this](int value) {
+        s_pirCalled = true;
+        s_pirVal = value;
+    };
+
+    std::function<void(uint16_t, const uint8_t*, size_t)> testGenericCb = [this](uint16_t type, const uint8_t* payload, size_t len) {
+        s_genericCalled = true;
+        s_genericType = type;
+        s_genericLen = len;
+    };
+
     MockSerialPort mockSerialPort;
     MockDateTimeProvider mockDateTimeProvider;
     int mockCurrentTimeSec;
+
+    bool s_tempCalled = false;
+    float s_tempVal = 0.0F;
+    bool s_pirCalled = false;
+    size_t s_pirVal = 0;
+    bool s_genericCalled = false;
+    uint16_t s_genericType = 0;
+    size_t s_genericLen = 0;
 };
 
 class BackplateCommsExposed : public BackplateComms
@@ -81,13 +104,13 @@ public:
     : BackplateComms(serialPort, dateTimeProvider)
     {};
 
-    virtual ~BackplateCommsExposed() = default;
+    ~BackplateCommsExposed() override = default;
 
-    inline bool InitializeSerial() { return BackplateComms::InitializeSerial(); };
-    inline bool DoBurstStage() { return BackplateComms::DoBurstStage(); };
-    inline bool DoInfoGathering() { return BackplateComms::DoInfoGathering(); };
-    inline bool GetInfo(MessageType command, MessageType expectedResponse) { return BackplateComms::GetInfo(command, expectedResponse); };
-    inline void TaskBodyComms() { BackplateComms::TaskBodyComms(); };
+    bool InitializeSerial() { return BackplateComms::InitializeSerial(); };
+    bool DoBurstStage() { return BackplateComms::DoBurstStage(); };
+    bool DoInfoGathering() { return BackplateComms::DoInfoGathering(); };
+    bool GetInfo(MessageType command, MessageType expectedResponse) { return BackplateComms::GetInfo(command, expectedResponse); };
+    void TaskBodyComms() { BackplateComms::TaskBodyComms(); };
 
 };
 
@@ -348,34 +371,6 @@ TEST_F(TestBackplateComms, DoBurstStageHandlesAllMessagesInOneRead)
     EXPECT_TRUE(comms.DoBurstStage());
 }
 
-namespace {
-    static bool s_tempCalled = false;
-    static float s_tempVal = 0.0f;
-    static bool s_pirCalled = false;
-    static size_t s_pirVal = 0;
-    static bool s_genericCalled = false;
-    static uint16_t s_genericType = 0;
-    static size_t s_genericLen = 0;
-
-    void testTempCb(float temp)
-    {
-        s_tempCalled = true;
-        s_tempVal = temp;
-    }
-
-    void testPirCb(int value)
-    {
-        s_pirCalled = true;
-        s_pirVal = value;
-    }
-
-    void testGenericCb(uint16_t type, const uint8_t* payload, size_t len)
-    {
-        s_genericCalled = true;
-        s_genericType = type;
-        s_genericLen = len;
-    }
-}
 
 TEST_F(TestBackplateComms, TemperatureCallbackInvoked)
 {
@@ -393,12 +388,12 @@ TEST_F(TestBackplateComms, TemperatureCallbackInvoked)
     EXPECT_CALL(mockSerialPort, Read(_,_))
         .WillOnce(mockReadResponse(sensorMsg.GetRawMessage()));
 
-    s_tempCalled = false; s_genericCalled = false; s_genericType = 0; s_tempVal = 0.0f;
+    s_tempCalled = false; s_genericCalled = false; s_genericType = 0; s_tempVal = 0.0F;
     comms.TaskBodyComms();
 
     EXPECT_TRUE(s_tempCalled);
     // payload {0x11,0x22} -> temp_cc = 0x2211 = 8721 -> 87.21 C
-    EXPECT_NEAR(s_tempVal, 87.21f, 0.01f);
+    EXPECT_NEAR(s_tempVal, 87.21F, 0.01F);
 }
 
 TEST_F(TestBackplateComms, PIRCallbackInvoked)
@@ -439,7 +434,10 @@ TEST_F(TestBackplateComms, CallbacksNotInvokedOnBadCrc)
     auto raw = sensorMsg.GetRawMessage();
     // Corrupt last CRC byte
     std::vector<uint8_t> corrupted(raw.begin(), raw.end());
-    if (!corrupted.empty()) corrupted[corrupted.size()-1] ^= 0xFF;
+    if (!corrupted.empty())
+    {
+        corrupted[corrupted.size()-1] ^= 0xFF;
+    }
 
     EXPECT_CALL(mockSerialPort, Write(_)).WillRepeatedly(Return(1));
     EXPECT_CALL(mockSerialPort, Read(_,_))

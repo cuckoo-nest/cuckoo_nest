@@ -150,7 +150,7 @@ std::vector<std::string> ConfigurationReader::get_keys() const
     return keys;
 }
 
-std::string ConfigurationReader::get_executable_directory() const
+std::string ConfigurationReader::get_executable_directory()
 {
     char path[PATH_MAX];
     ssize_t count = readlink("/proc/self/exe", path, PATH_MAX);
@@ -241,7 +241,7 @@ bool ConfigurationReader::has_home_assistant_config() const
     return false;
 }
 
-std::string ConfigurationReader::read_file_content(const std::string& filepath) const
+std::string ConfigurationReader::read_file_content(const std::string& filepath)
 {
     std::ifstream file(filepath);
     if (!file.is_open()) {

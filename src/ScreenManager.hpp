@@ -53,7 +53,7 @@ public:
 
 private:
     void GoToScreenPtr(ScreenBase *screen);
-    std::string ReadFileContents(const std::string &filepath) const;
+    static std::string ReadFileContents(const std::string &filepath);
 
     void BuildMenuScreenFromJSON(const json11::Json &screenJson);
 
