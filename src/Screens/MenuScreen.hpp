@@ -45,4 +45,6 @@ private:
     std::vector<MenuItem> menuItems;
 
     static constexpr int RotaryAccumulatorThreshold = 500;
+    static constexpr double FixedAngleSpacing = 35.0;  // degrees between icons
+    static constexpr double ArcCenterAngle = -90.0;    // top center position
 };

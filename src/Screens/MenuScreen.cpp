@@ -8,6 +8,8 @@ extern "C" {
     LV_FONT_DECLARE(CuckooFontAwesome);
 }
 
+static lv_style_t fontH1;
+
 void MenuScreen::Render()
 {
     if (display_ == nullptr)
@@ -15,13 +17,27 @@ void MenuScreen::Render()
 
     display_->SetBackgroundColor(SCREEN_COLOR_BLACK);
     
-    std::string selectdMenu = "No ITems";
+    // Display selected menu name with wrapping in the center of screen
+    std::string selectdMenu = "No Items";
     if (!menuItems.empty())
         selectdMenu = menuItems[menuSelectedIndex].GetName();
-    display_->DrawText(0, 0, selectdMenu, SCREEN_COLOR_WHITE, Font::FONT_H2);
+
+    
+    lv_style_init(&fontH1);
+    lv_style_set_text_font(&fontH1, &lv_font_montserrat_28);
+    
+    lv_obj_t * label = lv_label_create(lv_screen_active());
+    lv_label_set_text(label, selectdMenu.c_str());
+    lv_obj_set_width(label, 180);  // Limit width to enable wrapping
+    lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);  // Enable text wrapping
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_color(label, lv_color_white(), 0);
+    lv_obj_add_style(label, &fontH1, 0);
+    lv_obj_center(label);
+    lv_obj_set_y(label, 0);  // Center vertically
         
-    // Draw circular icons representing each menu item using LVGL directly.
-    // Icons are placed around a circle; the selected item is rotated to the top.
+    // Draw icons in a fixed horizontal arc centered at the top of the screen.
+    // Icons remain in place; only the selected icon grows larger.
     const int screenW = display_->width();
     const int screenH = display_->height();
     const int centerX = screenW / 2;
@@ -32,29 +48,13 @@ void MenuScreen::Render()
     if (count <= 0)
         return;
 
-    const double angleStep = 360.0 / count;
-    // rotate so the selected index is at -90 degrees (top)
-    // incorporate rotaryAccumulator for fractional rotation between items
-    double frac = 0.0;
-    if (std::abs(rotaryAccumulator) > 10)
-    {
-        frac = (double)rotaryAccumulator / RotaryAccumulatorThreshold;
-        if (frac > 0.99) frac = 0.99;
-        if (frac < -0.99) frac = -0.99;
-    }
-
-    // Prevent rotation beyond list bounds: when at first or last item, disallow
-    // fractional movement that would visually spin icons past the ends.
-    if (menuSelectedIndex <= 0 && frac < 0.0)
-        frac = 0.0;
-    if (menuSelectedIndex >= count - 1 && frac > 0.0)
-        frac = 0.0;
-    
-    const double baseAngle = -90.0 - ((double)menuSelectedIndex + frac) * angleStep;
-
+    // Icons are positioned at fixed angles in a horizontal arc centered at top
+    // Each icon has a fixed position based on its index
     for (int i = 0; i < count; ++i)
     {
-        double angleDeg = baseAngle + i * angleStep;
+        // Calculate fixed angle for this icon position
+        // Center the arc: middle item(s) at top, others spread horizontally
+        double angleDeg = ArcCenterAngle + ((i - (count - 1) / 2.0) * FixedAngleSpacing);
         int16_t angle = static_cast<int16_t>(angleDeg);
 
         // Use LVGL's integer trigonometry (works around GCC 4.9.4 soft-float math lib bug)
@@ -167,13 +167,13 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
     if (device_type == InputDeviceType::ROTARY)
     {
         rotaryAccumulator -= event.value;
-        // rotaryAccumulator -= (-1 * event.value);
-        // When at the first item allow only positive accumulator (forward rotation),
-        // and when at the last item allow only negative accumulator (backward rotation).
+        
+        // Clamp accumulator to valid range
         if (menuSelectedIndex <= 0 && rotaryAccumulator < 0)
             rotaryAccumulator = 0;
         if (menuSelectedIndex >= static_cast<int>(menuItems.size()) - 1 && rotaryAccumulator > 0)
             rotaryAccumulator = 0;
+            
         if (rotaryAccumulator >= RotaryAccumulatorThreshold)
         {
             menuSelectedIndex++;
