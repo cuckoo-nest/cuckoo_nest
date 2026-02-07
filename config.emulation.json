@@ -13,6 +13,7 @@
         "display_device": "/dev/fb0",
         "button_device": "/dev/input/by-path/platform-i8042-serio-0-event-kbd",
         "rotary_device": "/dev/input/mice",
+        "rotary_sensitivity_multiplier": 5.0,
         "backlight_device": "/dev/null",
         "backplate_serial_device": "/dev/null",
         "emulate_display": true,
@@ -20,6 +21,7 @@
         "backlight_max_brightness": 115,
         "backlight_min_brightness": 20
     },
+    "comment_rotary_sensitivity": "rotary_sensitivity_multiplier: Multiplies rotary encoder input values. Use higher values (e.g., 5.0) for emulation on laptop trackpads, lower values (e.g., 1.0) for real hardware.",
     "homeAssistant": {
         "baseURL": "http://homeassistant.local:8123",
         "token": "example_long_lived_access_token"

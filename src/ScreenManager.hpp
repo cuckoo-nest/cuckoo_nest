@@ -47,6 +47,7 @@ public:
     inline Beeper *HalBeeper() const { return Hal() != nullptr ? Hal()->beeper : nullptr; }
     inline Inputs *HalInputs() const { return Hal() != nullptr ? Hal()->inputs : nullptr; }
     inline Backlight *HalBacklight() const { return Hal() != nullptr ? Hal()->backlight : nullptr; }
+    inline double GetRotarySensitivityMultiplier() const { return rotary_sensitivity_multiplier_; }
 
     inline IntegrationContainer* GetIntegrationContainer() const { return integrationContainer_; }
     inline BackplateComms *GetBackplaceComms() const { return backplateComms_; }
@@ -61,6 +62,7 @@ private:
     ScreenBase* current_screen_ = nullptr;
     std::map<std::string, std::unique_ptr<ScreenBase>> screens_;
     std::string firstScreenId_;
+    double rotary_sensitivity_multiplier_ = 1.0;
 
     HAL *hal_ = nullptr;
     IntegrationContainer* integrationContainer_ = nullptr;

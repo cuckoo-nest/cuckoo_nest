@@ -164,6 +164,14 @@ void ScreenManager::LoadScreensFromConfig(const std::string& config_path)
         }
     }
 
+    // Load rotary sensitivity multiplier from hal config
+    auto hal = parsed_json["hal"];
+    if (hal.is_object() && hal["rotary_sensitivity_multiplier"].is_number())
+    {
+        rotary_sensitivity_multiplier_ = hal["rotary_sensitivity_multiplier"].number_value();
+        LOG_INFO_STREAM("ScreenManager: Rotary sensitivity multiplier: " << rotary_sensitivity_multiplier_);
+    }
+
     for (const auto& screen : parsed_json["screens"].array_items())
     {
         std::string name = (!screen["name"].is_null() ? screen["name"].string_value() : "");

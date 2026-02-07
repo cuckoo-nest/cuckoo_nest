@@ -46,6 +46,7 @@ struct HALConfig {
     std::string backlight_device;
     std::string backplate_serial_device;
     bool emulate_display;
+    double rotary_sensitivity_multiplier;
     int backlight_active_seconds;
     int backlight_max_brightness;
     int backlight_min_brightness;
@@ -262,6 +263,7 @@ static HALConfig load_hal_config(const std::string& config_file)
     config.backlight_device = "/sys/class/backlight/3-0036/brightness";
     config.backplate_serial_device = "/dev/ttyO2";
     config.emulate_display = false;
+    config.rotary_sensitivity_multiplier = 1.0;  // Default: no multiplier
     config.backlight_active_seconds = 10;
     config.backlight_max_brightness = 115;
     config.backlight_min_brightness = 20;
@@ -339,6 +341,10 @@ static HALConfig load_hal_config(const std::string& config_file)
         if (hal["backlight_min_brightness"].is_number()) {
             config.backlight_min_brightness = hal["backlight_min_brightness"].int_value();
             LOG_DEBUG_STREAM("  backlight_min_brightness: " << config.backlight_min_brightness);
+        }
+        if (hal["rotary_sensitivity_multiplier"].is_number()) {
+            config.rotary_sensitivity_multiplier = hal["rotary_sensitivity_multiplier"].number_value();
+            LOG_INFO_STREAM("  rotary_sensitivity_multiplier: " << config.rotary_sensitivity_multiplier);
         }
     } else {
         LOG_WARN_STREAM("No 'hal' section found in config, using defaults");

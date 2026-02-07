@@ -166,7 +166,11 @@ void MenuScreen::handle_input_event(const InputDeviceType device_type, const str
 {
     if (device_type == InputDeviceType::ROTARY)
     {
-        rotaryAccumulator -= event.value;
+        // Apply sensitivity multiplier to rotary input
+        double multiplier = (screenManager_ != nullptr) ? screenManager_->GetRotarySensitivityMultiplier() : 1.0;
+        int adjustedValue = static_cast<int>(event.value * multiplier);
+        
+        rotaryAccumulator -= adjustedValue;
         
         // Clamp accumulator to valid range
         if (menuSelectedIndex <= 0 && rotaryAccumulator < 0)
